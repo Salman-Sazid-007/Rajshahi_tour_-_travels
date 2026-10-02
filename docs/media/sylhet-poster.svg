@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#082f49"/>
+      <stop offset="50%" stop-color="#0369a1"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#bg2)"/>
+  <circle cx="680" cy="160" r="220" fill="#38bdf8" opacity="0.18"/>
+  <rect x="40" y="40" width="720" height="920" rx="28" fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.4"/>
+  <rect x="240" y="75" width="320" height="44" rx="22" fill="#38bdf8"/>
+  <text x="400" y="104" text-anchor="middle" fill="#082f49" font-family="sans-serif" font-size="20" font-weight="800">রাজশাহী ট্যুরস এন্ড ট্রাভেলস</text>
+  <text x="400" y="195" text-anchor="middle" fill="#bae6fd" font-family="sans-serif" font-size="26" font-weight="600">প্রকৃতির কন্যা ভ্রমণ</text>
+  <text x="400" y="280" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="64" font-weight="900">সিলেট ভ্রমণ</text>
+  <text x="400" y="340" text-anchor="middle" fill="#fde047" font-family="sans-serif" font-size="30" font-weight="700">সাদাপাথর • জাফলং • রাতারগুল • মালনীছড়া</text>
+  <rect x="140" y="390" width="520" height="110" rx="20" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/>
+  <text x="400" y="435" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="28" font-weight="700">৩০ অক্টোবর • ৩ রাত ২ দিন</text>
+  <text x="400" y="475" text-anchor="middle" fill="#7dd3fc" font-family="sans-serif" font-size="22" font-weight="600">যাত্রা শুরু: সপুরা মোড়, রাজশাহী</text>
+  <rect x="100" y="540" width="280" height="150" rx="20" fill="#ffffff" opacity="0.1" stroke="#fde047"/>
+  <text x="240" y="590" text-anchor="middle" fill="#fde047" font-family="sans-serif" font-size="22" font-weight="700">জনপ্রতি প্যাকেজ</text>
+  <text x="240" y="650" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="46" font-weight="900">৳৩,৮০০</text>
+  <rect x="420" y="540" width="280" height="150" rx="20" fill="#ffffff" opacity="0.1" stroke="#38bdf8"/>
+  <text x="560" y="590" text-anchor="middle" fill="#7dd3fc" font-family="sans-serif" font-size="22" font-weight="700">কাপল প্যাকেজ</text>
+  <text x="560" y="650" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="46" font-weight="900">৳৯,৫০০</text>
+  <rect x="150" y="810" width="500" height="85" rx="42" fill="#fde047"/>
+  <text x="400" y="863" text-anchor="middle" fill="#082f49" font-family="sans-serif" font-size="30" font-weight="900">বুকিং হটলাইন: 01711-987654</text>
+</svg>

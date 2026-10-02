@@ -1,0 +1,1705 @@
+{
+  "users": [
+    {
+      "id": "staff-owner-1",
+      "name": "সালমান সাজিদ (মালিক)",
+      "phone": "01711000001",
+      "email": "owner@rajshahitours.com",
+      "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
+      "role": "owner",
+      "designation": "স্বত্বাধিকারী ও প্রধান পরিচালক (Owner)",
+      "avatar": "SS",
+      "isActive": true,
+      "bio": "রাজশাহী ট্যুরস এন্ড ট্রাভেলস-এর প্রতিষ্ঠাতা। সকল ট্যুর প্ল্যানিং, একাউন্টিং ও কাস্টমার রিলেশন তত্ত্বাবধান করেন।",
+      "allowancePerTour": 0
+    },
+    {
+      "id": "staff-accountant-1",
+      "name": "তানভীর আহমেদ (একাউন্ট্যান্ট)",
+      "phone": "01711000002",
+      "email": "accounts@rajshahitours.com",
+      "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
+      "role": "accountant",
+      "designation": "হিসাবরক্ষক ও বুকিং ম্যানেজার (Accountant)",
+      "avatar": "TA",
+      "isActive": true,
+      "bio": "ট্যুর বাজেট, ট্রাভেলার বুকিং পেমেন্ট, ডিউ কালেকশন এবং মাসিক আয়-ব্যয়ের হিসাব পরিচালনা করেন।",
+      "allowancePerTour": 0
+    },
+    {
+      "id": "staff-guide-1",
+      "name": "মনিরুল ইসলাম (মনিরুল ভাই)",
+      "phone": "01711000003",
+      "email": "monirul@rajshahitours.com",
+      "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
+      "role": "guide",
+      "designation": "সিনিয়র ট্যুর গাইড (Senior Tour Guide)",
+      "avatar": "MI",
+      "isActive": true,
+      "bio": "সাজেক, সিলেট ও বান্দরবান রুটে ৫ বছরের অভিজ্ঞতাসম্পন্ন জনপ্রিয় ট্যুর গাইড।",
+      "allowancePerTour": 4000
+    },
+    {
+      "id": "staff-guide-2",
+      "name": "রাশেদুল ইসলাম",
+      "phone": "01711000004",
+      "email": "rashedul@rajshahitours.com",
+      "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
+      "role": "guide",
+      "designation": "ট্যুর গাইড ও ফটোগ্রাফার (Tour Guide)",
+      "avatar": "RI",
+      "isActive": true,
+      "bio": "কক্সবাজার, সেন্টমার্টিন ও সুন্দরবন ট্যুর পরিচালনায় দক্ষ এবং ট্রাভেল ফটোগ্রাফার।",
+      "allowancePerTour": 3500
+    },
+    {
+      "id": "staff-guide-3",
+      "name": "মেহেদী হাসান",
+      "phone": "01711000005",
+      "email": "mehedi@rajshahitours.com",
+      "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
+      "role": "guide",
+      "designation": "অ্যাসিস্ট্যান্ট ট্যুর গাইড (Assistant Guide)",
+      "avatar": "MH",
+      "isActive": true,
+      "bio": "গ্রুপ ট্যুর হসপিটালিটি, খাবার ব্যবস্থাপনা এবং ট্রান্সপোর্ট কো-অর্ডিনেশনে বিশেষজ্ঞ।",
+      "allowancePerTour": 3000
+    }
+  ],
+  "tours": [
+    {
+      "id": "tour-sajek-running",
+      "title": "সাজেক ভ্যালি ও খাগড়াছড়ি মেঘের রাজ্য গ্রুপ ট্যুর",
+      "slug": "sajek-valley-running-oct",
+      "destination": "সাজেক ভ্যালি",
+      "status": "running",
+      "isPublished": true,
+      "isFeatured": false,
+      "startDate": "2026-10-01",
+      "days": 2,
+      "nights": 3,
+      "returnDate": "2026-10-04",
+      "departureLocation": "সপুরা মোড়, রাজশাহী",
+      "totalSeats": 40,
+      "coverImage": "/media/sajek-2.jpg",
+      "posterImage": "/media/sajek-poster.svg",
+      "galleryImages": [
+        "/media/sajek-1.webp",
+        "/media/sajek-2.jpg",
+        "/media/sajek-3.jpg",
+        "/media/sajek-4.jpg"
+      ],
+      "packages": [
+        {
+          "id": "pkg-sajek-run-share",
+          "name": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+          "type": "shared_4",
+          "roomType": "non_ac",
+          "personsPerUnit": 1,
+          "price": 3800,
+          "description": "১ রুমে ৪ জন শেয়ারিং, নন-এসি প্রিমিয়াম ভ্যালি ভিউ রুম"
+        },
+        {
+          "id": "pkg-sajek-run-couple",
+          "name": "কাপল প্যাকেজ (২ জন এক রুমে)",
+          "type": "couple",
+          "roomType": "non_ac",
+          "personsPerUnit": 2,
+          "price": 15000,
+          "description": "কাপলদের জন্য সেপারেট মেঘ ভিউ ব্যালকনি রুম (২ জনের সম্পূর্ণ খরচ)"
+        }
+      ],
+      "addons": [
+        {
+          "id": "addon-entry-sajek-1",
+          "name": "প্রবেশ টিকিট (সাজেক, আলুটিলা গুহা ও ঝুলন্ত ব্রিজ)",
+          "price": 200,
+          "mandatory": false
+        }
+      ],
+      "transport": {
+        "primary": "নন-এসি রিজার্ভ বাস (৪০ সিট)",
+        "local": "চাঁদের গাড়ি (রিজার্ভ জিপ)",
+        "notes": "রাজশাহী সপুরা মোড় থেকে রাত ৯টায় যাত্রা, খাগড়াছড়ি নেমে চাঁদের গাড়িতে সাজেক।"
+      },
+      "guideIds": [
+        "staff-guide-1",
+        "staff-guide-3"
+      ],
+      "mealPlan": [
+        {
+          "day": 1,
+          "title": "১ম দিন (খাগড়াছড়ি ও সাজেক চেক-ইন)",
+          "breakfast": "ডিম খিচুড়ি ও আচার (৳৯০/জন)",
+          "snacks": "পাহাড়ি চা ও বিস্কুট",
+          "lunch": "পাহাড়ি ব্যাম্বু চিকেন স্পেশাল লাঞ্চ",
+          "dinner": "ব্যাম্বু বিরিয়ানি স্পেশাল ডিনার"
+        },
+        {
+          "day": 2,
+          "title": "২য় দিন (কংলাক পাহাড়, আলুটিলা ও রিটার্ন)",
+          "breakfast": "পরোটা, ডিম ভাজি ও ডাল ভুনা (৳৮৫/জন)",
+          "snacks": "সিঙ্গারা ও মালাই চা",
+          "lunch": "দেশি মুরগি ও ভর্তা-ভাত লাঞ্চ",
+          "dinner": "হাইওয়ে রেস্টুরেন্ট স্পেশাল ডিনার"
+        }
+      ],
+      "itinerary": [
+        {
+          "day": 1,
+          "dateLabel": "১ম দিন — খাগড়াছড়ি পৌঁছে চাঁদের গাড়িতে মেঘের রাজ্য সাজেক",
+          "spots": "বাঘাইহাট আর্মি ক্যাম্প এসকর্ট, রুইলুই পাড়া, হেলিপ্যাড সূর্যাস্ত, স্টোন গার্ডেন ও লুসাই গ্রাম",
+          "details": "সকালে খাগড়াছড়ি পৌঁছে ফ্রেশ হয়ে সকালের নাস্তা। এরপর রিজার্ভ চাঁদের গাড়িতে সাজেক যাত্রা। দুপুরে রিসোর্টে চেক-ইন ও ব্যাম্বু চিকেন লাঞ্চ। বিকালে হেলিপ্যাডে সূর্যাস্ত ও রাতে ব্যাম্বু বিরিয়ানি ডিনার।"
+        },
+        {
+          "day": 2,
+          "dateLabel": "২য় দিন — কংলাক পাহাড়ে সূর্যোদয় ও খাগড়াছড়ি দর্শনীয় স্থান",
+          "spots": "কংলাক পাহাড় চূড়া, রিসাং ঝর্ণা, আলুটিলা রহস্যময় গুহা, ঝুলন্ত ব্রিজ ও জেলা পরিষদ পার্ক",
+          "details": "ভোরে মেঘের চাদর দেখতে কংলাক পাহাড় ট্র্যাকিং। সকাল ১০টায় চেক-আউট করে খাগড়াছড়ির আলুটিলা গুহা, রিসাং ঝর্ণা ও ঝুলন্ত ব্রিজ ঘুরে রাতের বাসে রাজশাহীর উদ্দেশ্যে রওনা।"
+        }
+      ],
+      "marketingCaption": "✨ রাজশাহী থেকে মেঘের রাজ্য সাজেক ভ্যালি ও খাগড়াছড়ি স্পেশাল গ্রুপ ট্যুর! ✨\n🚌 যাত্রা: সপুরা মোড়, রাজশাহী\n🍛 ৫ বেলা স্পেশাল খাবার (ব্যাম্বু চিকেন ও ব্যাম্বু বিরিয়ানি সহ)\n💰 জনপ্রতি মাত্র ৳৩,৮০০ | কাপল প্যাকেজ ৳১৫,০০০",
+      "budget": {
+        "foodCostPerPerson": 90,
+        "foodTotal": 33000,
+        "busCost": 45000,
+        "hotelCost": 20000,
+        "localTransportCost": 8000,
+        "guideCost": 4000,
+        "marketingCost": 3000,
+        "otherCost": 2000,
+        "totalBudget": 115000,
+        "minTravelersToBreakEven": 31
+      }
+    },
+    {
+      "id": "tour-sylhet-oct",
+      "title": "সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল স্পেশাল ট্যুর",
+      "slug": "sylhet-sadapathor-oct-30",
+      "destination": "সিলেট",
+      "status": "upcoming",
+      "isPublished": true,
+      "isFeatured": true,
+      "startDate": "2026-10-30",
+      "days": 2,
+      "nights": 3,
+      "returnDate": "2026-11-02",
+      "departureLocation": "সপুরা মোড়, রাজশাহী",
+      "totalSeats": 40,
+      "coverImage": "/media/sylhet-1.jpg",
+      "posterImage": "/media/sylhet-poster.svg",
+      "galleryImages": [
+        "/media/sylhet-1.jpg",
+        "/media/sylhet-2.jpg",
+        "/media/sylhet-3.jpg"
+      ],
+      "packages": [
+        {
+          "id": "pkg-sylhet-share",
+          "name": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+          "type": "shared_4",
+          "roomType": "non_ac",
+          "personsPerUnit": 1,
+          "price": 3800,
+          "description": "১ রুমে ৪ জন শেয়ারিং, নন-এসি হোটেল রুম, বাস ও ৫ বেলা খাবার সহ"
+        },
+        {
+          "id": "pkg-sylhet-couple",
+          "name": "কাপল প্যাকেজ (২ জন এক রুমে)",
+          "type": "couple",
+          "roomType": "ac",
+          "personsPerUnit": 2,
+          "price": 9500,
+          "description": "কাপলদের জন্য প্রাইভেট এসি ডিলাক্স রুম (২ জনের প্যাকেজ)"
+        },
+        {
+          "id": "pkg-sylhet-3share",
+          "name": "৩ জন রুম প্যাকেজ (জনপ্রতি)",
+          "type": "shared_3",
+          "roomType": "non_ac",
+          "personsPerUnit": 1,
+          "price": 4200,
+          "description": "১ রুমে ৩ জন শেয়ারিং, নন-এসি রুম"
+        }
+      ],
+      "addons": [
+        {
+          "id": "addon-entry-sylhet",
+          "name": "প্রবেশ টিকিট ও নৌকা ঘাট ফি (রাতারগুল ও সাদাপাথর)",
+          "price": 200,
+          "mandatory": false
+        }
+      ],
+      "transport": {
+        "primary": "নন-এসি বাস (Non-AC Bus)",
+        "local": "রিজার্ভ লেগুনা / চাঁদের গাড়ি ও ট্রলার নৌকা",
+        "notes": "সপুরা মোড় ও সাহেব বাজার থেকে সরাসরি রিজার্ভ বাসে সিলেট যাত্রা।"
+      },
+      "guideIds": [
+        "staff-guide-1",
+        "staff-guide-2"
+      ],
+      "mealPlan": [
+        {
+          "day": 1,
+          "title": "১ম দিন (ভোলাগঞ্জ সাদাপাথর ও রাতারগুল)",
+          "breakfast": "ডিম খিচুড়ি ও আচার (৳৯০/জন)",
+          "snacks": "সিলেটের সাত রঙের চা ও বিস্কুট",
+          "lunch": "দেশি মুরগি ও ভর্তা-ভাত লাঞ্চ",
+          "dinner": "চিকেন বারবিকিউ ও পরোটা নাইট"
+        },
+        {
+          "day": 2,
+          "title": "২য় দিন (জাফলং, লালাখাল ও চা বাগান)",
+          "breakfast": "পরোটা, ডিম ভাজি ও ডাল ভুনা (৳৮৫/জন)",
+          "snacks": "বিকালের চা ও স্ন্যাক্স",
+          "lunch": "পাহাড়ি ব্যাম্বু চিকেন স্পেশাল লাঞ্চ",
+          "dinner": "হাইওয়ে ডিনার প্যাক"
+        }
+      ],
+      "itinerary": [
+        {
+          "day": 1,
+          "dateLabel": "১ম দিন — ভোলাগঞ্জ সাদাপাথর, রাতারগুল সোয়াম্প ফরেস্ট ও মাজার জিয়ারত",
+          "spots": "ভোলাগঞ্জ সাদাপাথর, রাতারগুল জলারবন, মালনীছড়া চা বাগান, হযরত শাহজালাল (রহ.) দরগাহ",
+          "details": "সকালে সিলেট পৌঁছে হোটেলে চেক-ইন ও নাস্তা। এরপর ট্রলারে ভোলাগঞ্জ সাদাপাথর এবং বিকালে ডিঙি নৌকায় রাতারগুল সোয়াম্প ফরেস্ট ও মালনীছড়া চা বাগান ভ্রমণ।"
+        },
+        {
+          "day": 2,
+          "dateLabel": "২য় দিন — জাফলং জিরো পয়েন্ট, সংগ্রামপুঞ্জি ঝর্ণা ও লালাখাল",
+          "spots": "জাফলং জিরো পয়েন্ট, ডাউকি নদী, সংগ্রামপুঞ্জি (মায়াবী) ঝর্ণা, খাসিয়া পল্লী ও লালাখাল",
+          "details": "সকালের নাস্তা সেরে জাফলং ও মায়াবী ঝর্ণা ভ্রমণ। দুপুরে লাঞ্চ শেষে লালাখালের নীল পানিতে নৌভ্রমণ করে রাতের বাসে রাজশাহীর উদ্দেশ্যে যাত্রা।"
+        }
+      ],
+      "marketingCaption": "🌿 ৩০ অক্টোবর সিলেট ভ্রমণ — সাদাপাথর, রাতারগুল ও জাফলং স্পেশাল গ্রুপ ট্যুর! 🌿\n📍 যাত্রা: সপুরা মোড়, রাজশাহী\n💺 মোট সিট: ৪০টি | ৫ বেলা খাবার ও রিসোর্ট সহ জনপ্রতি মাত্র ৳৩,৮০০!",
+      "budget": {
+        "foodCostPerPerson": 90,
+        "foodTotal": 36000,
+        "busCost": 48000,
+        "hotelCost": 22000,
+        "localTransportCost": 9000,
+        "guideCost": 4000,
+        "marketingCost": 3000,
+        "otherCost": 2000,
+        "totalBudget": 124000,
+        "minTravelersToBreakEven": 33
+      }
+    },
+    {
+      "id": "tour-sajek-oct15",
+      "title": "সাজেক ভ্যালি প্রিমিয়াম গ্রুপ ট্যুর (অক্টোবর স্পেশাল)",
+      "slug": "sajek-valley-oct-15",
+      "destination": "সাজেক ভ্যালি",
+      "status": "upcoming",
+      "isPublished": true,
+      "isFeatured": false,
+      "startDate": "2026-10-15",
+      "days": 2,
+      "nights": 3,
+      "returnDate": "2026-10-18",
+      "departureLocation": "সপুরা মোড়, রাজশাহী",
+      "totalSeats": 40,
+      "coverImage": "/media/sajek-1.webp",
+      "posterImage": "/media/sajek-poster.svg",
+      "galleryImages": [
+        "/media/sajek-1.webp",
+        "/media/sajek-2.jpg",
+        "/media/sajek-3.jpg",
+        "/media/sajek-4.jpg"
+      ],
+      "packages": [
+        {
+          "id": "pkg-sajek-couple",
+          "name": "কাপল প্যাকেজ (২ জন এক রুমে)",
+          "type": "couple",
+          "roomType": "non_ac",
+          "personsPerUnit": 2,
+          "price": 15000,
+          "description": "কাপলদের জন্য সেপারেট রুম (২ জন থাকবে)"
+        },
+        {
+          "id": "pkg-sajek-4share",
+          "name": "সিঙ্গেল পারসন (৪ জন এক রুমে)",
+          "type": "shared_4",
+          "roomType": "non_ac",
+          "personsPerUnit": 1,
+          "price": 3800,
+          "description": "৪ জন থাকবে এক রুমে (নন-এসি রুম, জনপ্রতি ৩,৮০০ টাকা)"
+        }
+      ],
+      "addons": [
+        {
+          "id": "addon-sajek-ticket",
+          "name": "প্রবেশ টিকিট (সাজেক ও আলুটিলা গুহা)",
+          "price": 200,
+          "mandatory": false
+        }
+      ],
+      "transport": {
+        "primary": "নন-এসি বাস (Non-AC Bus)",
+        "local": "চাঁদের গাড়ি (Chander Gari)",
+        "notes": "সপুরা মোড় থেকে রিজার্ভ বাস + খাগড়াছড়ি থেকে চাঁদের গাড়ি"
+      },
+      "guideIds": [
+        "staff-guide-1"
+      ],
+      "mealPlan": [
+        {
+          "day": 1,
+          "title": "১ম দিন (১৬ অক্টোবর — সাজেক ভ্যালি)",
+          "breakfast": "ডিম খিচুড়ি / পরোটা ডিম (৳৯০/জন)",
+          "snacks": "স্ন্যাক্স (ঐচ্ছিক)",
+          "lunch": "পাহাড়ি ব্যাম্বু চিকেন স্পেশাল লাঞ্চ",
+          "dinner": "ব্যাম্বু বিরিয়ানি স্পেশাল ডিনার"
+        },
+        {
+          "day": 2,
+          "title": "২য় দিন (১৭ অক্টোবর — কংলাক ও খাগড়াছড়ি)",
+          "breakfast": "পরোটা, ডিম ভাজি ও ডাল ভুনা",
+          "snacks": "পাহাড়ি চা ও বিস্কুট",
+          "lunch": "দেশি মুরগি ও ভর্তা-ভাত লাঞ্চ",
+          "dinner": "বারবিকিউ / হাইওয়ে ডিনার"
+        }
+      ],
+      "itinerary": [
+        {
+          "day": 1,
+          "dateLabel": "১৬ অক্টোবর — সাজেক ভ্যালি, রুইলুই পাড়া ও হেলিপ্যাড",
+          "spots": "সাজেক ভ্যালি, রুইলুই পাড়া, স্টোন গার্ডেন, হেলিপ্যাড ও লুসাই গ্রাম",
+          "details": "১৬ তারিখে খাগড়াছড়ি থেকে চাঁদের গাড়িতে সাজেক পৌঁছে এই জায়গাগুলো ঘুরবো এবং রিসোর্টে রাত্রিযাপন।"
+        },
+        {
+          "day": 2,
+          "dateLabel": "১৭ অক্টোবর — কংলাক পাহাড়, আলুটিলা গুহা ও ঝুলন্ত ব্রিজ",
+          "spots": "কংলাক পাহাড়, রিসাং ঝর্ণা, আলুটিলা রহস্যময় গুহা ও খাগড়াছড়ি ঝুলন্ত ব্রিজ",
+          "details": "দ্বিতীয় দিনে কংলাক পাহাড়ে সূর্যোদয় দেখে খাগড়াছড়ির সব স্পট ঘুরে রাজশাহীর উদ্দেশ্যে রওনা।"
+        }
+      ],
+      "marketingCaption": "🏔️ ১৫ অক্টোবর সাজেক ভ্যালি স্পেশাল গ্রুপ ট্যুর!\n📍 যাত্রা: সপুরা মোড়, রাজশাহী\n💑 কাপল প্যাকেজ: ৳১৫,০০০ | 👤 জনপ্রতি (৪ জন শেয়ারিং): ৳৩,৮০০\n🍛 ব্যাম্বু বিরিয়ানি ও ৫ বেলা খাবার সহ!",
+      "budget": {
+        "foodCostPerPerson": 90,
+        "foodTotal": 40000,
+        "busCost": 48000,
+        "hotelCost": 24000,
+        "localTransportCost": 10000,
+        "guideCost": 4000,
+        "marketingCost": 4000,
+        "otherCost": 0,
+        "totalBudget": 130000,
+        "minTravelersToBreakEven": 35
+      }
+    },
+    {
+      "id": "tour-coxs-nov",
+      "title": "কক্সবাজার, ইনানী ও মেরিন ড্রাইভ সমুদ্র বিলাস ট্যুর",
+      "slug": "coxs-bazar-nov-12",
+      "destination": "কক্সবাজার",
+      "status": "upcoming",
+      "isPublished": true,
+      "isFeatured": false,
+      "startDate": "2026-11-12",
+      "days": 3,
+      "nights": 4,
+      "returnDate": "2026-11-16",
+      "departureLocation": "সাহেব বাজার জিরো পয়েন্ট, রাজশাহী",
+      "totalSeats": 40,
+      "coverImage": "/media/coxs-1.jpg",
+      "posterImage": "/media/coxs-poster.svg",
+      "galleryImages": [
+        "/media/coxs-1.jpg",
+        "/media/coxs-2.jpg",
+        "/media/coxs-3.jpg"
+      ],
+      "packages": [
+        {
+          "id": "pkg-coxs-share",
+          "name": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+          "type": "shared_4",
+          "roomType": "non_ac",
+          "personsPerUnit": 1,
+          "price": 5500,
+          "description": "বিচ ভিউ হোটেল, ৪ জন শেয়ারিং রুম, ৭ বেলা খাবার সহ"
+        },
+        {
+          "id": "pkg-coxs-couple",
+          "name": "কাপল প্যাকেজ (এসি বিচ ভিউ রুম)",
+          "type": "couple",
+          "roomType": "ac",
+          "personsPerUnit": 2,
+          "price": 13500,
+          "description": "কাপলদের জন্য প্রাইভেট এসি বিচ ভিউ রুম (২ জন)"
+        }
+      ],
+      "addons": [
+        {
+          "id": "addon-coxs-parasailing",
+          "name": "হিমছড়ি ও মেরিন ড্রাইভ খোলা জিপ রাইড",
+          "price": 350,
+          "mandatory": false
+        }
+      ],
+      "transport": {
+        "primary": "নন-এসি / এসি রিজার্ভ বাস",
+        "local": "মেরিন ড্রাইভ ছাদখোলা জিপ ও অটো",
+        "notes": "সাহেব বাজার জিরো পয়েন্ট ও সপুরা মোড় থেকে পিকআপ।"
+      },
+      "guideIds": [
+        "staff-guide-2"
+      ],
+      "mealPlan": [
+        {
+          "day": 1,
+          "title": "১ম দিন (সুগন্ধা ও লাবণী বিচ)",
+          "breakfast": "পরোটা, ডিম ভাজি ও ডাল ভুনা",
+          "snacks": "সৈকতে ডাবের পানি",
+          "lunch": "সামুদ্রিক রূপচাঁদা মাছ ও ভর্তা-ভাত",
+          "dinner": "কোরাল মাছ বারবিকিউ ও পরোটা"
+        },
+        {
+          "day": 2,
+          "title": "২য় দিন (ইনানী, হিমছড়ি ও পাটুয়ারটেক)",
+          "breakfast": "ডিম খিচুড়ি ও আচার",
+          "snacks": "বিকালের চা ও স্ন্যাক্স",
+          "lunch": "দেশি মুরগি ও লইট্টা ফ্রাই লাঞ্চ",
+          "dinner": "চিকেন বিরিয়ানি ডিনার"
+        }
+      ],
+      "itinerary": [
+        {
+          "day": 1,
+          "dateLabel": "১ম দিন — কক্সবাজার চেক-ইন, সুগন্ধা ও কলাতলী বিচ",
+          "spots": "কলাতলী বিচ, সুগন্ধা বিচ, বার্মিজ মার্কেট ও লাবণী পয়েন্ট",
+          "details": "সকালে কক্সবাজার পৌঁছে হোটেল চেক-ইন এবং দিনভর সমুদ্র স্নান ও সূর্যাস্ত উপভোগ।"
+        },
+        {
+          "day": 2,
+          "dateLabel": "২য় দিন — মেরিন ড্রাইভ, হিমছড়ি ঝর্ণা, ইনানী ও পাটুয়ারটেক",
+          "spots": "হিমছড়ি পাহাড় ও ঝর্ণা, ইনানী প্রবাল বিচ, পাটুয়ারটেক ও টেকনাফ মেরিন ড্রাইভ",
+          "details": "ছাদখোলা জিপে পুরো ৮০ কিমি মেরিন ড্রাইভ ভ্রমণ ও রাতে সি-ফুড বারবিকিউ পার্টি।"
+        }
+      ],
+      "marketingCaption": "🌊 কক্সবাজার, ইনানী ও মেরিন ড্রাইভ সমুদ্র বিলাস ট্যুর! 🌊\n📍 যাত্রা: সাহেব বাজার জিরো পয়েন্ট, রাজশাহী\n💰 জনপ্রতি মাত্র ৳৫,৫০০ | কাপল প্যাকেজ ৳১৩,৫০০",
+      "budget": {
+        "foodCostPerPerson": 110,
+        "foodTotal": 48000,
+        "busCost": 65000,
+        "hotelCost": 35000,
+        "localTransportCost": 8000,
+        "guideCost": 4000,
+        "marketingCost": 3500,
+        "otherCost": 2500,
+        "totalBudget": 166000,
+        "minTravelersToBreakEven": 31
+      }
+    },
+    {
+      "id": "tour-sep-sajek",
+      "title": "সাজেক ভ্যালি শরতের মেঘের রাজ্য ট্যুর (সেপ্টেম্বর ব্যাচ)",
+      "slug": "sajek-sep-batch",
+      "destination": "সাজেক ভ্যালি",
+      "status": "completed",
+      "isPublished": true,
+      "isFeatured": false,
+      "startDate": "2026-09-05",
+      "days": 2,
+      "nights": 3,
+      "returnDate": "2026-09-08",
+      "departureLocation": "সপুরা মোড়, রাজশাহী",
+      "totalSeats": 40,
+      "coverImage": "/media/sajek-3.jpg",
+      "posterImage": "/media/sajek-poster.svg",
+      "galleryImages": [
+        "/media/sajek-3.jpg",
+        "/media/sajek-4.jpg"
+      ],
+      "packages": [
+        {
+          "id": "pkg-sep-sajek-1",
+          "name": "শেয়ারিং প্যাকেজ (জনপ্রতি)",
+          "type": "shared_4",
+          "roomType": "non_ac",
+          "personsPerUnit": 1,
+          "price": 3800,
+          "description": "৪ জন শেয়ারিং রুম"
+        }
+      ],
+      "addons": [],
+      "transport": {
+        "primary": "নন-এসি বাস",
+        "local": "চাঁদের গাড়ি",
+        "notes": "সফলভাবে সম্পন্ন (৩৮ জন ট্রাভেলার)"
+      },
+      "guideIds": [
+        "staff-guide-1"
+      ],
+      "mealPlan": [],
+      "itinerary": [],
+      "marketingCaption": "সেপ্টেম্বর সাজেক ভ্যালি সফল ট্যুর।",
+      "budget": {
+        "foodCostPerPerson": 90,
+        "foodTotal": 32000,
+        "busCost": 45000,
+        "hotelCost": 20000,
+        "localTransportCost": 8000,
+        "guideCost": 4000,
+        "marketingCost": 2500,
+        "otherCost": 1500,
+        "totalBudget": 113000,
+        "minTravelersToBreakEven": 30
+      }
+    },
+    {
+      "id": "tour-sep-sylhet",
+      "title": "সিলেট ও টাঙ্গুয়ার হাওর পূর্ণিমা বিলাস ট্যুর (সেপ্টেম্বর)",
+      "slug": "sylhet-haor-sep",
+      "destination": "সিলেট ও সুনামগঞ্জ",
+      "status": "completed",
+      "isPublished": true,
+      "isFeatured": false,
+      "startDate": "2026-09-14",
+      "days": 2,
+      "nights": 3,
+      "returnDate": "2026-09-17",
+      "departureLocation": "সাহেব বাজার জিরো পয়েন্ট, রাজশাহী",
+      "totalSeats": 40,
+      "coverImage": "/media/sylhet-2.jpg",
+      "posterImage": "/media/sylhet-poster.svg",
+      "galleryImages": [
+        "/media/sylhet-2.jpg",
+        "/media/sylhet-3.jpg"
+      ],
+      "packages": [
+        {
+          "id": "pkg-sep-sylhet-1",
+          "name": "হাউসবোট শেয়ারিং প্যাকেজ",
+          "type": "shared_4",
+          "roomType": "non_ac",
+          "personsPerUnit": 1,
+          "price": 4500,
+          "description": "লাক্সারি হাউসবোট ও সিলেট ভ্রমণ"
+        }
+      ],
+      "addons": [],
+      "transport": {
+        "primary": "নন-এসি রিজার্ভ বাস",
+        "local": "লাক্সারি হাউসবোট ও লেগুনা",
+        "notes": "সফলভাবে সম্পন্ন (৩৬ জন ট্রাভেলার)"
+      },
+      "guideIds": [
+        "staff-guide-1",
+        "staff-guide-2"
+      ],
+      "mealPlan": [],
+      "itinerary": [],
+      "marketingCaption": "সেপ্টেম্বর সিলেট ও হাওর ট্যুর।",
+      "budget": {
+        "foodCostPerPerson": 100,
+        "foodTotal": 34000,
+        "busCost": 46000,
+        "hotelCost": 18000,
+        "localTransportCost": 22000,
+        "guideCost": 5000,
+        "marketingCost": 3000,
+        "otherCost": 1000,
+        "totalBudget": 129000,
+        "minTravelersToBreakEven": 29
+      }
+    },
+    {
+      "id": "tour-sep-sundarbans",
+      "title": "সুন্দরবন রয়েল ম্যানগ্রোভ ক্রুজ ট্যুর (সেপ্টেম্বর)",
+      "slug": "sundarbans-cruise-sep",
+      "destination": "সুন্দরবন",
+      "status": "completed",
+      "isPublished": true,
+      "isFeatured": false,
+      "startDate": "2026-09-24",
+      "days": 3,
+      "nights": 3,
+      "returnDate": "2026-09-27",
+      "departureLocation": "সপুরা মোড়, রাজশাহী",
+      "totalSeats": 36,
+      "coverImage": "/media/sundarbans-1.jpg",
+      "posterImage": "/media/sundarbans-poster.svg",
+      "galleryImages": [
+        "/media/sundarbans-1.jpg",
+        "/media/sundarbans-2.jpg",
+        "/media/sundarbans-3.jpg"
+      ],
+      "packages": [
+        {
+          "id": "pkg-sep-sun-1",
+          "name": "কেবিন শেয়ারিং প্যাকেজ",
+          "type": "shared_4",
+          "roomType": "non_ac",
+          "personsPerUnit": 1,
+          "price": 7500,
+          "description": "লাক্সারি ট্যুরিস্ট শিপ কেবিন ও ফরেস্ট পারমিট সহ"
+        }
+      ],
+      "addons": [],
+      "transport": {
+        "primary": "নন-এসি বাস (রাজশাহী-খুলনা)",
+        "local": "লাক্সারি ক্রুজ শিপ ও দেশি ট্রলার",
+        "notes": "সফলভাবে সম্পন্ন (৩২ জন ট্রাভেলার)"
+      },
+      "guideIds": [
+        "staff-guide-2",
+        "staff-guide-3"
+      ],
+      "mealPlan": [],
+      "itinerary": [],
+      "marketingCaption": "সেপ্টেম্বর সুন্দরবন ক্রুজ ট্যুর।",
+      "budget": {
+        "foodCostPerPerson": 120,
+        "foodTotal": 45000,
+        "busCost": 38000,
+        "hotelCost": 65000,
+        "localTransportCost": 15000,
+        "guideCost": 6000,
+        "marketingCost": 3500,
+        "otherCost": 2500,
+        "totalBudget": 175000,
+        "minTravelersToBreakEven": 24
+      }
+    }
+  ],
+  "bookings": [
+    {
+      "id": "bk-run-1",
+      "bookingCode": "RTT-101",
+      "tourId": "tour-sajek-running",
+      "customerId": "cust-2",
+      "customerName": "ইসরাত জাহান",
+      "customerPhone": "01757950321",
+      "pax": 2,
+      "seatNumbers": "A1, A2",
+      "packageId": "pkg-sajek-run-share",
+      "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+      "packageUnitPrice": 3800,
+      "addonsSelected": [
+        {
+          "id": "addon-entry-sajek-1",
+          "name": "প্রবেশ টিকিট",
+          "price": 200
+        }
+      ],
+      "extraCharge": 400,
+      "discount": 200,
+      "discountReason": "রিপিট কাস্টমার ছাড়",
+      "totalAmount": 7800,
+      "advancePaid": 7800,
+      "dueAmount": 0,
+      "paymentMethod": "bkash",
+      "source": "phone",
+      "status": "confirmed",
+      "notes": "রুইলুই পাড়া মেঘপল্লী রিসোর্ট রুম ২০২",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-09-26T10:20:00Z"
+    },
+    {
+      "id": "bk-run-2",
+      "bookingCode": "RTT-102",
+      "tourId": "tour-sajek-running",
+      "customerId": "cust-3",
+      "customerName": "মাহমুদুল হাসান সজীব",
+      "customerPhone": "01819445566",
+      "pax": 2,
+      "seatNumbers": "B1, B2",
+      "packageId": "pkg-sajek-run-couple",
+      "packageName": "কাপল প্যাকেজ (২ জন এক রুমে)",
+      "packageUnitPrice": 15000,
+      "addonsSelected": [
+        {
+          "id": "addon-entry-sajek-1",
+          "name": "প্রবেশ টিকিট",
+          "price": 200
+        }
+      ],
+      "extraCharge": 400,
+      "discount": 400,
+      "discountReason": "লয়াল কাস্টমার ডিসকাউন্ট",
+      "totalAmount": 15000,
+      "advancePaid": 15000,
+      "dueAmount": 0,
+      "paymentMethod": "bkash",
+      "source": "facebook",
+      "status": "confirmed",
+      "notes": "কাপল ব্যালকনি রুম ১০১",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-09-27T14:00:00Z"
+    },
+    {
+      "id": "bk-run-3",
+      "bookingCode": "RTT-103",
+      "tourId": "tour-sajek-running",
+      "customerId": "cust-5",
+      "customerName": "আরিফুল ইসলাম রনি",
+      "customerPhone": "01677889900",
+      "pax": 4,
+      "seatNumbers": "C1, C2, C3, C4",
+      "packageId": "pkg-sajek-run-share",
+      "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+      "packageUnitPrice": 3800,
+      "addonsSelected": [],
+      "extraCharge": 0,
+      "discount": 200,
+      "discountReason": "গ্রুপ ডিসকাউন্ট",
+      "totalAmount": 15000,
+      "advancePaid": 13400,
+      "dueAmount": 1600,
+      "paymentMethod": "nagad",
+      "source": "website",
+      "status": "confirmed",
+      "notes": "৪ জনের গ্রুপ রুম ২০৪",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-09-28T09:15:00Z"
+    },
+    {
+      "id": "bk-run-4",
+      "bookingCode": "RTT-104",
+      "tourId": "tour-sajek-running",
+      "customerId": "cust-6",
+      "customerName": "নুসরাত সুলতানা নিপা",
+      "customerPhone": "01788990011",
+      "pax": 4,
+      "seatNumbers": "D1, D2, D3, D4",
+      "packageId": "pkg-sajek-run-share",
+      "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+      "packageUnitPrice": 3800,
+      "addonsSelected": [],
+      "extraCharge": 0,
+      "discount": 0,
+      "discountReason": "",
+      "totalAmount": 15200,
+      "advancePaid": 15200,
+      "dueAmount": 0,
+      "paymentMethod": "cash",
+      "source": "walkin",
+      "status": "confirmed",
+      "notes": "ফ্যামিলি রুম ২০৫",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-09-29T11:30:00Z"
+    },
+    {
+      "id": "bk-syl-1",
+      "bookingCode": "RTT-201",
+      "tourId": "tour-sylhet-oct",
+      "customerId": "cust-1",
+      "customerName": "তানিয়া পারভেজ",
+      "customerPhone": "01712345678",
+      "pax": 5,
+      "seatNumbers": "A1, A2, A3, A4, B1",
+      "packageId": "pkg-sylhet-share",
+      "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+      "packageUnitPrice": 3800,
+      "addonsSelected": [
+        {
+          "id": "addon-entry-sylhet",
+          "name": "প্রবেশ টিকিট ও নৌকা ঘাট ফি",
+          "price": 200
+        }
+      ],
+      "extraCharge": 1000,
+      "discount": 5,
+      "discountReason": "রাউন্ড ফিগার ডিসকাউন্ট",
+      "totalAmount": 19995,
+      "advancePaid": 7500,
+      "dueAmount": 12495,
+      "paymentMethod": "bkash",
+      "source": "facebook",
+      "status": "confirmed",
+      "notes": "তানিয়া পারভেজের সাথে মোট ৫ জন যাবেন (ভিডিও উদাহরণ)",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-10-01T11:00:00Z"
+    },
+    {
+      "id": "bk-syl-2",
+      "bookingCode": "RTT-202",
+      "tourId": "tour-sylhet-oct",
+      "customerId": "cust-2",
+      "customerName": "ইসরাত জাহান",
+      "customerPhone": "01757950321",
+      "pax": 1,
+      "seatNumbers": "B2",
+      "packageId": "pkg-sylhet-share",
+      "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+      "packageUnitPrice": 3800,
+      "addonsSelected": [
+        {
+          "id": "addon-entry-sylhet",
+          "name": "প্রবেশ টিকিট ও নৌকা ঘাট ফি",
+          "price": 200
+        }
+      ],
+      "extraCharge": 199,
+      "discount": 399,
+      "discountReason": "বার্গেন করেছে / স্পেশাল অফার",
+      "totalAmount": 3600,
+      "advancePaid": 2000,
+      "dueAmount": 1600,
+      "paymentMethod": "bkash",
+      "source": "phone",
+      "status": "confirmed",
+      "notes": "ফোন কলে বুকিং কনফার্ম ও বিকাশে ২০০০ টাকা এডভান্স",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-10-02T09:30:00Z"
+    },
+    {
+      "id": "bk-syl-3",
+      "bookingCode": "RTT-203",
+      "tourId": "tour-sylhet-oct",
+      "customerId": "cust-4",
+      "customerName": "ফারহানা ইয়াসমিন মিম",
+      "customerPhone": "01911223344",
+      "pax": 4,
+      "seatNumbers": "C1, C2, C3, C4",
+      "packageId": "pkg-sylhet-share",
+      "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+      "packageUnitPrice": 3800,
+      "addonsSelected": [],
+      "extraCharge": 0,
+      "discount": 0,
+      "discountReason": "",
+      "totalAmount": 15200,
+      "advancePaid": 13200,
+      "dueAmount": 2000,
+      "paymentMethod": "nagad",
+      "source": "website",
+      "status": "confirmed",
+      "notes": "৪ জনের ফিমেল শেয়ারিং রুম",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-10-01T15:20:00Z"
+    },
+    {
+      "id": "bk-syl-4",
+      "bookingCode": "RTT-204",
+      "tourId": "tour-sylhet-oct",
+      "customerId": "cust-7",
+      "customerName": "শাকিল আহমেদ",
+      "customerPhone": "01521445588",
+      "pax": 4,
+      "seatNumbers": "D1, D2, D3, D4",
+      "packageId": "pkg-sylhet-share",
+      "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+      "packageUnitPrice": 3800,
+      "addonsSelected": [],
+      "extraCharge": 0,
+      "discount": 0,
+      "discountReason": "",
+      "totalAmount": 15200,
+      "advancePaid": 12000,
+      "dueAmount": 3200,
+      "paymentMethod": "bkash",
+      "source": "facebook",
+      "status": "confirmed",
+      "notes": "রুয়েট ৪ জনের গ্রুপ",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-10-01T18:10:00Z"
+    },
+    {
+      "id": "bk-syl-5",
+      "bookingCode": "RTT-205",
+      "tourId": "tour-sylhet-oct",
+      "customerId": "cust-3",
+      "customerName": "মাহমুদুল হাসান সজীব",
+      "customerPhone": "01819445566",
+      "pax": 2,
+      "seatNumbers": "E1, E2",
+      "packageId": "pkg-sylhet-couple",
+      "packageName": "কাপল প্যাকেজ (২ জন এক রুমে)",
+      "packageUnitPrice": 9500,
+      "addonsSelected": [],
+      "extraCharge": 0,
+      "discount": 500,
+      "discountReason": "ভিআইপি মেম্বার ছাড়",
+      "totalAmount": 9000,
+      "advancePaid": 9000,
+      "dueAmount": 0,
+      "paymentMethod": "bank",
+      "source": "phone",
+      "status": "confirmed",
+      "notes": "এসি কাপল রুম",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-10-02T08:00:00Z"
+    },
+    {
+      "id": "bk-syl-6",
+      "bookingCode": "RTT-206",
+      "tourId": "tour-sylhet-oct",
+      "customerId": "cust-6",
+      "customerName": "নুসরাত সুলতানা নিপা",
+      "customerPhone": "01788990011",
+      "pax": 2,
+      "seatNumbers": "E3, E4",
+      "packageId": "pkg-sylhet-share",
+      "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
+      "packageUnitPrice": 3800,
+      "addonsSelected": [],
+      "extraCharge": 0,
+      "discount": 0,
+      "discountReason": "",
+      "totalAmount": 7600,
+      "advancePaid": 5000,
+      "dueAmount": 2600,
+      "paymentMethod": "cash",
+      "source": "walkin",
+      "status": "confirmed",
+      "notes": "অফিসে এসে এডভান্স দিয়েছেন",
+      "feedbackSubmitted": false,
+      "createdAt": "2026-10-02T10:15:00Z"
+    }
+  ],
+  "inquiries": [
+    {
+      "id": "inq-1",
+      "tourId": "tour-sajek-oct15",
+      "tourTitle": "সাজেক ভ্যালি প্রিমিয়াম গ্রুপ ট্যুর (১৫ অক্টোবর)",
+      "name": "রাকিবুল ইসলাম সৌরভ",
+      "phone": "01744556677",
+      "pax": 4,
+      "preferredPackage": "সিঙ্গেল পারসন (৪ জন এক রুমে) - ৳৩,৮০০",
+      "message": "ভাই আমরা ৪ জন বন্ধু ১৫ অক্টোবরের সাজেক ট্যুরে যেতে চাই, সামনের দিকে ৪টা সিট পাওয়া যাবে কি?",
+      "status": "new",
+      "adminNote": "",
+      "createdAt": "2026-10-02T11:20:00Z"
+    },
+    {
+      "id": "inq-2",
+      "tourId": "tour-sylhet-oct",
+      "tourTitle": "সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল (৩০ অক্টোবর)",
+      "name": "সাদিয়া আফরিন মৌ",
+      "phone": "01855667788",
+      "pax": 2,
+      "preferredPackage": "কাপল প্যাকেজ (২ জন এক রুমে) - ৳৯,৫০০",
+      "message": "কাপল প্যাকেজে এসি রুম এবং বাসের সামনের সিট কনফার্ম করতে কত টাকা এডভান্স দিতে হবে?",
+      "status": "contacted",
+      "adminNote": "ফোনে কথা হয়েছে, আজ রাত ৮টার মধ্যে বিকাশে এডভান্স পাঠাবেন বলেছেন।",
+      "createdAt": "2026-10-02T09:45:00Z"
+    },
+    {
+      "id": "inq-3",
+      "tourId": "tour-coxs-nov",
+      "tourTitle": "কক্সবাজার, ইনানী ও মেরিন ড্রাইভ সমুদ্র বিলাস ট্যুর",
+      "name": "জুবায়ের হোসেন",
+      "phone": "01966778899",
+      "pax": 6,
+      "preferredPackage": "শেয়ারিং প্যাকেজ - ৳৫,৫০০",
+      "message": "ফ্যামিলি মেম্বার ৬ জন, কক্সবাজার ট্যুরে আলাদা ২টা রুম নিলে কত পড়বে?",
+      "status": "new",
+      "adminNote": "",
+      "createdAt": "2026-10-01T20:10:00Z"
+    },
+    {
+      "id": "inq-4",
+      "tourId": "tour-sylhet-oct",
+      "tourTitle": "সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল (৩০ অক্টোবর)",
+      "name": "ইসরাত জাহান",
+      "phone": "01757950321",
+      "pax": 1,
+      "preferredPackage": "শেয়ারিং প্যাকেজ - ৳৩,৮০০",
+      "message": "৩০ অক্টোবরের সিলেট ট্যুরে ১টি সিট বুক করতে চাই।",
+      "status": "converted",
+      "adminNote": "বুকিং কনফার্ম করা হয়েছে (বুকিং কোড: RTT-202, এডভান্স ৳২,০০০)।",
+      "createdAt": "2026-10-01T16:30:00Z"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust-1",
+      "name": "তানিয়া পারভেজ",
+      "phone": "01712345678",
+      "email": "tania.parvez@gmail.com",
+      "address": "উপশহর, রাজশাহী",
+      "tags": [
+        "loyal",
+        "repeat"
+      ],
+      "toursCompleted": [
+        "সাজেক ভ্যালি শরতের মেঘের রাজ্য ট্যুর (সেপ্টেম্বর ব্যাচ)",
+        "সিলেট ভ্রমণ (৩০ অক্টোবর)"
+      ],
+      "totalBookings": 3,
+      "totalSpent": 38995,
+      "totalDue": 12495,
+      "notes": "পরিবার নিয়ে প্রতি সিজনে আমাদের সাথে ট্যুরে যান।"
+    },
+    {
+      "id": "cust-2",
+      "name": "ইসরাত জাহান",
+      "phone": "01757950321",
+      "email": "israt.jahan@ru.ac.bd",
+      "address": "কাজলা, মতিহার, রাজশাহী",
+      "tags": [
+        "loyal",
+        "repeat"
+      ],
+      "toursCompleted": [
+        "সাজেক ভ্যালি ও খাগড়াছড়ি মেঘের রাজ্য গ্রুপ ট্যুর",
+        "সিলেট ভ্রমণ (৩০ অক্টোবর)"
+      ],
+      "totalBookings": 2,
+      "totalSpent": 7400,
+      "totalDue": 1600,
+      "notes": "রাজশাহী বিশ্ববিদ্যালয়ের শিক্ষার্থী, সাজেক ও সিলেট ট্যুরের নিয়মিত ট্রাভেলার।"
+    },
+    {
+      "id": "cust-3",
+      "name": "মাহমুদুল হাসান সজীব",
+      "phone": "01819445566",
+      "email": "sajib.rj@gmail.com",
+      "address": "সাহেব বাজার, বোয়ালিয়া, রাজশাহী",
+      "tags": [
+        "loyal",
+        "vip"
+      ],
+      "toursCompleted": [
+        "সুন্দরবন রয়েল ম্যানগ্রোভ ক্রুজ ট্যুর (সেপ্টেম্বর)",
+        "সাজেক ভ্যালি (চলমান)"
+      ],
+      "totalBookings": 4,
+      "totalSpent": 45000,
+      "totalDue": 0,
+      "notes": "কাপল প্যাকেজ প্রিফার করেন, সবসময় ফুল পেমেন্টে বুকিং দেন।"
+    },
+    {
+      "id": "cust-4",
+      "name": "ফারহানা ইয়াসমিন মিম",
+      "phone": "01911223344",
+      "email": "farhana.mim@gmail.com",
+      "address": "লক্ষ্মীপুর মোড়, রাজশাহী",
+      "tags": [
+        "repeat"
+      ],
+      "toursCompleted": [
+        "সিলেট ও টাঙ্গুয়ার হাওর পূর্ণিমা বিলাস ট্যুর (সেপ্টেম্বর)"
+      ],
+      "totalBookings": 2,
+      "totalSpent": 15200,
+      "totalDue": 2000,
+      "notes": "গ্রুপ বুকিং নিয়ে আসেন।"
+    },
+    {
+      "id": "cust-5",
+      "name": "আরিফুল ইসলাম রনি",
+      "phone": "01677889900",
+      "email": "ariful.roni@gmail.com",
+      "address": "তালাইমারি, রাজশাহী",
+      "tags": [
+        "new"
+      ],
+      "toursCompleted": [
+        "সাজেক ভ্যালি (চলমান)"
+      ],
+      "totalBookings": 1,
+      "totalSpent": 7600,
+      "totalDue": 1600,
+      "notes": "ফেসবুক পেজ থেকে বুকিং করেছেন।"
+    },
+    {
+      "id": "cust-6",
+      "name": "নুসরাত সুলতানা নিপা",
+      "phone": "01788990011",
+      "email": "nusrat.nipa@gmail.com",
+      "address": "সপুরা, শাহ মখদুম, রাজশাহী",
+      "tags": [
+        "loyal",
+        "repeat"
+      ],
+      "toursCompleted": [
+        "সাজেক ভ্যালি শরতের মেঘের রাজ্য ট্যুর (সেপ্টেম্বর ব্যাচ)",
+        "সুন্দরবন রয়েল ম্যানগ্রোভ ক্রুজ ট্যুর (সেপ্টেম্বর)"
+      ],
+      "totalBookings": 3,
+      "totalSpent": 26500,
+      "totalDue": 0,
+      "notes": "সাজেক ও সুন্দরবন দুই ট্যুরেই ৫ স্টার রিভিউ দিয়েছেন।"
+    },
+    {
+      "id": "cust-7",
+      "name": "শাকিল আহমেদ",
+      "phone": "01521445588",
+      "email": "shakil.ruet@gmail.com",
+      "address": "রুয়েট গেট, রাজশাহী",
+      "tags": [
+        "repeat"
+      ],
+      "toursCompleted": [
+        "সিলেট ভ্রমণ (৩০ অক্টোবর)"
+      ],
+      "totalBookings": 2,
+      "totalSpent": 15200,
+      "totalDue": 3200,
+      "notes": "৪ বন্ধু একসাথে শেয়ারিং প্যাকেজ নেন।"
+    }
+  ],
+  "mealMenus": [
+    {
+      "id": "meal-1",
+      "name": "ডিম খিচুড়ি ও আচার",
+      "category": "breakfast",
+      "categoryLabel": "সকালের নাস্তা (Breakfast)",
+      "costPerPerson": 90,
+      "items": "ভুনা খিচুড়ি, ডিম ভুনা/ভাজি, বেগুন ভাজি, আচার, মিনারেল ওয়াটার",
+      "isPopular": true
+    },
+    {
+      "id": "meal-2",
+      "name": "পরোটা, ডিম ভাজি ও ডাল ভুনা",
+      "category": "breakfast",
+      "categoryLabel": "সকালের নাস্তা (Breakfast)",
+      "costPerPerson": 85,
+      "items": "৩টি পরোটা, ডিম অমলেট, বুটের ডাল/সবজি, চা ও পানি",
+      "isPopular": true
+    },
+    {
+      "id": "meal-3",
+      "name": "পাহাড়ি ব্যাম্বু চিকেন স্পেশাল লাঞ্চ",
+      "category": "lunch",
+      "categoryLabel": "দুপুরের খাবার (Lunch)",
+      "costPerPerson": 260,
+      "items": "সাদা ভাত, ঐতিহ্যবাহী ব্যাম্বু চিকেন, মিক্সড সবজি, পাহাড়ি ভর্তা, ঘন ডাল, সালাদ",
+      "isPopular": true
+    },
+    {
+      "id": "meal-4",
+      "name": "দেশি মুরগি ও ভর্তা-ভাত লাঞ্চ",
+      "category": "lunch",
+      "categoryLabel": "দুপুরের খাবার (Lunch)",
+      "costPerPerson": 220,
+      "items": "সাদা ভাত, দেশি মুরগির ঝোল, আলু-শুঁটকি ভর্তা, ডাল, সালাদ",
+      "isPopular": false
+    },
+    {
+      "id": "meal-5",
+      "name": "ব্যাম্বু বিরিয়ানি স্পেশাল ডিনার",
+      "category": "dinner",
+      "categoryLabel": "রাতের খাবার (Dinner)",
+      "costPerPerson": 290,
+      "items": "বাঁশের ভেতর রান্না করা স্পেশাল ব্যাম্বু বিরিয়ানি, রোস্ট/চিকেন, বোরহানি, সালাদ",
+      "isPopular": true
+    },
+    {
+      "id": "meal-6",
+      "name": "চিকেন বারবিকিউ ও পরোটা নাইট",
+      "category": "dinner",
+      "categoryLabel": "রাতের খাবার (Dinner)",
+      "costPerPerson": 280,
+      "items": "কোয়ার্টার গ্রিলড বারবিকিউ চিকেন, ২টি নান/পরোটা, রাশিয়ান সালাদ, কোল্ড ড্রিংকস",
+      "isPopular": true
+    },
+    {
+      "id": "meal-7",
+      "name": "বিকালের পাহাড়ি চা ও স্ন্যাক্স",
+      "category": "snacks",
+      "categoryLabel": "বিকালের নাস্তা (Snacks)",
+      "costPerPerson": 60,
+      "items": "সিঙ্গারা/সমুচা, বিস্কুট ও স্পেশাল মালাই চা",
+      "isPopular": false
+    }
+  ],
+  "networkContacts": [
+    {
+      "id": "net-1",
+      "name": "কামরুল হাসান (মেঘপল্লী রিসোর্ট মালিক)",
+      "role": "হোটেল ও রিসোর্ট মালিক",
+      "category": "hotel",
+      "destination": "সাজেক ভ্যালি",
+      "phone": "01819223344",
+      "altPhone": "01715223344",
+      "address": "রুইলুই পাড়া, সাজেক ভ্যালি, রাঙ্গামাটি",
+      "notes": "আমাদের রেগুলার পার্টনার রিসোর্ট। ১০টি রুম আগাম ব্লক করা যায়, মনিরুল ভাইয়ের রেফারেন্স দিলে স্পেশাল ডিসকাউন্ট পাওয়া যায়।",
+      "rating": 4.9
+    },
+    {
+      "id": "net-2",
+      "name": "দিদারুল আলম (চাঁদের গাড়ি সমিতি লাইনম্যান)",
+      "role": "চাঁদের গাড়ি ও লোকাল ট্রান্সপোর্ট",
+      "category": "transport",
+      "destination": "খাগড়াছড়ি / সাজেক",
+      "phone": "01822889900",
+      "altPhone": "01556889900",
+      "address": "শাপলা চত্বর জিপ স্ট্যান্ড, খাগড়াছড়ি সদর",
+      "notes": "খাগড়াছড়ি থেকে বাঘাইহাট আর্মি এসকর্ট ও সাজেক রুটে অভিজ্ঞ ড্রাইভারদের গাড়ি দেন।",
+      "rating": 4.8
+    },
+    {
+      "id": "net-3",
+      "name": "হোটেল গ্র্যান্ড সিলেট ভিউ (ম্যানেজার জাকির ভাই)",
+      "role": "হোটেল মালিক / ম্যানেজার",
+      "category": "hotel",
+      "destination": "সিলেট",
+      "phone": "01712445566",
+      "altPhone": "",
+      "address": "দরগাহ গেট, আম্বরখানা, সিলেট",
+      "notes": "গ্রুপ ট্যুরের জন্য ৪ জনের রুম ও কাপল রুম এক ফ্লোরে পাওয়া যায়।",
+      "rating": 4.7
+    },
+    {
+      "id": "net-4",
+      "name": "মাঝি করিম মিয়া (রাতারগুল ও সাদাপাথর ঘাট)",
+      "role": "নৌকা ও ট্রলার মালিক",
+      "category": "boat",
+      "destination": "সিলেট",
+      "phone": "01733667788",
+      "altPhone": "",
+      "address": "ভোলাগঞ্জ ১০ নং ঘাট ও রাতারগুল ঘাট, সিলেট",
+      "notes": "৪০ জনের গ্রুপের জন্য একসাথে ৫টি ট্রলার ও নৌকা রেডি রাখেন।",
+      "rating": 4.8
+    },
+    {
+      "id": "net-5",
+      "name": "হানিফ / দেশ ট্রাভেলস রিজার্ভ ডিভিশন (রফিক ভাই)",
+      "role": "বাস কাউন্টার ও রিজার্ভ ইনচার্জ",
+      "category": "bus",
+      "destination": "রাজশাহী (সপুরা মোড়)",
+      "phone": "01711334455",
+      "altPhone": "01711334456",
+      "address": "সপুরা মোড় ও শিরোইল বাস টার্মিনাল, রাজশাহী",
+      "notes": "৪০ সিটের এসি ও নন-এসি রিজার্ভ কোচ সরবরাহ করেন।",
+      "rating": 4.9
+    },
+    {
+      "id": "net-6",
+      "name": "কাসুন্দি পাহাড়ি রেস্টুরেন্ট (সাজেক হেলিপ্যাড)",
+      "role": "রেস্টুরেন্ট ও ক্যাটারিং",
+      "category": "restaurant",
+      "destination": "সাজেক ভ্যালি",
+      "phone": "01844556677",
+      "altPhone": "",
+      "address": "হেলিপ্যাড সংলগ্ন, রুইলুই পাড়া, সাজেক",
+      "notes": "ব্যাম্বু চিকেন ও ব্যাম্বু বিরিয়ানির অর্ডার কমপক্ষে ৪ ঘণ্টা আগে জানাতে হয়।",
+      "rating": 4.8
+    }
+  ],
+  "monthlyAccounting": {
+    "2026-10": {
+      "month": "2026-10",
+      "labelBn": "অক্টোবর ২০২৬",
+      "tourRecords": [
+        {
+          "tourId": "tour-sajek-running",
+          "tourTitle": "সাজেক ভ্যালি ও খাগড়াছড়ি মেঘের রাজ্য গ্রুপ ট্যুর (চলমান)",
+          "startDate": "2026-10-01",
+          "travelersCount": 38,
+          "plannedBudget": 115000,
+          "totalIncome": 141000,
+          "busCost": 5000,
+          "hotelCost": 20000,
+          "foodCost": 33000,
+          "guideCost": 4000,
+          "boatAndLocalCost": 3000,
+          "marketingCost": 3000
+        },
+        {
+          "tourId": "tour-sajek-oct15",
+          "tourTitle": "সাজেক ভ্যালি প্রিমিয়াম গ্রুপ ট্যুর (১৫ অক্টোবর প্ল্যান)",
+          "startDate": "2026-10-15",
+          "travelersCount": 35,
+          "plannedBudget": 130000,
+          "totalIncome": 0,
+          "busCost": 0,
+          "hotelCost": 0,
+          "foodCost": 0,
+          "guideCost": 0,
+          "boatAndLocalCost": 0,
+          "marketingCost": 0
+        },
+        {
+          "tourId": "tour-sylhet-oct",
+          "tourTitle": "সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল (৩০ অক্টোবর)",
+          "startDate": "2026-10-30",
+          "travelersCount": 18,
+          "plannedBudget": 124000,
+          "totalIncome": 0,
+          "busCost": 0,
+          "hotelCost": 0,
+          "foodCost": 0,
+          "guideCost": 0,
+          "boatAndLocalCost": 0,
+          "marketingCost": 0
+        }
+      ],
+      "officeExpenses": [
+        {
+          "id": "exp-oct-1",
+          "month": "2026-10",
+          "title": "অফিস ভাড়া (সপুরা মোড়, রাজশাহী)",
+          "category": "office_rent",
+          "amount": 8500,
+          "date": "2026-10-01",
+          "notes": "অক্টোবর মাসের অফিস রেন্ট"
+        },
+        {
+          "id": "exp-oct-2",
+          "month": "2026-10",
+          "title": "অফিস ওয়াইফাই ও ইন্টারনেট বিল",
+          "category": "wifi",
+          "amount": 1500,
+          "date": "2026-10-02",
+          "notes": "হাই-স্পিড ফাইবার ব্রডব্যান্ড বিল"
+        }
+      ]
+    },
+    "2026-09": {
+      "month": "2026-09",
+      "labelBn": "সেপ্টেম্বর ২০২৬",
+      "tourRecords": [
+        {
+          "tourId": "tour-sep-sajek",
+          "tourTitle": "সাজেক ভ্যালি শরতের মেঘের রাজ্য ট্যুর (৫ সেপ্টেম্বর)",
+          "startDate": "2026-09-05",
+          "travelersCount": 38,
+          "plannedBudget": 113000,
+          "totalIncome": 152000,
+          "busCost": 45000,
+          "hotelCost": 20000,
+          "foodCost": 32000,
+          "guideCost": 4000,
+          "boatAndLocalCost": 8000,
+          "marketingCost": 2500
+        },
+        {
+          "tourId": "tour-sep-sylhet",
+          "tourTitle": "সিলেট ও টাঙ্গুয়ার হাওর পূর্ণিমা বিলাস ট্যুর (১৪ সেপ্টেম্বর)",
+          "startDate": "2026-09-14",
+          "travelersCount": 36,
+          "plannedBudget": 129000,
+          "totalIncome": 162000,
+          "busCost": 46000,
+          "hotelCost": 18000,
+          "foodCost": 34000,
+          "guideCost": 5000,
+          "boatAndLocalCost": 22000,
+          "marketingCost": 3000
+        },
+        {
+          "tourId": "tour-sep-sundarbans",
+          "tourTitle": "সুন্দরবন রয়েল ম্যানগ্রোভ ক্রুজ ট্যুর (২৪ সেপ্টেম্বর)",
+          "startDate": "2026-09-24",
+          "travelersCount": 32,
+          "plannedBudget": 175000,
+          "totalIncome": 240000,
+          "busCost": 38000,
+          "hotelCost": 65000,
+          "foodCost": 45000,
+          "guideCost": 6000,
+          "boatAndLocalCost": 15000,
+          "marketingCost": 3500
+        }
+      ],
+      "officeExpenses": [
+        {
+          "id": "exp-sep-1",
+          "month": "2026-09",
+          "title": "অফিস ভাড়া (সপুরা মোড়, রাজশাহী)",
+          "category": "office_rent",
+          "amount": 8500,
+          "date": "2026-09-01",
+          "notes": "সেপ্টেম্বর মাসের অফিস রেন্ট"
+        },
+        {
+          "id": "exp-sep-2",
+          "month": "2026-09",
+          "title": "অফিস ওয়াইফাই ও বিদ্যুৎ বিল",
+          "category": "wifi",
+          "amount": 2200,
+          "date": "2026-09-05",
+          "notes": "ওয়াইফাই ১৫০০ + বিদ্যুৎ ৭০০"
+        },
+        {
+          "id": "exp-sep-3",
+          "month": "2026-09",
+          "title": "ফেসবুক পেজ প্রমোশন ও ব্যানার প্রিন্ট",
+          "category": "marketing",
+          "amount": 3300,
+          "date": "2026-09-10",
+          "notes": "সেপ্টেম্বর মাসের বুস্টিং খরচ"
+        }
+      ]
+    }
+  },
+  "reviews": [
+    {
+      "id": "rev-1",
+      "customerName": "ইসরাত জাহান",
+      "customerLocation": "মতিহার, রাজশাহী",
+      "tourTitle": "সাজেক ভ্যালি ও খাগড়াছড়ি মেঘের রাজ্য ট্যুর",
+      "rating": 5,
+      "verdictLabel": "অসাধারণ, আবারও যাব!",
+      "likedTags": [
+        "খাবার ভালো ছিল",
+        "গাইড ভালো ছিল",
+        "বাস ভালো ছিল",
+        "সময়ানুবর্তিতা"
+      ],
+      "comment": "মনিরুল ভাইয়ের গাইডিং এবং সাজেকের ব্যাম্বু বিরিয়ানি সত্যিই অসাধারণ ছিল! মেয়েদের জন্য খুবই নিরাপদ ও গোছানো একটি ট্যুর গ্রুপ। ইনশাআল্লাহ ৩০ অক্টোবরের সিলেট ট্যুরেও যাচ্ছি!",
+      "isVisibleOnWebsite": true,
+      "createdAt": "2026-09-20T14:30:00Z"
+    },
+    {
+      "id": "rev-2",
+      "customerName": "মাহমুদুল হাসান সজীব",
+      "customerLocation": "সাহেব বাজার, রাজশাহী",
+      "tourTitle": "সুন্দরবন রয়েল ম্যানগ্রোভ ক্রুজ ট্যুর",
+      "rating": 5,
+      "verdictLabel": "অসাধারণ, আবারও যাব!",
+      "likedTags": [
+        "খাবার ভালো ছিল",
+        "রিসোর্ট/হোটেল ভালো ছিল",
+        "গাইড ভালো ছিল"
+      ],
+      "comment": "রাজশাহী থেকে এত সুন্দর ও প্রফেশনালভাবে সুন্দরবন ট্যুর আয়োজন করার জন্য ধন্যবাদ। বিশেষ করে শিপের খাবার এবং গাইডদের আন্তরিকতা ১০/১০।",
+      "isVisibleOnWebsite": true,
+      "createdAt": "2026-09-28T18:15:00Z"
+    },
+    {
+      "id": "rev-3",
+      "customerName": "তানিয়া পারভেজ",
+      "customerLocation": "উপশহর, রাজশাহী",
+      "tourTitle": "সাজেক ভ্যালি শরতের মেঘের রাজ্য ট্যুর",
+      "rating": 5,
+      "verdictLabel": "খুব ভালো লেগেছে",
+      "likedTags": [
+        "খাবার ভালো ছিল",
+        "গাইড ভালো ছিল",
+        "বাস ভালো ছিল"
+      ],
+      "comment": "পরিবারের ৫ জন মিলে গিয়েছিলাম। খাবারের মান এবং চাঁদের গাড়ির ব্যবস্থাপনা খুব ভালো ছিল। শুধু হোটেল চেক-ইনটা আরেকটু দ্রুত হলে আরও ভালো হতো। সব মিলিয়ে দারুণ অভিজ্ঞতা!",
+      "isVisibleOnWebsite": true,
+      "createdAt": "2026-09-12T11:00:00Z"
+    },
+    {
+      "id": "rev-4",
+      "customerName": "শাকিল আহমেদ",
+      "customerLocation": "রুয়েট, রাজশাহী",
+      "tourTitle": "সিলেট ও টাঙ্গুয়ার হাওর পূর্ণিমা বিলাস ট্যুর",
+      "rating": 4,
+      "verdictLabel": "খুব ভালো লেগেছে",
+      "likedTags": [
+        "খাবার ভালো ছিল",
+        "গাইড ভালো ছিল"
+      ],
+      "comment": "ভাই আপনাদের খাবার ও গাইড সার্ভিস এক কথায় সেরা ছিল, তবে সিলেটের হোটেলটা আরেকটু ভালো করতে পারতেন। সামনের ট্যুরে আবার দেখা হবে!",
+      "isVisibleOnWebsite": false,
+      "createdAt": "2026-09-19T16:40:00Z"
+    }
+  ],
+  "gallery": [
+    {
+      "id": "gal-1",
+      "title": "সাজেক কংলাক পাহাড়ে মেঘের সকাল",
+      "destination": "সাজেক ভ্যালি",
+      "imageUrl": "/media/sajek-1.webp",
+      "capturedBy": "মনিরুল ভাই (ট্যুর গাইড)",
+      "type": "photo",
+      "date": "সেপ্টেম্বর ২০২৬"
+    },
+    {
+      "id": "gal-2",
+      "title": "সাজেক ভ্যালি মেঘপল্লী রিসোর্ট ভিউ",
+      "destination": "সাজেক ভ্যালি",
+      "imageUrl": "/media/sajek-2.jpg",
+      "capturedBy": "মনিরুল ভাই (ট্যুর গাইড)",
+      "type": "photo",
+      "date": "সেপ্টেম্বর ২০২৬"
+    },
+    {
+      "id": "gal-3",
+      "title": "ভোলাগঞ্জ সাদাপাথর স্বচ্ছ পানির ধারা",
+      "destination": "সিলেট",
+      "imageUrl": "/media/sylhet-1.jpg",
+      "capturedBy": "রাশেদুল ইসলাম (ট্যুর গাইড)",
+      "type": "photo",
+      "date": "সেপ্টেম্বর ২০২৬"
+    },
+    {
+      "id": "gal-4",
+      "title": "কক্সবাজার ও সেন্টমার্টিন নীল সমুদ্র",
+      "destination": "কক্সবাজার",
+      "imageUrl": "/media/coxs-1.jpg",
+      "capturedBy": "রাশেদুল ইসলাম (ট্যুর গাইড)",
+      "type": "photo",
+      "date": "আগস্ট ২০২৬"
+    },
+    {
+      "id": "gal-5",
+      "title": "সুন্দরবন ম্যানগ্রোভ ক্যানেল ক্রুজিং",
+      "destination": "সুন্দরবন",
+      "imageUrl": "/media/sundarbans-1.jpg",
+      "capturedBy": "মেহেদী হাসান (ট্যুর গাইড)",
+      "type": "photo",
+      "date": "সেপ্টেম্বর ২০২৬"
+    },
+    {
+      "id": "gal-6",
+      "title": "রুইলুই পাড়া ও পাহাড়ি সূর্যোদয়",
+      "destination": "সাজেক ভ্যালি",
+      "imageUrl": "/media/sajek-4.jpg",
+      "capturedBy": "মনিরুল ভাই (ট্যুর গাইড)",
+      "type": "photo",
+      "date": "অক্টোবর ২০২৬"
+    }
+  ],
+  "mediaLibrary": [
+    {
+      "id": "med-1",
+      "label": "সাজেক মেঘের রাজ্য ১",
+      "url": "/media/sajek-1.webp",
+      "kind": "cover"
+    },
+    {
+      "id": "med-2",
+      "label": "সাজেক রিসোর্ট ও পাহাড় ২",
+      "url": "/media/sajek-2.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-3",
+      "label": "সাজেক কংলাক ভিউ ৩",
+      "url": "/media/sajek-3.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-4",
+      "label": "সাজেক ইকো কটেজ ৪",
+      "url": "/media/sajek-4.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-5",
+      "label": "সিলেট সাদাপাথর ১",
+      "url": "/media/sylhet-1.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-6",
+      "label": "সিলেট রাতারগুল ২",
+      "url": "/media/sylhet-2.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-7",
+      "label": "সিলেট জাফলং ৩",
+      "url": "/media/sylhet-3.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-8",
+      "label": "কক্সবাজার সমুদ্র সৈকত ১",
+      "url": "/media/coxs-1.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-9",
+      "label": "সেন্টমার্টিন কোরাল দ্বীপ ২",
+      "url": "/media/coxs-2.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-10",
+      "label": "সুন্দরবন রয়েল ক্রুজ ১",
+      "url": "/media/sundarbans-1.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-11",
+      "label": "সুন্দরবন নৌভ্রমণ ২",
+      "url": "/media/sundarbans-2.jpg",
+      "kind": "cover"
+    },
+    {
+      "id": "med-p1",
+      "label": "সাজেক ভ্যালি ফেসবুক পোস্টার",
+      "url": "/media/sajek-poster.svg",
+      "kind": "poster"
+    },
+    {
+      "id": "med-p2",
+      "label": "সিলেট ভ্রমণ ফেসবুক পোস্টার",
+      "url": "/media/sylhet-poster.svg",
+      "kind": "poster"
+    },
+    {
+      "id": "med-p3",
+      "label": "কক্সবাজার ফেসবুক পোস্টার",
+      "url": "/media/coxs-poster.svg",
+      "kind": "poster"
+    },
+    {
+      "id": "med-p4",
+      "label": "সুন্দরবন ফেসবুক পোস্টার",
+      "url": "/media/sundarbans-poster.svg",
+      "kind": "poster"
+    }
+  ],
+  "smsLogs": [
+    {
+      "id": "sms-1",
+      "recipientName": "ইসরাত জাহান",
+      "phone": "01757950321",
+      "message": "প্রিয় ইসরাত জাহান, সিলেট ভ্রমণ (৩০ অক্টোবর) ট্যুরে আপনার ১ জনের বুকিং কনফার্ম করা হয়েছে। মোট বিল: ৩,৬০০ টাকা, জমা দেওয়া হয়েছে: ২,০০০ টাকা, বাকি থাকলো: ১,৬০০ টাকা। ধন্যবাদ - রাজশাহী ট্যুরস এন্ড ট্রাভেলস।",
+      "category": "booking_confirm",
+      "tourId": "tour-sylhet-oct",
+      "bookingId": "bk-syl-2",
+      "status": "delivered",
+      "gateway": "Automas",
+      "encoding": "unicode",
+      "segments": 3,
+      "sentBy": "সালমান সাজিদ (মালিক)",
+      "createdAt": "2026-10-02T09:31:00Z"
+    },
+    {
+      "id": "sms-2",
+      "recipientName": "সাজেক ট্যুর গ্রুপ (১২ জন ট্রাভেলার)",
+      "phone": "01757950321, 01819445566, 01677889900, 01788990011",
+      "message": "দুপুরের খাবার রেডি, সবাই ডাইনিং এ চলে আসেন। - মনিরুল ভাই (রাজশাহী ট্যুরস এন্ড ট্রাভেলস)",
+      "category": "running_tour",
+      "tourId": "tour-sajek-running",
+      "bookingId": "",
+      "status": "delivered",
+      "gateway": "Automas",
+      "encoding": "unicode",
+      "segments": 2,
+      "sentBy": "মনিরুল ইসলাম (মনিরুল ভাই)",
+      "createdAt": "2026-10-02T13:15:00Z"
+    },
+    {
+      "id": "sms-3",
+      "recipientName": "তানিয়া পারভেজ",
+      "phone": "01712345678",
+      "message": "প্রিয় তানিয়া পারভেজ, আমাদের সাজেক ভ্যালি ট্যুরটি আপনার কেমন লেগেছে? আপনার মূল্যবান মতামত দিন এই লিংকে: https://rajshahitours.com/feedback/bk-syl-1",
+      "category": "feedback_link",
+      "tourId": "tour-sep-sajek",
+      "bookingId": "bk-syl-1",
+      "status": "delivered",
+      "gateway": "MimSMS",
+      "encoding": "unicode",
+      "segments": 3,
+      "sentBy": "সালমান সাজিদ (মালিক)",
+      "createdAt": "2026-09-10T18:00:00Z"
+    }
+  ],
+  "siteSettings": {
+    "agencyNameBn": "রাজশাহী ট্যুরস এন্ড ট্রাভেলস",
+    "agencyNameEn": "Rajshahi Tours & Travels",
+    "tagline": "রাজশাহী থেকে সারা বাংলাদেশ",
+    "heroTitle": "রাজশাহী থেকে সারা বাংলাদেশ — নিরাপদ ও আনন্দময় গ্রুপ ট্যুর",
+    "heroSubtitle": "সাজেক, সিলেট, কক্সবাজার, সেন্টমার্টিন ও সুন্দরবন সহ দেশের সেরা সব গন্তব্যে প্রতি মাসে আমাদের ফ্যামিলি ও গ্রুপ ট্যুর পরিচালিত হচ্ছে। আজই আপনার পছন্দের ট্যুরে সিট বুক করুন!",
+    "heroBackgroundImage": "/media/sajek-2.jpg",
+    "highlightedTourId": "tour-sylhet-oct",
+    "phone": "01711-987654",
+    "whatsapp": "8801711987654",
+    "email": "info@rajshahitours.com",
+    "officeAddress": "সপুরা মোড় (সাহেব বাজার জিরো পয়েন্ট শাখা সংলগ্ন), বোয়ালিয়া, রাজশাহী-৬১০০",
+    "officeHours": "প্রতিদিন সকাল ১০:০০ টা – রাত ৯:০০ টা",
+    "facebookUrl": "https://facebook.com/rajshahitoursandtravels",
+    "googleMapLocation": "সপুরা মোড়, রাজশাহী (Sopura Mor, Rajshahi)",
+    "stats": {
+      "completedTours": "১২০+",
+      "happyTravelers": "৪,৫০০+",
+      "destinations": "২৫+",
+      "averageRating": "৪.৯/৫.০"
+    }
+  }
+}

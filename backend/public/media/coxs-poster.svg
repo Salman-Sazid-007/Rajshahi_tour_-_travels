@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#431407"/>
+      <stop offset="50%" stop-color="#9a3412"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#bg3)"/>
+  <circle cx="400" cy="240" r="160" fill="#fb923c" opacity="0.22"/>
+  <rect x="40" y="40" width="720" height="920" rx="28" fill="none" stroke="#fb923c" stroke-width="2" opacity="0.4"/>
+  <rect x="240" y="75" width="320" height="44" rx="22" fill="#fb923c"/>
+  <text x="400" y="104" text-anchor="middle" fill="#431407" font-family="sans-serif" font-size="20" font-weight="800">রাজশাহী ট্যুরস এন্ড ট্রাভেলস</text>
+  <text x="400" y="200" text-anchor="middle" fill="#fed7aa" font-family="sans-serif" font-size="26" font-weight="600">সমুদ্র বিলাস স্পেশাল অফার</text>
+  <text x="400" y="285" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="60" font-weight="900">কক্সবাজার ও ইনানী</text>
+  <text x="400" y="345" text-anchor="middle" fill="#fdba74" font-family="sans-serif" font-size="32" font-weight="700">মেরিন ড্রাইভ ও হিমছড়ি গ্রুপ ট্যুর</text>
+  <rect x="140" y="400" width="520" height="110" rx="20" fill="#7c2d12" stroke="#fb923c" stroke-width="2"/>
+  <text x="400" y="445" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="28" font-weight="700">৪ রাত ৩ দিন • বিচ ভিউ হোটেল</text>
+  <text x="400" y="485" text-anchor="middle" fill="#fed7aa" font-family="sans-serif" font-size="22" font-weight="600">যাত্রা শুরু: সাহেব বাজার জিরো পয়েন্ট, রাজশাহী</text>
+  <rect x="100" y="550" width="280" height="150" rx="20" fill="#ffffff" opacity="0.1" stroke="#fb923c"/>
+  <text x="240" y="600" text-anchor="middle" fill="#fdba74" font-family="sans-serif" font-size="22" font-weight="700">জনপ্রতি প্যাকেজ</text>
+  <text x="240" y="660" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="46" font-weight="900">৳৫,৫০০</text>
+  <rect x="420" y="550" width="280" height="150" rx="20" fill="#ffffff" opacity="0.1" stroke="#fde047"/>
+  <text x="560" y="600" text-anchor="middle" fill="#fde047" font-family="sans-serif" font-size="22" font-weight="700">কাপল প্যাকেজ</text>
+  <text x="560" y="660" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="46" font-weight="900">৳১৩,৫০০</text>
+  <rect x="150" y="810" width="500" height="85" rx="42" fill="#fb923c"/>
+  <text x="400" y="863" text-anchor="middle" fill="#431407" font-family="sans-serif" font-size="30" font-weight="900">বুকিং হটলাইন: 01711-987654</text>
+</svg>
