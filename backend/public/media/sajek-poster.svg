@@ -3,33 +3,33 @@
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#062c21"/>
       <stop offset="50%" stop-color="#0d4a38"/>
-      <stop offset="100%" stop-color="#041b15"/>
+      <stop offset="100%" stop-color="#073e4d"/>
     </linearGradient>
     <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#f59e0b"/>
+      <stop offset="0%" stop-color="#ffb044"/>
+      <stop offset="100%" stop-color="#f09224"/>
     </linearGradient>
   </defs>
   <rect width="800" height="1000" fill="url(#bg)"/>
-  <circle cx="700" cy="120" r="240" fill="#10b981" opacity="0.15"/>
-  <circle cx="100" cy="850" r="280" fill="#f59e0b" opacity="0.12"/>
+  <circle cx="700" cy="120" r="240" fill="#18adb5" opacity="0.15"/>
+  <circle cx="100" cy="850" r="280" fill="#f09224" opacity="0.12"/>
   <path d="M0 620 Q200 540 400 600 T800 560 L800 1000 L0 1000 Z" fill="#042219" opacity="0.8"/>
-  <rect x="40" y="40" width="720" height="920" rx="28" fill="none" stroke="#fbbf24" stroke-width="2" opacity="0.35"/>
-  <rect x="240" y="75" width="320" height="44" rx="22" fill="#f59e0b"/>
-  <text x="400" y="104" text-anchor="middle" fill="#041b15" font-family="sans-serif" font-size="20" font-weight="800">রাজশাহী ট্যুরস এন্ড ট্রাভেলস</text>
+  <rect x="40" y="40" width="720" height="920" rx="28" fill="none" stroke="#ffb044" stroke-width="2" opacity="0.35"/>
+  <rect x="240" y="75" width="320" height="44" rx="22" fill="#f09224"/>
+  <text x="400" y="104" text-anchor="middle" fill="#073e4d" font-family="sans-serif" font-size="20" font-weight="800">রাজশাহী ট্যুরস এন্ড ট্রাভেলস</text>
   <text x="400" y="190" text-anchor="middle" fill="#a7f3d0" font-family="sans-serif" font-size="26" font-weight="600">মেঘের রাজ্য ভ্রমণ অফার</text>
   <text x="400" y="275" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="68" font-weight="900">সাজেক ভ্যালি</text>
-  <text x="400" y="335" text-anchor="middle" fill="#fbbf24" font-family="sans-serif" font-size="34" font-weight="700">ও খাগড়াছড়ি স্পেশাল গ্রুপ ট্যুর</text>
-  <rect x="140" y="380" width="520" height="110" rx="20" fill="#0a382b" stroke="#10b981" stroke-width="2"/>
+  <text x="400" y="335" text-anchor="middle" fill="#ffb044" font-family="sans-serif" font-size="34" font-weight="700">ও খাগড়াছড়ি স্পেশাল গ্রুপ ট্যুর</text>
+  <rect x="140" y="380" width="520" height="110" rx="20" fill="#0a382b" stroke="#18adb5" stroke-width="2"/>
   <text x="400" y="425" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="28" font-weight="700">৩ রাত ২ দিন • ৫ বেলা স্পেশাল খাবার</text>
   <text x="400" y="468" text-anchor="middle" fill="#6ee7b7" font-family="sans-serif" font-size="22" font-weight="600">যাত্রা শুরু: সপুরা মোড় / সাহেব বাজার, রাজশাহী</text>
-  <rect x="80" y="530" width="300" height="150" rx="20" fill="#ffffff" opacity="0.08" stroke="#fbbf24"/>
-  <text x="230" y="580" text-anchor="middle" fill="#fbbf24" font-family="sans-serif" font-size="22" font-weight="700">শেয়ারিং প্যাকেজ (৪ জন)</text>
+  <rect x="80" y="530" width="300" height="150" rx="20" fill="#ffffff" opacity="0.08" stroke="#ffb044"/>
+  <text x="230" y="580" text-anchor="middle" fill="#ffb044" font-family="sans-serif" font-size="22" font-weight="700">শেয়ারিং প্যাকেজ (৪ জন)</text>
   <text x="230" y="640" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="46" font-weight="900">৳৩,৮০০</text>
-  <rect x="420" y="530" width="300" height="150" rx="20" fill="#ffffff" opacity="0.08" stroke="#10b981"/>
+  <rect x="420" y="530" width="300" height="150" rx="20" fill="#ffffff" opacity="0.08" stroke="#18adb5"/>
   <text x="570" y="580" text-anchor="middle" fill="#6ee7b7" font-family="sans-serif" font-size="22" font-weight="700">কাপল প্যাকেজ (২ জন)</text>
   <text x="570" y="640" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="46" font-weight="900">৳১৫,০০০</text>
   <text x="400" y="750" text-anchor="middle" fill="#e2e8f0" font-family="sans-serif" font-size="22">✓ রিজার্ভ বাস  ✓ চাঁদের গাড়ি  ✓ মেঘপল্লী রিসোর্ট  ✓ ব্যাম্বু বিরিয়ানি</text>
   <rect x="150" y="810" width="500" height="85" rx="42" fill="url(#gold)"/>
-  <text x="400" y="863" text-anchor="middle" fill="#041b15" font-family="sans-serif" font-size="30" font-weight="900">বুকিং হটলাইন: 01711-987654</text>
+  <text x="400" y="863" text-anchor="middle" fill="#073e4d" font-family="sans-serif" font-size="30" font-weight="900">বুকিং হটলাইন: 01782250709</text>
 </svg>

@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   base: './',
+  optimizeDeps: { include: ['@rtt/transport'] },
+  build: { commonjsOptions: { include: [/node_modules/, /shared\/transport\.cjs/] } },
   plugins: [react(), tailwindcss()],
   server: {
     host: '0.0.0.0',

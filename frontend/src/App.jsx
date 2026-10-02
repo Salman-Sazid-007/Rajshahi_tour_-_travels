@@ -1,28 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import PublicWebsite from './components/PublicWebsite';
-import AdminDashboard from './components/AdminDashboard';
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 import StaffLoginModal from './components/StaffLoginModal';
 import FeedbackModal from './components/FeedbackModal';
 import { apiFetch } from './lib/api';
+import { useI18n, localizeData } from './lib/i18n';
 
 export default function App() {
+  const { language, t } = useI18n();
   const [viewMode, setViewMode] = useState(() => {
     if (window.location.pathname.startsWith('/admin')) return 'admin';
     return 'public';
   });
   const [publicPayload, setPublicPayload] = useState(null);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(() => new URLSearchParams(window.location.search).has('staff'));
   const [feedbackBookingId, setFeedbackBookingId] = useState(() => {
     const match = window.location.pathname.match(/^\/feedback\/([^/]+)/);
     return match ? match[1] : null;
   });
-  const [currentUser, setCurrentUser] = useState({
-    id: 'usr-owner-1',
-    name: 'সালমান সাজিদ (মালিক)',
-    role: 'owner',
-    roleLabelBn: 'মালিক / এডমিন',
-    phone: '01711000001',
-  });
+  const [currentUser, setCurrentUser] = useState(null);
 
   const loadPublicHome = () => {
     apiFetch('/api/public/bootstrap')
@@ -31,6 +27,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    apiFetch('/api/auth/me').then((res) => { if (res.user) { setCurrentUser(res.user); if (new URLSearchParams(window.location.search).has('staff')) { setViewMode('admin'); setLoginModalOpen(false); } } }).catch(() => {});
     loadPublicHome();
   }, []);
 
@@ -60,8 +57,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {viewMode === 'admin' ? (
-        <AdminDashboard
+      {viewMode === 'admin' && currentUser ? (
+        <Suspense fallback={<div className="p-10">{t("Loading staff dashboard…", "ড্যাশবোর্ড লোড হচ্ছে…")}</div>}><AdminDashboard
           currentUser={currentUser}
           onSwitchRole={handleQuickRoleSwitch}
           onBackToWebsite={() => {
@@ -72,10 +69,10 @@ export default function App() {
             setFeedbackBookingId(bookingId || 'bkg-israt-sylhet')
           }
           onRefreshPublic={loadPublicHome}
-        />
+        /></Suspense>
       ) : (
         <PublicWebsite
-          data={publicPayload}
+          data={localizeData(publicPayload, language)}
           currentUser={currentUser}
           onRefresh={loadPublicHome}
           onOpenLogin={() => setLoginModalOpen(true)}

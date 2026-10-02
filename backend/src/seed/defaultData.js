@@ -1,6 +1,7 @@
 'use strict';
 
 const bcrypt = require('bcryptjs');
+const { migrateEditionData } = require('../../../shared/transport.cjs');
 
 function calculateReturnDate(startDateStr, days = 2, nights = 3) {
   if (!startDateStr) return '';
@@ -18,7 +19,7 @@ function buildDefaultData() {
     {
       id: 'staff-owner-1',
       name: 'সালমান সাজিদ (মালিক)',
-      phone: '01711000001',
+      phone: '00000000104',
       email: 'owner@rajshahitours.com',
       passwordHash,
       role: 'owner',
@@ -31,7 +32,7 @@ function buildDefaultData() {
     {
       id: 'staff-accountant-1',
       name: 'তানভীর আহমেদ (একাউন্ট্যান্ট)',
-      phone: '01711000002',
+      phone: '00000000105',
       email: 'accounts@rajshahitours.com',
       passwordHash,
       role: 'accountant',
@@ -44,7 +45,7 @@ function buildDefaultData() {
     {
       id: 'staff-guide-1',
       name: 'মনিরুল ইসলাম (মনিরুল ভাই)',
-      phone: '01711000003',
+      phone: '00000000106',
       email: 'monirul@rajshahitours.com',
       passwordHash,
       role: 'guide',
@@ -57,7 +58,7 @@ function buildDefaultData() {
     {
       id: 'staff-guide-2',
       name: 'রাশেদুল ইসলাম',
-      phone: '01711000004',
+      phone: '00000000107',
       email: 'rashedul@rajshahitours.com',
       passwordHash,
       role: 'guide',
@@ -70,7 +71,7 @@ function buildDefaultData() {
     {
       id: 'staff-guide-3',
       name: 'মেহেদী হাসান',
-      phone: '01711000005',
+      phone: '00000000108',
       email: 'mehedi@rajshahitours.com',
       passwordHash,
       role: 'guide',
@@ -155,8 +156,8 @@ function buildDefaultData() {
       role: 'হোটেল ও রিসোর্ট মালিক',
       category: 'hotel',
       destination: 'সাজেক ভ্যালি',
-      phone: '01819223344',
-      altPhone: '01715223344',
+      phone: '00000000118',
+      altPhone: '00000000113',
       address: 'রুইলুই পাড়া, সাজেক ভ্যালি, রাঙ্গামাটি',
       notes: 'আমাদের রেগুলার পার্টনার রিসোর্ট। ১০টি রুম আগাম ব্লক করা যায়, মনিরুল ভাইয়ের রেফারেন্স দিলে স্পেশাল ডিসকাউন্ট পাওয়া যায়।',
       rating: 4.9,
@@ -167,8 +168,8 @@ function buildDefaultData() {
       role: 'চাঁদের গাড়ি ও লোকাল ট্রান্সপোর্ট',
       category: 'transport',
       destination: 'খাগড়াছড়ি / সাজেক',
-      phone: '01822889900',
-      altPhone: '01556889900',
+      phone: '00000000120',
+      altPhone: '00000000102',
       address: 'শাপলা চত্বর জিপ স্ট্যান্ড, খাগড়াছড়ি সদর',
       notes: 'খাগড়াছড়ি থেকে বাঘাইহাট আর্মি এসকর্ট ও সাজেক রুটে অভিজ্ঞ ড্রাইভারদের গাড়ি দেন।',
       rating: 4.8,
@@ -179,7 +180,7 @@ function buildDefaultData() {
       role: 'হোটেল মালিক / ম্যানেজার',
       category: 'hotel',
       destination: 'সিলেট',
-      phone: '01712445566',
+      phone: '00000000112',
       altPhone: '',
       address: 'দরগাহ গেট, আম্বরখানা, সিলেট',
       notes: 'গ্রুপ ট্যুরের জন্য ৪ জনের রুম ও কাপল রুম এক ফ্লোরে পাওয়া যায়।',
@@ -191,7 +192,7 @@ function buildDefaultData() {
       role: 'নৌকা ও ট্রলার মালিক',
       category: 'boat',
       destination: 'সিলেট',
-      phone: '01733667788',
+      phone: '00000000114',
       altPhone: '',
       address: 'ভোলাগঞ্জ ১০ নং ঘাট ও রাতারগুল ঘাট, সিলেট',
       notes: '৪০ জনের গ্রুপের জন্য একসাথে ৫টি ট্রলার ও নৌকা রেডি রাখেন।',
@@ -203,8 +204,8 @@ function buildDefaultData() {
       role: 'বাস কাউন্টার ও রিজার্ভ ইনচার্জ',
       category: 'bus',
       destination: 'রাজশাহী (সপুরা মোড়)',
-      phone: '01711334455',
-      altPhone: '01711334456',
+      phone: '00000000109',
+      altPhone: '00000000110',
       address: 'সপুরা মোড় ও শিরোইল বাস টার্মিনাল, রাজশাহী',
       notes: '৪০ সিটের এসি ও নন-এসি রিজার্ভ কোচ সরবরাহ করেন।',
       rating: 4.9,
@@ -215,7 +216,7 @@ function buildDefaultData() {
       role: 'রেস্টুরেন্ট ও ক্যাটারিং',
       category: 'restaurant',
       destination: 'সাজেক ভ্যালি',
-      phone: '01844556677',
+      phone: '00000000121',
       altPhone: '',
       address: 'হেলিপ্যাড সংলগ্ন, রুইলুই পাড়া, সাজেক',
       notes: 'ব্যাম্বু চিকেন ও ব্যাম্বু বিরিয়ানির অর্ডার কমপক্ষে ৪ ঘণ্টা আগে জানাতে হয়।',
@@ -785,7 +786,7 @@ function buildDefaultData() {
     {
       id: 'cust-1',
       name: 'তানিয়া পারভেজ',
-      phone: '01712345678',
+      phone: '00000000111',
       email: 'tania.parvez@gmail.com',
       address: 'উপশহর, রাজশাহী',
       tags: ['loyal', 'repeat'],
@@ -798,7 +799,7 @@ function buildDefaultData() {
     {
       id: 'cust-2',
       name: 'ইসরাত জাহান',
-      phone: '01757950321',
+      phone: '00000000116',
       email: 'israt.jahan@ru.ac.bd',
       address: 'কাজলা, মতিহার, রাজশাহী',
       tags: ['loyal', 'repeat'],
@@ -811,7 +812,7 @@ function buildDefaultData() {
     {
       id: 'cust-3',
       name: 'মাহমুদুল হাসান সজীব',
-      phone: '01819445566',
+      phone: '00000000119',
       email: 'sajib.rj@gmail.com',
       address: 'সাহেব বাজার, বোয়ালিয়া, রাজশাহী',
       tags: ['loyal', 'vip'],
@@ -824,7 +825,7 @@ function buildDefaultData() {
     {
       id: 'cust-4',
       name: 'ফারহানা ইয়াসমিন মিম',
-      phone: '01911223344',
+      phone: '00000000123',
       email: 'farhana.mim@gmail.com',
       address: 'লক্ষ্মীপুর মোড়, রাজশাহী',
       tags: ['repeat'],
@@ -837,7 +838,7 @@ function buildDefaultData() {
     {
       id: 'cust-5',
       name: 'আরিফুল ইসলাম রনি',
-      phone: '01677889900',
+      phone: '00000000103',
       email: 'ariful.roni@gmail.com',
       address: 'তালাইমারি, রাজশাহী',
       tags: ['new'],
@@ -850,7 +851,7 @@ function buildDefaultData() {
     {
       id: 'cust-6',
       name: 'নুসরাত সুলতানা নিপা',
-      phone: '01788990011',
+      phone: '00000000117',
       email: 'nusrat.nipa@gmail.com',
       address: 'সপুরা, শাহ মখদুম, রাজশাহী',
       tags: ['loyal', 'repeat'],
@@ -863,7 +864,7 @@ function buildDefaultData() {
     {
       id: 'cust-7',
       name: 'শাকিল আহমেদ',
-      phone: '01521445588',
+      phone: '00000000101',
       email: 'shakil.ruet@gmail.com',
       address: 'রুয়েট গেট, রাজশাহী',
       tags: ['repeat'],
@@ -883,7 +884,7 @@ function buildDefaultData() {
       tourId: 'tour-sajek-running',
       customerId: 'cust-2',
       customerName: 'ইসরাত জাহান',
-      customerPhone: '01757950321',
+      customerPhone: '00000000116',
       pax: 2,
       seatNumbers: 'A1, A2',
       packageId: 'pkg-sajek-run-share',
@@ -909,7 +910,7 @@ function buildDefaultData() {
       tourId: 'tour-sajek-running',
       customerId: 'cust-3',
       customerName: 'মাহমুদুল হাসান সজীব',
-      customerPhone: '01819445566',
+      customerPhone: '00000000119',
       pax: 2,
       seatNumbers: 'B1, B2',
       packageId: 'pkg-sajek-run-couple',
@@ -935,7 +936,7 @@ function buildDefaultData() {
       tourId: 'tour-sajek-running',
       customerId: 'cust-5',
       customerName: 'আরিফুল ইসলাম রনি',
-      customerPhone: '01677889900',
+      customerPhone: '00000000103',
       pax: 4,
       seatNumbers: 'C1, C2, C3, C4',
       packageId: 'pkg-sajek-run-share',
@@ -961,7 +962,7 @@ function buildDefaultData() {
       tourId: 'tour-sajek-running',
       customerId: 'cust-6',
       customerName: 'নুসরাত সুলতানা নিপা',
-      customerPhone: '01788990011',
+      customerPhone: '00000000117',
       pax: 4,
       seatNumbers: 'D1, D2, D3, D4',
       packageId: 'pkg-sajek-run-share',
@@ -989,7 +990,7 @@ function buildDefaultData() {
       tourId: 'tour-sylhet-oct',
       customerId: 'cust-1',
       customerName: 'তানিয়া পারভেজ',
-      customerPhone: '01712345678',
+      customerPhone: '00000000111',
       pax: 5,
       seatNumbers: 'A1, A2, A3, A4, B1',
       packageId: 'pkg-sylhet-share',
@@ -1015,7 +1016,7 @@ function buildDefaultData() {
       tourId: 'tour-sylhet-oct',
       customerId: 'cust-2',
       customerName: 'ইসরাত জাহান',
-      customerPhone: '01757950321',
+      customerPhone: '00000000116',
       pax: 1,
       seatNumbers: 'B2',
       packageId: 'pkg-sylhet-share',
@@ -1041,7 +1042,7 @@ function buildDefaultData() {
       tourId: 'tour-sylhet-oct',
       customerId: 'cust-4',
       customerName: 'ফারহানা ইয়াসমিন মিম',
-      customerPhone: '01911223344',
+      customerPhone: '00000000123',
       pax: 4,
       seatNumbers: 'C1, C2, C3, C4',
       packageId: 'pkg-sylhet-share',
@@ -1067,7 +1068,7 @@ function buildDefaultData() {
       tourId: 'tour-sylhet-oct',
       customerId: 'cust-7',
       customerName: 'শাকিল আহমেদ',
-      customerPhone: '01521445588',
+      customerPhone: '00000000101',
       pax: 4,
       seatNumbers: 'D1, D2, D3, D4',
       packageId: 'pkg-sylhet-share',
@@ -1093,7 +1094,7 @@ function buildDefaultData() {
       tourId: 'tour-sylhet-oct',
       customerId: 'cust-3',
       customerName: 'মাহমুদুল হাসান সজীব',
-      customerPhone: '01819445566',
+      customerPhone: '00000000119',
       pax: 2,
       seatNumbers: 'E1, E2',
       packageId: 'pkg-sylhet-couple',
@@ -1119,7 +1120,7 @@ function buildDefaultData() {
       tourId: 'tour-sylhet-oct',
       customerId: 'cust-6',
       customerName: 'নুসরাত সুলতানা নিপা',
-      customerPhone: '01788990011',
+      customerPhone: '00000000117',
       pax: 2,
       seatNumbers: 'E3, E4',
       packageId: 'pkg-sylhet-share',
@@ -1147,7 +1148,7 @@ function buildDefaultData() {
       tourId: 'tour-sajek-oct15',
       tourTitle: 'সাজেক ভ্যালি প্রিমিয়াম গ্রুপ ট্যুর (১৫ অক্টোবর)',
       name: 'রাকিবুল ইসলাম সৌরভ',
-      phone: '01744556677',
+      phone: '00000000115',
       pax: 4,
       preferredPackage: 'সিঙ্গেল পারসন (৪ জন এক রুমে) - ৳৩,৮০০',
       message: 'ভাই আমরা ৪ জন বন্ধু ১৫ অক্টোবরের সাজেক ট্যুরে যেতে চাই, সামনের দিকে ৪টা সিট পাওয়া যাবে কি?',
@@ -1160,7 +1161,7 @@ function buildDefaultData() {
       tourId: 'tour-sylhet-oct',
       tourTitle: 'সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল (৩০ অক্টোবর)',
       name: 'সাদিয়া আফরিন মৌ',
-      phone: '01855667788',
+      phone: '00000000122',
       pax: 2,
       preferredPackage: 'কাপল প্যাকেজ (২ জন এক রুমে) - ৳৯,৫০০',
       message: 'কাপল প্যাকেজে এসি রুম এবং বাসের সামনের সিট কনফার্ম করতে কত টাকা এডভান্স দিতে হবে?',
@@ -1173,7 +1174,7 @@ function buildDefaultData() {
       tourId: 'tour-coxs-nov',
       tourTitle: 'কক্সবাজার, ইনানী ও মেরিন ড্রাইভ সমুদ্র বিলাস ট্যুর',
       name: 'জুবায়ের হোসেন',
-      phone: '01966778899',
+      phone: '00000000124',
       pax: 6,
       preferredPackage: 'শেয়ারিং প্যাকেজ - ৳৫,৫০০',
       message: 'ফ্যামিলি মেম্বার ৬ জন, কক্সবাজার ট্যুরে আলাদা ২টা রুম নিলে কত পড়বে?',
@@ -1186,7 +1187,7 @@ function buildDefaultData() {
       tourId: 'tour-sylhet-oct',
       tourTitle: 'সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল (৩০ অক্টোবর)',
       name: 'ইসরাত জাহান',
-      phone: '01757950321',
+      phone: '00000000116',
       pax: 1,
       preferredPackage: 'শেয়ারিং প্যাকেজ - ৳৩,৮০০',
       message: '৩০ অক্টোবরের সিলেট ট্যুরে ১টি সিট বুক করতে চাই।',
@@ -1479,7 +1480,7 @@ function buildDefaultData() {
     {
       id: 'sms-1',
       recipientName: 'ইসরাত জাহান',
-      phone: '01757950321',
+      phone: '00000000116',
       message:
         'প্রিয় ইসরাত জাহান, সিলেট ভ্রমণ (৩০ অক্টোবর) ট্যুরে আপনার ১ জনের বুকিং কনফার্ম করা হয়েছে। মোট বিল: ৩,৬০০ টাকা, জমা দেওয়া হয়েছে: ২,০০০ টাকা, বাকি থাকলো: ১,৬০০ টাকা। ধন্যবাদ - রাজশাহী ট্যুরস এন্ড ট্রাভেলস।',
       category: 'booking_confirm',
@@ -1495,7 +1496,7 @@ function buildDefaultData() {
     {
       id: 'sms-2',
       recipientName: 'সাজেক ট্যুর গ্রুপ (১২ জন ট্রাভেলার)',
-      phone: '01757950321, 01819445566, 01677889900, 01788990011',
+      phone: '00000000116, 00000000119, 00000000103, 00000000117',
       message: 'দুপুরের খাবার রেডি, সবাই ডাইনিং এ চলে আসেন। - মনিরুল ভাই (রাজশাহী ট্যুরস এন্ড ট্রাভেলস)',
       category: 'running_tour',
       tourId: 'tour-sajek-running',
@@ -1510,7 +1511,7 @@ function buildDefaultData() {
     {
       id: 'sms-3',
       recipientName: 'তানিয়া পারভেজ',
-      phone: '01712345678',
+      phone: '00000000111',
       message:
         'প্রিয় তানিয়া পারভেজ, আমাদের সাজেক ভ্যালি ট্যুরটি আপনার কেমন লেগেছে? আপনার মূল্যবান মতামত দিন এই লিংকে: https://rajshahitours.com/feedback/bk-syl-1',
       category: 'feedback_link',
@@ -1534,8 +1535,8 @@ function buildDefaultData() {
       'সাজেক, সিলেট, কক্সবাজার, সেন্টমার্টিন ও সুন্দরবন সহ দেশের সেরা সব গন্তব্যে প্রতি মাসে আমাদের ফ্যামিলি ও গ্রুপ ট্যুর পরিচালিত হচ্ছে। আজই আপনার পছন্দের ট্যুরে সিট বুক করুন!',
     heroBackgroundImage: '/media/sajek-2.jpg',
     highlightedTourId: 'tour-sylhet-oct',
-    phone: '01711-987654',
-    whatsapp: '8801711987654',
+    phone: '01782250709',
+    whatsapp: '8801782250709',
     email: 'info@rajshahitours.com',
     officeAddress: 'সপুরা মোড় (সাহেব বাজার জিরো পয়েন্ট শাখা সংলগ্ন), বোয়ালিয়া, রাজশাহী-৬১০০',
     officeHours: 'প্রতিদিন সকাল ১০:০০ টা – রাত ৯:০০ টা',
@@ -1549,7 +1550,7 @@ function buildDefaultData() {
     },
   };
 
-  return {
+  return migrateEditionData({
     users,
     tours,
     bookings,
@@ -1563,7 +1564,7 @@ function buildDefaultData() {
     mediaLibrary,
     smsLogs,
     siteSettings,
-  };
+  });
 }
 
 module.exports = { buildDefaultData, calculateReturnDate };

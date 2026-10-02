@@ -24,6 +24,10 @@ const env = {
   MIMSMS_BASE_URL: process.env.MIMSMS_BASE_URL || 'https://api.mimsms.com',
 };
 
+if (env.isProd && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || process.env.JWT_SECRET === 'rajshahi-tours-travels-secret-key-2026-secure')) {
+  throw new Error('Production requires a unique JWT_SECRET of at least 32 characters.');
+}
+
 env.smsGatewayConfigured = Boolean(
   (env.AUTOMAS_API_KEY && env.AUTOMAS_SENDER_ID) ||
     (env.MIMSMS_USERNAME && env.MIMSMS_API_KEY)

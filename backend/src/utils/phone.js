@@ -7,7 +7,9 @@
  */
 
 function toLocalBd(input = '') {
-  const digits = String(input || '').replace(/\D/g, '');
+  const original = String(input || '').trim();
+  const digits = original.replace(/\D/g, '');
+  if (original.startsWith('+') && !digits.startsWith('880')) return `+${digits}`;
   if (digits.length === 11 && digits.startsWith('01')) return digits;
   if (digits.length === 13 && digits.startsWith('8801')) return digits.slice(2);
   if (digits.length === 10 && digits.startsWith('1')) return `0${digits}`;

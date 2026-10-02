@@ -3,17 +3,17 @@
     <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#14532d"/>
       <stop offset="50%" stop-color="#166534"/>
-      <stop offset="100%" stop-color="#052e16"/>
+      <stop offset="100%" stop-color="#073e4d"/>
     </linearGradient>
   </defs>
   <rect width="800" height="1000" fill="url(#bg4)"/>
   <rect x="40" y="40" width="720" height="920" rx="28" fill="none" stroke="#86efac" stroke-width="2" opacity="0.4"/>
   <rect x="240" y="75" width="320" height="44" rx="22" fill="#4ade80"/>
-  <text x="400" y="104" text-anchor="middle" fill="#052e16" font-family="sans-serif" font-size="20" font-weight="800">রাজশাহী ট্যুরস এন্ড ট্রাভেলস</text>
+  <text x="400" y="104" text-anchor="middle" fill="#073e4d" font-family="sans-serif" font-size="20" font-weight="800">রাজশাহী ট্যুরস এন্ড ট্রাভেলস</text>
   <text x="400" y="200" text-anchor="middle" fill="#bbf7d0" font-family="sans-serif" font-size="26" font-weight="600">রয়েল ম্যানগ্রোভ অ্যাডভেঞ্চার</text>
   <text x="400" y="285" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="60" font-weight="900">সুন্দরবন ক্রুজ ট্যুর</text>
   <text x="400" y="345" text-anchor="middle" fill="#fde047" font-family="sans-serif" font-size="30" font-weight="700">কটকা • কচিখালী • জামতলা বিচ • করমজল</text>
-  <rect x="140" y="400" width="520" height="110" rx="20" fill="#052e16" stroke="#4ade80" stroke-width="2"/>
+  <rect x="140" y="400" width="520" height="110" rx="20" fill="#073e4d" stroke="#4ade80" stroke-width="2"/>
   <text x="400" y="445" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="28" font-weight="700">৩ রাত ৩ দিন • লাক্সারি শিপ ক্রুজ</text>
   <text x="400" y="485" text-anchor="middle" fill="#86efac" font-family="sans-serif" font-size="22" font-weight="600">যাত্রা শুরু: সপুরা মোড়, রাজশাহী</text>
   <rect x="100" y="550" width="280" height="150" rx="20" fill="#ffffff" opacity="0.1" stroke="#4ade80"/>
@@ -23,5 +23,5 @@
   <text x="560" y="600" text-anchor="middle" fill="#fde047" font-family="sans-serif" font-size="22" font-weight="700">কাপল কেবিন</text>
   <text x="560" y="660" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="46" font-weight="900">৳১৯,০০০</text>
   <rect x="150" y="810" width="500" height="85" rx="42" fill="#4ade80"/>
-  <text x="400" y="863" text-anchor="middle" fill="#052e16" font-family="sans-serif" font-size="30" font-weight="900">বুকিং হটলাইন: 01711-987654</text>
+  <text x="400" y="863" text-anchor="middle" fill="#073e4d" font-family="sans-serif" font-size="30" font-weight="900">বুকিং হটলাইন: 01782250709</text>
 </svg>
