@@ -1,0 +1,83 @@
+/* One shared, travel-inspired loader and gentle reveal motion for both editions. */
+.rtt-page-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 17px;
+  width: 100%;
+  padding: 36px 20px;
+  color: #193e4a;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 35%, #ffffff 0%, #f0fafb 68%, #e8f5f6 100%);
+}
+.rtt-page-loader.is-fullscreen { min-height: 100vh; min-height: 100dvh; }
+.rtt-page-loader.is-inline { min-height: 190px; border: 1px solid #dcecef; border-radius: 16px; }
+.rtt-loader-brand { margin-bottom: 2px; }
+.rtt-page-loader .rtt-agency-logo { color: #123f50; }
+.rtt-loader-scene { position: relative; width: 214px; height: 72px; }
+.rtt-loader-route {
+  position: absolute;
+  left: 18px;
+  right: 20px;
+  top: 43px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #91cbd2 0 7px, transparent 7px 13px);
+  background-size: 26px 2px;
+  animation: rtt-route-flow 1.5s linear infinite;
+}
+.rtt-loader-pin { position: absolute; top: 33px; display: grid; place-items: center; color: #13859a; }
+.rtt-loader-pin-start { left: 0; }
+.rtt-loader-pin-end { right: 0; color: #e38c27; animation: rtt-loader-sparkle 1.8s ease-in-out infinite; }
+.rtt-loader-bus {
+  position: absolute;
+  top: 8px;
+  left: 5px;
+  display: grid;
+  place-items: center;
+  width: 45px;
+  height: 40px;
+  border: 1px solid #acdce1;
+  border-radius: 12px 12px 8px 8px;
+  background: #fff;
+  color: #0d7388;
+  box-shadow: 0 8px 18px #15566a1a;
+  animation: rtt-loader-drive 2.8s cubic-bezier(.5,0,.35,1) infinite;
+}
+.rtt-loader-wheel { position: absolute; top: 44px; z-index: 1; width: 7px; height: 7px; border: 2px solid #fff; border-radius: 50%; background: #e38c27; animation: rtt-loader-wheel 2.8s linear infinite; }
+.rtt-loader-wheel-one { left: 13px; }
+.rtt-loader-wheel-two { left: 34px; }
+.rtt-loader-message { max-width: min(460px, 100%); color: #526d76; font-size: 13px; line-height: 1.8; }
+.rtt-loader-error { max-width: min(460px, 100%); color: #a84427; font-size: 12px; line-height: 1.8; }
+.rtt-loader-retry, .rtt-loader-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 16px; border: 1px solid #bcdce1; border-radius: 10px; background: #fff; color: #096b80; font-size: 12px; font-weight: 700; text-decoration: none; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+.rtt-loader-retry { background: #f39425; border-color: #f39425; color: #173b48; }
+.rtt-loader-retry:hover, .rtt-loader-link:hover { transform: translateY(-2px); }
+.rtt-loader-retry:hover { background: #ffc16d; }
+.rtt-loader-link:hover { background: #f7fcfc; border-color: #69bcc8; }
+
+[data-reveal] { opacity: 0; transform: translate3d(0, 22px, 0); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.75,.25,1); transition-delay: var(--reveal-delay, 0ms); }
+[data-reveal="left"] { transform: translate3d(-22px, 0, 0); }
+[data-reveal="right"] { transform: translate3d(22px, 0, 0); }
+[data-reveal].is-revealed { opacity: 1; transform: translate3d(0, 0, 0); }
+
+@keyframes rtt-route-flow { to { background-position: 26px 0; } }
+@keyframes rtt-loader-drive {
+  0%, 10% { transform: translateX(0) translateY(0) rotate(0); }
+  23% { transform: translateX(34px) translateY(-3px) rotate(-2deg); }
+  76% { transform: translateX(150px) translateY(-1px) rotate(1deg); }
+  90%, 100% { transform: translateX(160px) translateY(0) rotate(0); }
+}
+@keyframes rtt-loader-wheel { 0%, 10% { transform: translateX(0) rotate(0); } 90%, 100% { transform: translateX(160px) rotate(520deg); } }
+@keyframes rtt-loader-sparkle { 0%, 100% { transform: translateY(0) scale(1); opacity: .75; } 50% { transform: translateY(-6px) scale(1.16); opacity: 1; } }
+
+@media (max-width: 480px) {
+  .rtt-page-loader .rtt-agency-logo.compact strong { font-size: 19px; }
+  .rtt-page-loader .rtt-agency-logo.compact small { font-size: 6px; }
+  .rtt-page-loader .rtt-agency-logo.compact img { width: 36px; height: 36px; }
+  .rtt-loader-message { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal], [data-reveal="left"], [data-reveal="right"] { opacity: 1; transform: none; transition: none; }
+  .rtt-loader-route, .rtt-loader-pin-end, .rtt-loader-bus, .rtt-loader-wheel { animation: none; }
+  .rtt-loader-bus { left: calc(100% - 50px); }
+}

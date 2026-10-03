@@ -25,6 +25,19 @@ test('both static editions load at the GitHub project prefix with no runtime err
   await expect(page.locator('#bus-tickets')).toBeVisible();
   expect(errors).toEqual([]);
 });
+test('upper tour rail scrolls through live and upcoming tour cards', async ({ page }) => {
+  await setEnglish(page);await page.goto(classic);
+  const rail=page.locator('.rtt-tour-ticker');
+  await expect(rail).toBeVisible();
+  await expect(rail.locator('.rtt-tour-ticker-status.live')).toHaveCount(1);
+  await expect(rail.locator('.rtt-tour-ticker-status.upcoming').first()).toBeVisible();
+  await rail.getByRole('button',{name:'Pause tour carousel'}).click();
+  await expect(rail.getByRole('button',{name:'Resume tour carousel'})).toHaveAttribute('aria-pressed','true');
+  const track=rail.locator('.rtt-tour-ticker-track');
+  const before=await track.evaluate((element)=>element.scrollLeft);
+  await rail.getByRole('button',{name:'Next tours'}).click();
+  await expect.poll(()=>track.evaluate((element)=>element.scrollLeft)).toBeGreaterThan(before);
+});
 test('language switching stays in the same edition and persists across both designs', async ({ page }) => {
   await page.goto(pro);
   await page.getByRole('button',{name:'বাংলা',exact:true}).click();
@@ -60,6 +73,19 @@ test('shortlist is functional and survives reload', async ({ page }) => {
   await expect(page.locator('.pro-tour-card')).toHaveCount(1);
   await page.locator('.pro-save-button').click();await expect(page.locator('.pro-empty')).toContainText('favorites');
 });
+test('Classic mobile drawer is a side panel and the brand always returns to its edition home', async ({ page }) => {
+  await setEnglish(page);await page.setViewportSize({width:390,height:844});await page.goto(classic+'#upcoming');
+  await page.getByRole('link',{name:'Go to the home page'}).click();
+  await expect(page).toHaveURL(classic+'#top');
+  await page.getByRole('button',{name:'Open navigation menu'}).click();
+  const drawer=page.locator('#rtt-mobile-navigation');
+  await expect(drawer).toBeVisible();await expect(drawer).toHaveClass(/is-open/);
+  await drawer.getByRole('link',{name:'Bus tickets',exact:true}).click();
+  await expect(page).toHaveURL(classic+'#bus-tickets');
+  await expect(page.getByRole('button',{name:'Open navigation menu'})).toHaveAttribute('aria-expanded','false');
+  await page.getByRole('button',{name:'Open navigation menu'}).click();await page.keyboard.press('Escape');
+  await expect(page.getByRole('button',{name:'Open navigation menu'})).toHaveAttribute('aria-expanded','false');
+});
 test('USD prices are explicitly approximate, never a live-rate claim', async ({ page }) => {
   await page.goto(pro);await page.getByLabel('Display currency').selectOption('USD');
   await expect(page.locator('#pro-currency-note')).toContainText('not a live rate');
@@ -94,21 +120,21 @@ test('regular bus section stays visible but ticket sales remain unavailable befo
   await expect(page.locator('.rtt-availability').first()).toContainText('Schedule and fare');
   await expect(page.locator('.rtt-service-card .rtt-button').first()).toBeDisabled();
 });
-test('configured regular bus booking has the 46-seat map, male/female markers and a pending receipt', async ({ page }) => {
+test('configured regular bus booking has the 40-seat map, male/female markers and a pending receipt', async ({ page }) => {
   await installFixture(page,configureDemoBus(structuredClone(seed)));await page.goto(pro);
   await page.getByLabel('Bus journey date').fill('2099-01-05');
   await page.locator('.rtt-service-card .rtt-button').first().click();
-  const modal=page.getByRole('dialog');await expect(modal.locator('.rtt-seat')).toHaveCount(46);
-  await modal.getByRole('button',{name:'Seat K-5: Available',exact:true}).click();
-  await modal.getByLabel('Passenger gender for seat K-5').selectOption('male');
+  const modal=page.getByRole('dialog');await expect(modal.locator('.rtt-seat')).toHaveCount(40);
+  await modal.getByRole('button',{name:'Seat J-4: Available',exact:true}).click();
+  await modal.getByLabel('Passenger gender for seat J-4').selectOption('male');
   await modal.getByLabel('Passenger name').fill('Bus Traveler');await modal.getByLabel('Phone / WhatsApp').fill('+15555550101');
   await modal.getByRole('button',{name:'Save demo reservation',exact:true}).click();
   await expect(modal).toContainText('Demo reservation saved');await expect(modal).toContainText('not a real ticket');
   await expect(modal.locator('.rtt-ticket-receipt')).toContainText('৳700');
   const state=await page.evaluate((key)=>JSON.parse(localStorage.getItem(key)),storage);
-  expect(state.busTickets[0].status).toBe('pending');expect(state.busTickets[0].seats[0]).toEqual({id:'K-5',gender:'male'});
+  expect(state.busTickets[0].status).toBe('pending');expect(state.busTickets[0].seats[0]).toEqual({id:'J-4',gender:'male'});
   await page.keyboard.press('Escape');await page.locator('.rtt-service-card .rtt-button').first().click();
-  await expect(page.getByRole('button',{name:'Seat K-5: Held · male',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Seat J-4: Held · male',exact:true})).toBeDisabled();
 });
 test('tour-day closure and maintenance status are visible, not silently hidden', async ({ page }) => {
   await installFixture(page,configureDemoBus(structuredClone(seed)));await page.goto(pro);
@@ -125,6 +151,18 @@ test('real remaining count of 10 triggers a red alert in both editions', async (
   await installFixture(page,fixture);await page.goto(pro);
   await expect(page.locator('.pro-tour-card .rtt-low-seats')).toContainText('Only 10 seats left!');
   await page.goto(classic);await expect(page.locator('.rtt-low-seats').first()).toContainText('Only 10 seats left!');
+});
+test('staff navigation collapses into an accessible mobile drawer', async ({ page }) => {
+  await setEnglish(page);await page.setViewportSize({width:390,height:844});await page.goto(classic+'?staff=1');
+  await page.getByRole('button',{name:'Sign in',exact:true}).first().click();
+  const menu=page.getByRole('button',{name:'Open staff navigation'});
+  await expect(menu).toBeVisible();await menu.click();
+  const sidebar=page.locator('#admin-navigation');
+  await expect(sidebar).toBeVisible();
+  await sidebar.getByRole('button',{name:/Tours & budget planner/}).click();
+  await expect(page.getByRole('button',{name:'Open staff navigation'})).toHaveAttribute('aria-expanded','false');
+  await page.getByRole('button',{name:'Open staff navigation'}).click();await page.keyboard.press('Escape');
+  await expect(page.getByRole('button',{name:'Open staff navigation'})).toHaveAttribute('aria-expanded','false');
 });
 test('owner configures fares and repair status from the bilingual fleet panel', async ({ page }) => {
   await setEnglish(page);await page.goto(classic+'?staff=1');
@@ -156,7 +194,7 @@ for (const width of [360,390,768,1440]) {
   });
 }
 
-test('tour builder uses an added 40-seat profile and saves both language titles', async ({ page }) => {
+test('tour builder uses an added 40-seat profile and publishes its bilingual public description', async ({ page }) => {
   await setEnglish(page);await page.goto(classic+'?staff=1');
   await page.getByRole('button',{name:'Sign in',exact:true}).first().click();
   await page.getByRole('button',{name:'Bus profiles & tickets',exact:true}).click();
@@ -172,6 +210,8 @@ test('tour builder uses an added 40-seat profile and saves both language titles'
   await page.getByRole('button',{name:'Create a new tour',exact:true}).click();
   await page.getByLabel('Tour title in English',{exact:true}).fill('Test bilingual tour');
   await page.getByLabel('Destination in English',{exact:true}).fill('Sylhet');
+  await page.getByLabel('Tour description in Bangla',{exact:true}).fill('পরিবারের জন্য আরামদায়ক সিলেট ভ্রমণ।');
+  await page.getByLabel('Tour description in English',{exact:true}).fill('A relaxed public overview with tea gardens, quiet rivers and a friendly local guide.');
   const form=page.locator('form').filter({has:page.getByLabel('Tour bus profile',{exact:true})});
   await form.locator('input[type="date"]').first().fill('2099-02-01');
   await page.getByLabel('Tour bus profile',{exact:true}).selectOption(bus.id);
@@ -181,4 +221,10 @@ test('tour builder uses an added 40-seat profile and saves both language titles'
   const tours=await page.evaluate((key)=>JSON.parse(localStorage.getItem(key)).tours,storage);
   const tour=tours.find((item)=>item.titleEn==='Test bilingual tour');
   expect(tour.busId).toBe(bus.id);expect(tour.totalSeats).toBe(40);expect(tour.destinationEn).toBe('Sylhet');
+  expect(tour.description).toBe('পরিবারের জন্য আরামদায়ক সিলেট ভ্রমণ।');
+  expect(tour.descriptionEn).toBe('A relaxed public overview with tea gardens, quiet rivers and a friendly local guide.');
+  await page.goto(classic);
+  const publicCard=page.locator('.rtt-public-tour-card').filter({hasText:'Test bilingual tour'});
+  await publicCard.getByRole('button',{name:'Full details',exact:true}).click();
+  await expect(page.getByRole('dialog')).toContainText('A relaxed public overview with tea gardens, quiet rivers and a friendly local guide.');
 });

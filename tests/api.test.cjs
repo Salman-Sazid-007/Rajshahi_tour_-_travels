@@ -24,7 +24,7 @@ test('public bootstrap has correct contact details and no passenger identities',
   assert.equal(data.siteSettings.phone,'01782250709'); assert.equal(data.siteSettings.whatsapp,'8801782250709'); assert.equal(data.siteSettings.bkashNumber,'01782250709');
   assert.ok(data.upcomingTours.every((tour)=>!('bookings' in tour)));
   const seats=await (await request('/api/public/tours/tour-sylhet-oct/seats')).json();
-  assert.equal(seats.seats.length,46);assert.ok(seats.occupied.every((seat)=>Object.keys(seat).every((key)=>['id','gender','status'].includes(key))));
+  assert.equal(seats.seats.length,40);assert.ok(seats.occupied.every((seat)=>Object.keys(seat).every((key)=>['id','gender','status'].includes(key))));
 });
 test('fleet and confirmed-booking writes require staff authentication', async () => {
   assert.equal((await request('/api/buses')).status,401);
@@ -41,13 +41,13 @@ test('configured ticket API calculates fare and serializes competing seat reques
   const fleet=await (await request('/api/buses',null,true)).json();const bus=fleet.buses[0];
   const config={...bus,services:bus.services.map((s)=>({...s,enabled:true,fare:700,departureTime:'21:30',boardingPoint:'Test terminal'}))};
   assert.equal((await request(`/api/buses/${bus.id}`,config,true,'PUT')).status,200);
-  const payload={busId:bus.id,serviceId:'rajshahi-dhaka',date:'2099-01-05',name:'Test traveler',phone:'+15555550100',seats:[{id:'K-5',gender:'female'}],totalAmount:1};
+  const payload={busId:bus.id,serviceId:'rajshahi-dhaka',date:'2099-01-05',name:'Test traveler',phone:'+15555550100',seats:[{id:'J-4',gender:'female'}],totalAmount:1};
   const responses=await Promise.all([request('/api/public/bus-tickets',payload),request('/api/public/bus-tickets',payload)]);
   assert.deepEqual(responses.map((r)=>r.status).sort(),[201,409]);
   const success=responses.find((r)=>r.status===201);const data=await success.json();
   assert.equal(data.ticket.totalAmount,700);assert.equal(data.ticket.status,'pending');assert.equal(data.ticket.paymentNumber,'01782250709');
   const publicData=await (await request('/api/public/bus-services?date=2099-01-05')).json();
-  assert.deepEqual(publicData.services[0].occupied,[{id:'K-5',gender:'female',status:'reserved'}]);
+  assert.deepEqual(publicData.services[0].occupied,[{id:'J-4',gender:'female',status:'reserved'}]);
   assert.ok(!JSON.stringify(publicData).includes(payload.phone));
   const confirmation=await request(`/api/bus-tickets/${data.ticket.id}`,{status:'confirmed',paymentVerified:true},true,'PATCH');
   assert.equal(confirmation.status,200);assert.equal((await confirmation.json()).ticket.paymentStatus,'verified');

@@ -1,21 +1,26 @@
-import React, { useState } from 'react';
-import { ArrowRight, Bus, Calendar, Camera, CheckCircle2, Clock, Compass, Image as ImageIcon, LayoutDashboard, LogIn, MapPin, MessageCircle, MessageSquareHeart, Phone, ShieldCheck, Sparkles, Star, Ticket, Users, Utensils, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Bus, Calendar, Camera, CheckCircle2, Clock, Compass, Image as ImageIcon, LayoutDashboard, LogIn, MapPin, Menu, MessageCircle, MessageSquareHeart, Phone, ShieldCheck, Sparkles, Star, Ticket, Users, Utensils, X } from 'lucide-react';
 import { apiFetch, formatBnDate, formatTaka } from '../lib/api';
 import { useI18n, LanguageSwitcher } from '../lib/i18n';
 import AgencyLogo from './AgencyLogo';
 import BusTicketSection from './BusTicketSection';
 import TourSeatPicker from './TourSeatPicker';
+import PageLoader from './PageLoader';
+import TourTicker from './TourTicker';
 export default function PublicWebsite({
   data,
   currentUser,
   onOpenLogin,
   onOpenDashboard,
   onOpenFeedback,
-  onRefresh
+  onRefresh,
+  loadError = false,
+  onRetryLoad
 }) {
   const {
     t,
-    tr
+    tr,
+    language
   } = useI18n();
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [inquiryError, setInquiryError] = useState('');
@@ -31,13 +36,59 @@ export default function PublicWebsite({
   });
   const [submittingInquiry, setSubmittingInquiry] = useState(false);
   const [inquirySuccess, setInquirySuccess] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!selectedTour) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setSelectedTour(null);
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [selectedTour]);
+
+  const homeBase = (() => {
+    const path = window.location.pathname;
+    const feedbackIndex = path.indexOf('/feedback/');
+    if (feedbackIndex >= 0) return `${path.slice(0, feedbackIndex)}/`;
+    const withoutIndex = path.replace(/index\.html?$/, '');
+    if (withoutIndex.endsWith('/')) return withoutIndex;
+    return withoutIndex.slice(0, withoutIndex.lastIndexOf('/') + 1) || '/';
+  })();
+  const homeHref = `${homeBase}#top`;
+  const closeMenu = () => setMenuOpen(false);
+
   if (!data) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <div className="text-center space-y-2">
-          <div className="h-10 w-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-emerald-200">{tr("রাজশাহী ট্যুরস এন্ড ট্রাভেলস লোড হচ্ছে...")}</p>
-        </div>
-      </div>;
+    return <PageLoader
+      fullScreen
+      message={loadError ? t('We are having trouble loading the site.', 'ওয়েবসাইট লোড করতে সমস্যা হচ্ছে।') : tr("রাজশাহী ট্যুরস এন্ড ট্রাভেলস লোড হচ্ছে...")}
+      errorMessage={loadError ? t('Please try again or contact the team on WhatsApp.', 'আবার চেষ্টা করুন অথবা হোয়াটসঅ্যাপে যোগাযোগ করুন।') : ''}
+      onRetry={loadError ? onRetryLoad : undefined}
+      retryLabel={t('Try again', 'আবার চেষ্টা করুন')}
+    />;
   }
   const {
     siteSettings = {},
@@ -49,6 +100,7 @@ export default function PublicWebsite({
     gallery = []
   } = data;
   const openTourModal = (tour, tab = 'details') => {
+    setMenuOpen(false);
     setSelectedTour(tour);
     setSelectedSeats([]);
     setInquiryError('');
@@ -92,56 +144,77 @@ export default function PublicWebsite({
   };
   const galleryDestinations = ['সব', ...new Set(gallery.map(g => g.destination))];
   const filteredGallery = galleryFilter === 'সব' ? gallery : gallery.filter(g => g.destination === galleryFilter);
+  const selectedDescription = selectedTour
+    ? language === 'en'
+      ? selectedTour.descriptionEn || selectedTour.description || ''
+      : selectedTour.description || selectedTour.descriptionEn || ''
+    : '';
   return <div className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Running Tour Live Ticker Banner */}
-      {runningTours.length > 0 && <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 px-4 py-2 text-xs sm:text-sm font-bold">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-900 animate-ping" />
-              <span>{tr("চলমান ট্যুর (Live):")}<strong>{tr(runningTours[0].title)}</strong>{tr(" — গাইড:")}{' '}
-                {tr(runningTours[0].guides?.[0]?.name || 'মনিরুল ভাই')}
-              </span>
-            </div>
-            <button onClick={() => openTourModal(runningTours[0], 'details')} className="underline font-extrabold hover:text-emerald-950">{tr("চলমান ট্যুরের বিস্তারিত দেখুন →")}</button>
-          </div>
-        </div>}
-
       {/* Top Sticky Navbar */}
-      <header className="sticky top-0 z-40 bg-emerald-950/95 backdrop-blur-md border-b border-emerald-800/60 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4 py-3">
-          <a href="#top" className="flex items-center gap-3"><AgencyLogo compact /></a>
+      <header className="rtt-public-header sticky top-0 z-40 bg-emerald-950/95 backdrop-blur-md border-b border-emerald-800/60 text-white">
+        <div className="rtt-public-header-inner max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4 py-3">
+          <a href={homeHref} aria-label={t('Go to the home page', 'হোম পেজে যান')} className="rtt-public-brand flex items-center gap-3" onClick={closeMenu}><AgencyLogo compact /></a>
 
-          <nav className="hidden xl:flex items-center gap-6 text-sm font-semibold text-emerald-100">
-            <a href="#bus-tickets" className="hover:text-amber-400 transition">{t("Bus tickets", "বাসের টিকিট")}</a>
-            <a href="./pro/" className="hover:text-amber-400 transition">{tr("Pro Edition ↗")}</a>
-            <a href="#upcoming" className="hover:text-amber-400 transition">{tr("আপকামিং ট্যুর")}</a>
-            <a href="#past-tours" className="hover:text-amber-400 transition">{tr("আগের ট্যুরসমূহ")}</a>
-            <a href="#reviews" className="hover:text-amber-400 transition">{tr("ট্রাভেলার রিভিউ")}</a>
-            <a href="#gallery" className="hover:text-amber-400 transition">{tr("গ্যালারি")}</a>
-            <a href="#office" className="hover:text-amber-400 transition">{tr("অফিস লোকেশন")}</a>
+          <nav className="rtt-desktop-navigation hidden xl:flex items-center gap-5 text-sm font-semibold text-emerald-100" aria-label={t('Main navigation', 'প্রধান নেভিগেশন')}>
+            <a href={`${homeBase}#bus-tickets`} className="hover:text-amber-400 transition">{t("Bus tickets", "বাসের টিকিট")}</a>
+            <a href={`${homeBase}pro/`} className="hover:text-amber-400 transition">{tr("Pro Edition ↗")}</a>
+            <a href={`${homeBase}#upcoming`} className="hover:text-amber-400 transition">{tr("আপকামিং ট্যুর")}</a>
+            <a href={`${homeBase}#past-tours`} className="hover:text-amber-400 transition">{tr("আগের ট্যুরসমূহ")}</a>
+            <a href={`${homeBase}#reviews`} className="hover:text-amber-400 transition">{tr("ট্রাভেলার রিভিউ")}</a>
+            <a href={`${homeBase}#gallery`} className="hover:text-amber-400 transition">{tr("গ্যালারি")}</a>
+            <a href={`${homeBase}#office`} className="hover:text-amber-400 transition">{tr("অফিস লোকেশন")}</a>
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-2.5"><LanguageSwitcher />
+          <div className="rtt-header-actions flex items-center gap-2 sm:gap-2.5"><LanguageSwitcher />
             <a href={`https://wa.me/${siteSettings.whatsapp || '8801782250709'}`} target="_blank" rel="noreferrer" className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-emerald-700/80 hover:bg-emerald-600 border border-emerald-500/40 px-3 py-2 text-xs font-bold text-white transition">
               <MessageCircle className="h-4 w-4 text-emerald-300" />{tr("WhatsApp")}</a>
             <a href={`tel:${siteSettings.phone || '01782250709'}`} className="hidden md:inline-flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-2 text-xs font-bold text-amber-300 transition">
-              <Phone className="h-3.5 w-3.5" />
-              {siteSettings.phone || '01782250709'}
+              <Phone className="h-3.5 w-3.5" />{siteSettings.phone || '01782250709'}
             </a>
 
             {currentUser ? <button onClick={onOpenDashboard} aria-label={t("Staff dashboard", "স্টাফ ড্যাশবোর্ড")} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 hover:bg-amber-300 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-slate-950 shadow-md transition">
                 <LayoutDashboard className="h-4 w-4" />
                 <span className="hidden sm:inline">{tr("ড্যাশবোর্ড (")}{currentUser.role === 'owner' ? 'মালিক' : currentUser.role === 'accountant' ? 'একাউন্ট্যান্ট' : 'গাইড'})</span>
               </button> : <button onClick={onOpenLogin} aria-label={t("Staff login", "স্টাফ লগইন")} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 px-3.5 sm:px-4 py-2.5 text-xs sm:text-sm font-extrabold text-slate-950 shadow-md transition">
-                <LogIn className="h-4 w-4" />
-                <span className="hidden sm:inline">{tr("স্টাফ লগইন")}</span>
+                <LogIn className="h-4 w-4" /><span className="hidden sm:inline">{tr("স্টাফ লগইন")}</span>
               </button>}
+            <button
+              ref={menuButtonRef}
+              type="button"
+              className="rtt-mobile-menu-trigger"
+              aria-label={menuOpen ? t('Close navigation menu', 'নেভিগেশন মেনু বন্ধ করুন') : t('Open navigation menu', 'নেভিগেশন মেনু খুলুন')}
+              aria-expanded={menuOpen}
+              aria-controls="rtt-mobile-navigation"
+              onClick={() => setMenuOpen((open) => !open)}
+            >{menuOpen ? <X size={21} /> : <Menu size={21} />}</button>
           </div>
         </div>
       </header>
+      {menuOpen && <button className="rtt-mobile-menu-backdrop" aria-label={t('Close navigation menu', 'নেভিগেশন মেনু বন্ধ করুন')} onClick={closeMenu} />}
+      <aside id="rtt-mobile-navigation" className={`rtt-mobile-menu ${menuOpen ? 'is-open' : ''}`} aria-label={t('Mobile navigation', 'মোবাইল নেভিগেশন')} aria-hidden={!menuOpen}>
+        <div className="rtt-mobile-menu-header">
+          <a href={homeHref} onClick={closeMenu}><AgencyLogo compact /></a>
+          <button type="button" className="rtt-mobile-menu-close" aria-label={t('Close navigation menu', 'নেভিগেশন মেনু বন্ধ করুন')} onClick={closeMenu}><X size={21} /></button>
+        </div>
+        <nav className="rtt-mobile-menu-links" aria-label={t('Main navigation', 'প্রধান নেভিগেশন')}>
+          <a href={`${homeBase}#top`} onClick={closeMenu}>{t('Home', 'হোম')}</a>
+          <a href={`${homeBase}#upcoming`} onClick={closeMenu}>{tr('আপকামিং ট্যুর')}</a>
+          <a href={`${homeBase}#bus-tickets`} onClick={closeMenu}>{t('Bus tickets', 'বাসের টিকিট')}</a>
+          <a href={`${homeBase}#past-tours`} onClick={closeMenu}>{tr('আগের ট্যুরসমূহ')}</a>
+          <a href={`${homeBase}#reviews`} onClick={closeMenu}>{tr('ট্রাভেলার রিভিউ')}</a>
+          <a href={`${homeBase}#gallery`} onClick={closeMenu}>{tr('গ্যালারি')}</a>
+          <a href={`${homeBase}#office`} onClick={closeMenu}>{tr('অফিস লোকেশন')}</a>
+          <a className="rtt-mobile-pro-link" href={`${homeBase}pro/`} onClick={closeMenu}>{tr('International Pro Edition ↗')}</a>
+        </nav>
+        <div className="rtt-mobile-menu-contact">
+          <a href={`tel:${siteSettings.phone || '01782250709'}`}><Phone size={16} />{t('Call the team', 'টিমকে কল করুন')}</a>
+          <a href={`https://wa.me/${siteSettings.whatsapp || '8801782250709'}`} target="_blank" rel="noreferrer"><MessageCircle size={16} />{t('Chat on WhatsApp', 'হোয়াটসঅ্যাপে কথা বলুন')}</a>
+        </div>
+      </aside>
+      <TourTicker runningTours={runningTours} upcomingTours={upcomingTours} onOpenTour={(tour) => openTourModal(tour, 'details')} />
 
       {/* Hero Section + Next Tour Highlight */}
-      <section id="top" className="relative overflow-hidden bg-emerald-950 text-white py-12 sm:py-18 lg:py-22">
+      <section id="top" data-reveal className="relative overflow-hidden bg-emerald-950 text-white py-12 sm:py-18 lg:py-22">
         {/* Background Cover Image with Dark Emerald Overlay */}
         <div className="absolute inset-0 bg-cover bg-center opacity-35 transition-all duration-700" style={{
         backgroundImage: `url(${siteSettings.heroBackgroundImage || '/media/sajek-2.jpg'})`
@@ -285,7 +358,7 @@ export default function PublicWebsite({
       </section>
 
       {/* Upcoming Monthly Schedule Section */}
-      <section id="upcoming" className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+      <section id="upcoming" data-reveal className="rtt-upcoming-section py-16 max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-800 mb-2">
@@ -297,72 +370,48 @@ export default function PublicWebsite({
             <ShieldCheck className="h-4 w-4 text-emerald-600" />{tr("পছন্দের ট্যুর সিলেক্ট করে বিস্তারিত প্ল্যান দেখুন ও বুকিং কুয়েরি পাঠান")}</div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {upcomingTours.map(tour => <div key={tour.id} className="group rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:border-emerald-500/60 transition overflow-hidden flex flex-col">
-              <div className="relative h-52 overflow-hidden">
+        <div className="rtt-tour-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {upcomingTours.map((tour, index) => <article key={tour.id} data-reveal style={{ '--reveal-delay': `${Math.min(index, 4) * 90}ms` }} className="rtt-public-tour-card group rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+              <button type="button" className="rtt-tour-image-button relative h-52 overflow-hidden" onClick={() => openTourModal(tour, 'details')} aria-label={`${t('View details', 'বিস্তারিত দেখুন')}: ${tr(tour.title)}`}>
                 <img src={tour.coverImage || '/media/sajek-1.webp'} alt={tour.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-                <div className="absolute top-3 left-3 flex items-center gap-2">
-                  <span className="rounded-full bg-emerald-900/90 backdrop-blur-sm text-white px-3 py-1 text-xs font-bold">
-                    {tr(tour.destination)}
-                  </span>
+                <span className="rtt-tour-image-tags absolute top-3 left-3 flex items-center gap-2">
+                  <span className="rounded-full bg-emerald-900/90 backdrop-blur-sm text-white px-3 py-1 text-xs font-bold">{tr(tour.destination)}</span>
                   {tour.isFeatured && <span className="rounded-full bg-amber-400 text-slate-950 px-3 py-1 text-xs font-black">{tr("হাইলাইটেড ট্যুর")}</span>}
-                </div>
-                <div className="absolute bottom-3 right-3 rounded-xl bg-slate-950/85 backdrop-blur-sm text-amber-300 px-3 py-1 text-xs font-bold">
-                  {tour.days}{tr(" দিন • ")}{tour.nights}{tr("রাত")}</div>
-              </div>
+                </span>
+                <span className="absolute bottom-3 right-3 rounded-xl bg-slate-950/85 backdrop-blur-sm text-amber-300 px-3 py-1 text-xs font-bold">{tour.days}{tr(" দিন • ")}{tour.nights}{tr("রাত")}</span>
+              </button>
 
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <div className="space-y-2.5">
+              <div className="rtt-tour-card-content p-5 flex-1 flex flex-col justify-between gap-4">
+                <div className="space-y-3">
                   <h3 className="text-lg font-extrabold text-slate-900 leading-snug">
-                    {tr(tour.title)}
+                    <button type="button" className="rtt-tour-title-button" onClick={() => openTourModal(tour, 'details')}>{tr(tour.title)}</button>
                   </h3>
-                  <div className="space-y-1.5 text-xs text-slate-600">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>{tr("যাত্রা:")}<strong>{formatBnDate(tour.startDate)}</strong>{tr(" → ফেরা:")}{' '}
-                        <strong>{formatBnDate(tour.returnDate)}</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>{tr("ছাড়ার স্থান: ")}{tr(tour.departureLocation)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Bus className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>{tr(tour.transport?.primary)} + {tr(tour.transport?.local)}</span>
-                    </div>
-                  </div>
-
-                  {/* Packages Pills */}
-                  <div className="pt-2 flex flex-wrap gap-1.5">
-                    {(tour.packages || []).map(pkg => <span key={pkg.id} className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
-                        {pkg.name.split('(')[0].trim()}:{' '}
-                        <strong className="text-emerald-800">{formatTaka(pkg.price)}</strong>
-                      </span>)}
+                  <div className="rtt-tour-facts space-y-2 text-xs text-slate-600">
+                    <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-emerald-600 shrink-0" /><span>{tr("যাত্রা:")} <strong>{formatBnDate(tour.startDate)}</strong>{tr(" → ফেরা:")} <strong>{formatBnDate(tour.returnDate)}</strong></span></div>
+                    <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-600 shrink-0" /><span>{tr("ছাড়ার স্থান: ")}{tr(tour.departureLocation)}</span></div>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-600">{tr("বুকড:")}{tour.seatsBooked}/{tour.totalSeats}{tr("সিট")}</span>
-                    <span className={tour.seatsRemaining > 0 && tour.seatsRemaining <= 10 ? "rtt-low-seats" : "font-bold text-emerald-700"}>{tour.seatsRemaining > 0 && tour.seatsRemaining <= 10 ? t(`Only ${tour.seatsRemaining} seats left!`, `আর মাত্র ${tour.seatsRemaining}টি সিট!`) : `${tour.seatsRemaining} ${t("seats available", "টি সিট খালি")}`}</span>
-                  </div>
+                <div className="rtt-tour-price-row">
+                  <div><small>{t('Packages from', 'প্যাকেজ শুরু')}</small><strong>{formatTaka(tour.startingPrice)}</strong></div>
+                  <span className={tour.seatsRemaining > 0 && tour.seatsRemaining <= 10 ? "rtt-low-seats" : "rtt-tour-seats-available"}>
+                    {tour.seatsRemaining > 0 && tour.seatsRemaining <= 10 ? t(`Only ${tour.seatsRemaining} seats left!`, `আর মাত্র ${tour.seatsRemaining}টি সিট!`) : tour.seatsRemaining === 0 ? t('Fully booked', 'সব সিট বুকড') : `${tour.seatsRemaining} ${t("seats left", "টি সিট খালি")}`}
+                  </span>
+                </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => openTourModal(tour, 'details')} className="rounded-xl border border-slate-300 hover:border-emerald-600 py-2.5 text-xs font-bold text-slate-700 hover:text-emerald-800 transition">{tr("বিস্তারিত প্ল্যান")}</button>
-                    <button onClick={() => openTourModal(tour, 'poster')} className="rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 py-2.5 text-xs font-bold text-amber-900 transition">{tr("পোস্টার দেখুন")}</button>
-                    <button onClick={() => openTourModal(tour, 'book')} className="rounded-xl bg-emerald-800 hover:bg-emerald-900 py-2.5 text-xs font-bold text-white transition">{tr("বুকিং কুয়েরি")}</button>
-                  </div>
+                <div className="rtt-tour-card-actions">
+                  <button type="button" className="rtt-tour-detail-btn" onClick={() => openTourModal(tour, 'details')}>{t('Full details', 'সব বিস্তারিত')}<ArrowRight size={15} /></button>
+                  <button type="button" className="rtt-tour-book-btn" onClick={() => openTourModal(tour, 'book')}>{t('Ask to book', 'বুকিং জিজ্ঞাসা')}<ArrowRight size={15} /></button>
                 </div>
               </div>
-            </div>)}
+            </article>)}
         </div>
       </section>
 
       <BusTicketSection />
 
       {/* Previous Tours / Destinations Visited Section */}
-      <section id="past-tours" className="py-16 bg-emerald-950 text-white">
+      <section id="past-tours" data-reveal className="py-16 bg-emerald-950 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
             <div>
@@ -396,7 +445,7 @@ export default function PublicWebsite({
       </section>
 
       {/* Traveler Reviews / Feedback Section */}
-      <section id="reviews" className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+      <section id="reviews" data-reveal className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-1 text-xs font-bold text-amber-900 mb-2">
@@ -445,7 +494,7 @@ export default function PublicWebsite({
       </section>
 
       {/* Tour Guide Photo Gallery Section */}
-      <section id="gallery" className="py-16 bg-slate-100">
+      <section id="gallery" data-reveal className="py-16 bg-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
@@ -481,7 +530,7 @@ export default function PublicWebsite({
       </section>
 
       {/* Office Location & Direct Contact Footer */}
-      <footer id="office" className="bg-slate-950 text-white pt-16 pb-24 border-t border-slate-800">
+      <footer id="office" data-reveal className="bg-slate-950 text-white pt-16 pb-24 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-5 space-y-4">
             <AgencyLogo />
@@ -508,7 +557,7 @@ export default function PublicWebsite({
 
           <div className="lg:col-span-3 space-y-3">
             <h4 className="text-sm font-bold uppercase tracking-wider text-amber-400">{tr("দ্রুত অ্যাকশন")}</h4>
-            <div className="flex flex-col gap-2.5"><a href="./pro/" className="rounded-xl border border-amber-400/50 px-4 py-3 text-xs font-bold text-amber-300">{tr("International Pro Edition ↗")}</a>
+            <div className="flex flex-col gap-2.5"><a href={`${homeBase}pro/`} className="rounded-xl border border-amber-400/50 px-4 py-3 text-xs font-bold text-amber-300">{tr("International Pro Edition ↗")}</a>
               <a href={`https://wa.me/${siteSettings.whatsapp || '8801782250709'}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-3 text-xs font-bold text-white transition">
                 <MessageCircle className="h-4 w-4" />{tr("হোয়াটসঅ্যাপে মেসেজ দিন")}</a>
               <button onClick={currentUser ? onOpenDashboard : onOpenLogin} className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 px-4 py-3 text-xs font-bold text-amber-300 transition">
@@ -519,7 +568,7 @@ export default function PublicWebsite({
       </footer>
 
       {/* Floating Quick WhatsApp & Call Bar */}
-      <div className="fixed bottom-4 right-4 z-30 flex items-center gap-2">
+      <div className="rtt-floating-contact fixed bottom-4 right-4 z-30 flex items-center gap-2">
         <a href={`tel:${siteSettings.phone || '01782250709'}`} className="inline-flex items-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-400/40 px-4 py-3 text-xs font-bold shadow-xl transition">
           <Phone className="h-4 w-4" />{tr("কল করুন")}</a>
         <a href={`https://wa.me/${siteSettings.whatsapp || '8801782250709'}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 text-xs font-bold shadow-xl transition">
@@ -527,22 +576,22 @@ export default function PublicWebsite({
       </div>
 
       {/* Tour Details / Poster / Booking Inquiry Modal */}
-      {selectedTour && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-4xl rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[90vh] flex flex-col">
+      {selectedTour && <div className="rtt-tour-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm overflow-y-auto" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedTour(null); }}>
+          <div className="rtt-tour-modal-shell relative w-full max-w-4xl rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[90vh] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="rtt-tour-modal-title">
             {/* Modal Top Header */}
             <div className="bg-emerald-950 text-white px-6 py-4 flex items-center justify-between shrink-0">
               <div>
                 <span className="text-xs font-bold text-amber-300">
                   {tr(selectedTour.destination)} • {formatBnDate(selectedTour.startDate)} ({selectedTour.days}{tr(" দিন ")}{selectedTour.nights}{tr("রাত)")}</span>
-                <h3 className="text-lg sm:text-xl font-bold">{tr(selectedTour.title)}</h3>
+                <h3 id="rtt-tour-modal-title" className="text-lg sm:text-xl font-bold">{tr(selectedTour.title)}</h3>
               </div>
-              <button onClick={() => setSelectedTour(null)} className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
+              <button autoFocus type="button" aria-label={t('Close tour details', 'ট্যুরের বিস্তারিত বন্ধ করুন')} onClick={() => setSelectedTour(null)} className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Modal Sub-Tabs */}
-            <div className="flex border-b border-slate-200 bg-slate-50 px-6 gap-2 pt-2 shrink-0">
+            <div className="rtt-tour-modal-tabs flex border-b border-slate-200 bg-slate-50 px-6 gap-2 pt-2 shrink-0">
               {[{
             id: 'details',
             label: '📋 বিস্তারিত ও ডে-বাই-ডে প্ল্যান'
@@ -559,7 +608,11 @@ export default function PublicWebsite({
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1">
-              {activeModalTab === 'details' && <div className="space-y-6">
+              {activeModalTab === 'details' && <div className="rtt-tour-details-content space-y-6">
+                  {selectedDescription && <section className="rtt-tour-description-panel">
+                    <div className="rtt-tour-description-heading"><span><Sparkles size={17} /></span><div><small>{t('TOUR OVERVIEW', 'ট্যুরের বিবরণ')}</small><h4>{t('A little more about this journey', 'এই ভ্রমণ সম্পর্কে বিস্তারিত')}</h4></div></div>
+                    <p lang={language === 'en' ? 'en' : 'bn'}>{selectedDescription}</p>
+                  </section>}
                   {/* Packages Grid */}
                   <div>
                     <h4 className="text-sm font-black uppercase tracking-wider text-slate-500 mb-3">{tr("প্যাকেজ ও রুম ক্যাটাগরি")}</h4>

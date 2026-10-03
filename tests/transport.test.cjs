@@ -14,13 +14,33 @@ const ticketInput = (overrides = {}) => ({ busId: 'bus-rajshahi-express', servic
 const tourInput = (overrides = {}) => ({ tourId: 'tour-sylhet-oct', name: 'Test Traveler', phone: '+15555550100', pax: 2, packageId: 'pkg-sylhet-share', seats: [{ id: 'F-1', gender: 'male' }, { id: 'F-2', gender: 'female' }], ...overrides });
 const throwsCode = (fn, code) => assert.throws(fn, (error) => error.code === code);
 
-test('reference bus is 46 seats: front 1, A–J 2+2 and K 5-wide', () => {
+test('Rajshahi Express defaults to an easy 40-seat 2+2 map; legacy 46-seat plans remain supported', () => {
   const seats = engine.seatIds();
-  assert.equal(seats.length, 46); assert.equal(new Set(seats).size, 46);
-  assert.deepEqual(seats.slice(0, 5), ['1','A-1','A-2','A-3','A-4']);
-  assert.deepEqual(seats.slice(-5), ['K-1','K-2','K-3','K-4','K-5']);
+  assert.equal(seats.length, 40); assert.equal(new Set(seats).size, 40);
+  assert.deepEqual(seats.slice(0, 4), ['A-1','A-2','A-3','A-4']);
+  assert.deepEqual(seats.slice(-4), ['J-1','J-2','J-3','J-4']);
   assert.equal(engine.seatIds('standard40').length, 40);
+  assert.equal(engine.seatIds('express46').length, 46);
+  assert.deepEqual(engine.defaultBus().layout, 'standard40');
   assert.equal(engine.normalizeSeat('b3'), 'B-3');
+});
+test('edition v3 upgrades to a 40-seat coach only when no assigned seat would be removed', () => {
+  const legacy = JSON.parse(JSON.stringify(fixture));
+  legacy.editionDataVersion = 3;
+  legacy.buses[0].layout = 'express46';
+  for (const tour of legacy.tours) if (tour.busId === legacy.buses[0].id) tour.totalSeats = 46;
+  engine.migrateEditionData(legacy);
+  assert.equal(legacy.editionDataVersion, 4);
+  assert.equal(legacy.buses[0].layout, 'standard40');
+  assert.ok(legacy.tours.filter((tour) => tour.busId === legacy.buses[0].id).every((tour) => tour.totalSeats === 40));
+
+  const preserveLegacy = JSON.parse(JSON.stringify(fixture));
+  preserveLegacy.editionDataVersion = 3;
+  preserveLegacy.buses[0].layout = 'express46';
+  preserveLegacy.bookings.push({ id: 'migration-k-seat', tourId: 'tour-sylhet-oct', seatAssignments: [{ id: 'K-1', gender: 'male' }], seatNumbers: 'K-1' });
+  engine.migrateEditionData(preserveLegacy);
+  assert.equal(preserveLegacy.buses[0].layout, 'express46');
+  assert.equal(preserveLegacy.bookings.at(-1).seatAssignments[0].id, 'K-1');
 });
 test('default regular services are closed until actual schedule and fare are configured', () => {
   const services = engine.getBusServices(fresh(), { date: '2026-10-05' }, now);
@@ -94,7 +114,7 @@ test('expired bus holds release inventory and cannot be confirmed later', () => 
   throwsCode(() => engine.updateBusTicket(state, ticket.id, { status: 'confirmed' }, later), 'HOLD_EXPIRED');
 });
 test('verified admin confirmation preserves the gender marker; cancellation frees seats', () => {
-  const state = configured(); const ticket = engine.createBusTicket(state, ticketInput({ seats:[{ id:'K-5',gender:'female' }] }), now);
+  const state = configured(); state.buses[0].layout = 'express46'; const ticket = engine.createBusTicket(state, ticketInput({ seats:[{ id:'K-5',gender:'female' }] }), now);
   engine.updateBusTicket(state, ticket.id, { status:'confirmed', paymentVerified:true }, now);
   assert.equal(ticket.paymentStatus, 'verified');
   const occupied = engine.getBusServices(state, { date:'2026-10-05' }, now)[0].occupied;
@@ -110,7 +130,7 @@ test('tour seat requests validate pax, price, gender and existing seats', () => 
   const request = engine.createTourSeatRequest(state, tourInput({ totalAmount:1 }), now);
   assert.equal(request.totalAmount, 7600); assert.equal(request.status, 'pending');
   const info = engine.getTourSeats(state, request.tourId, now.getTime());
-  assert.equal(info.seatsLeft, 26); assert.ok(info.occupied.some((seat) => seat.id === 'F-2' && seat.gender === 'female'));
+  assert.equal(info.seatsLeft, 20); assert.ok(info.occupied.some((seat) => seat.id === 'F-2' && seat.gender === 'female'));
   throwsCode(() => engine.createTourSeatRequest(state, tourInput(), now), 'SEAT_TAKEN');
 });
 test('confirming a tour hold does not double-count seats or invent a payment', () => {
@@ -124,7 +144,7 @@ test('confirming a tour hold does not double-count seats or invent a payment', (
 test('expired tour requests free inventory and cannot be silently converted', () => {
   const state = fresh(); const request = engine.createTourSeatRequest(state, tourInput(), now);
   const later = new Date(now.getTime()+31*60*1000);
-  assert.equal(engine.getTourSeats(state, request.tourId, later.getTime()).seatsLeft, 28);
+  assert.equal(engine.getTourSeats(state, request.tourId, later.getTime()).seatsLeft, 22);
   throwsCode(() => engine.confirmTourSeatRequest(state, request.id, later), 'HOLD_EXPIRED');
 });
 test('capacity and the 10-seat low-availability threshold use actual allocations', () => {
@@ -135,13 +155,14 @@ test('capacity and the 10-seat low-availability threshold use actual allocations
 });
 test('overlapping tour assignments and conflicting regular reservations are rejected', () => {
   const state = configured();
-  throwsCode(() => engine.validateTourBus(state,{id:'new',busId:state.buses[0].id,status:'upcoming',startDate:'2026-10-15',returnDate:'2026-10-16',totalSeats:46}), 'BUS_BUSY');
+  throwsCode(() => engine.validateTourBus(state,{id:'new',busId:state.buses[0].id,status:'upcoming',startDate:'2026-10-15',returnDate:'2026-10-16',totalSeats:40}), 'BUS_BUSY');
   const ticket = engine.createBusTicket(state,ticketInput(),now);
   engine.updateBusTicket(state,ticket.id,{status:'confirmed',paymentVerified:true},now);
-  throwsCode(() => engine.validateTourBus(state,{id:'new',busId:state.buses[0].id,status:'upcoming',startDate:'2026-10-05',returnDate:'2026-10-06',totalSeats:46}), 'BUS_TICKETS_EXIST');
+  throwsCode(() => engine.validateTourBus(state,{id:'new',busId:state.buses[0].id,status:'upcoming',startDate:'2026-10-05',returnDate:'2026-10-06',totalSeats:40}), 'BUS_TICKETS_EXIST');
 });
 test('bus setup refuses invalid fares, enabled incomplete services and live layout changes', () => {
   const state = fresh(),bus=state.buses[0];
+  bus.layout = 'express46';
   throwsCode(() => engine.saveBus(state,bus.id,{services:[{...bus.services[0],enabled:true}]}), 'SETUP_REQUIRED');
   throwsCode(() => engine.saveBus(state,bus.id,{services:[{...bus.services[0],fare:-10}]}), 'INVALID_SERVICE');
   throwsCode(() => engine.saveBus(state,bus.id,{layout:'standard40'}), 'LAYOUT_IN_USE');

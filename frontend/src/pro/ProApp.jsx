@@ -5,6 +5,8 @@ import JourneyDialog from './JourneyDialog';
 import { LanguageSwitcher, useI18n } from '../lib/i18n';
 import AgencyLogo from '../components/AgencyLogo';
 import BusTicketSection from '../components/BusTicketSection';
+import PageLoader from '../components/PageLoader';
+import useScrollReveal from '../lib/useScrollReveal';
 import { classicUrl, destinations, filterJourneys, formatDate, formatPrice, heroImage, presentReview, presentTour, readPreference, savePreference, storyImage, toEnglishNumerals } from './catalog';
 const initialFilters = {
   destination: 'all',
@@ -62,6 +64,7 @@ function Stars({
 }
 function TourCard({
   tour,
+  index = 0,
   currency,
   saved,
   onSave,
@@ -71,7 +74,7 @@ function TourCard({
     t,
     tr
   } = useI18n();
-  return <article className="pro-tour-card">
+  return <article className="pro-tour-card" data-reveal style={{ '--reveal-delay': `${Math.min(index, 4) * 90}ms` }}>
       <div className="pro-tour-photo">
         <img src={tour.image} alt={tour.destinationInfo.name} loading="lazy" decoding="async" />
         <span className={`pro-tour-badge ${tour.isFeatured ? 'featured' : ''}`}>{tr(tour.isFeatured ? <><Sparkles size={12} />{tr(" THE NEXT GREAT ESCAPE")}</> : tour.destinationInfo.category === 'hills' ? 'A HIGHER KIND OF HAPPY' : 'A LITTLE VITAMIN SEA')}</span>
@@ -99,6 +102,8 @@ export default function ProApp() {
     t,
     tr
   } = useI18n();
+  useScrollReveal();
+  const proHomeHref = `${new URL('.', window.location.href).pathname}#top`;
   const [payload, setPayload] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [loadVersion, setLoadVersion] = useState(0);
@@ -136,15 +141,20 @@ export default function ProApp() {
     savePreference('shortlist', saved);
   }, [saved]);
   useEffect(() => {
-    if (!menuOpen) return;
-    const closeOnEscape = event => {
+    if (!menuOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
       if (event.key === 'Escape') {
         setMenuOpen(false);
         menuButton.current?.focus();
       }
     };
+    document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
   }, [menuOpen]);
   const tours = useMemo(() => (payload?.upcomingTours || []).map(presentTour), [payload, language]);
   const visibleTours = useMemo(() => filterJourneys(tours, filters, saved), [tours, filters, saved]);
@@ -216,15 +226,24 @@ export default function ProApp() {
     });
   };
   if (!payload) {
-    return <main className="pro-loading"><Brand /><Compass size={42} className={loadError ? '' : 'pro-loading-compass'} aria-hidden="true" /><h1>{tr(loadError ? 'A small detour.' : 'A little wonder is on its way.')}</h1><p>{tr(loadError ? 'We couldn’t load the journeys. Please try again or speak with our team.' : 'Getting your next adventure ready…')}</p>{loadError && <div className="pro-loading-actions"><button className="pro-button" onClick={() => setLoadVersion(value => value + 1)}>{tr("Try again ")}<ArrowRight size={17} /></button><a className="pro-text-link" href={whatsapp} target="_blank" rel="noopener noreferrer">{tr("Contact on WhatsApp")}</a></div>}<a className="pro-text-link" href={classicUrl}>{tr("Visit the Classic Edition ")}<ArrowUpRight size={16} /></a></main>;
+    return <PageLoader
+      fullScreen
+      message={tr(loadError ? 'A small detour.' : 'Getting your next adventure ready…')}
+      errorMessage={loadError ? tr('We couldn’t load the journeys. Please try again or speak with our team.') : ''}
+      onRetry={loadError ? () => setLoadVersion((value) => value + 1) : undefined}
+      retryLabel={tr('Try again')}
+      linkHref={loadError ? classicUrl : undefined}
+      linkLabel={loadError ? tr('Visit the Classic Edition') : undefined}
+      className="pro-page-loader"
+    />;
   }
   return <div className="pro-site" id="top">
       <a className="pro-skip-link" href="#main-content">{tr("Skip to main content")}</a>
       <div className="pro-topline"><div className="pro-container"><span><Globe2 size={12} aria-hidden="true" />{tr(" INTERNATIONAL PRO EDITION ")}<span className="pro-topline-separator">/</span> <span className="pro-topline-note">{tr("Local roots. Extraordinary journeys.")}</span></span><a href={`${classicUrl}?staff=1`}>{t("Staff dashboard", "স্টাফ ড্যাশবোর্ড")}</a><a href={classicUrl}>{tr("Classic Edition ")}<span lang="bn">{tr("বাংলা")}</span> <ArrowUpRight size={13} aria-hidden="true" /></a></div></div>
       <header className="pro-header">
         <div className="pro-container pro-header-inner">
-          <a href="#top" className="pro-brand-link" aria-label={tr("Rajshahi Tours and Travels home")}><Brand /></a>
-          <nav className={`pro-navigation ${menuOpen ? 'is-open' : ''}`} id="pro-navigation" aria-label={tr("Main navigation")}>
+          <a href={proHomeHref} className="pro-brand-link" aria-label={tr("Rajshahi Tours and Travels home")}><Brand /></a>
+          <nav className="pro-navigation" id="pro-navigation" aria-label={tr("Main navigation")}>
             <a href="#destinations" onClick={() => setMenuOpen(false)}>{tr("Destinations")}</a>
             <a href="#bus-tickets" onClick={() => setMenuOpen(false)}>{t("Bus tickets", "বাসের টিকিট")}</a>
             <a href="#journeys" onClick={() => setMenuOpen(false)}>{tr("Our journeys")}</a>
@@ -235,13 +254,29 @@ export default function ProApp() {
           <div className="pro-header-actions"><LanguageSwitcher />
             <label className="pro-currency-control"><Globe2 size={15} aria-hidden="true" /><span className="pro-sr-only">{tr("Display currency")}</span><select value={currency} onChange={event => setCurrency(event.target.value)} aria-describedby={currency === 'USD' ? 'pro-currency-note' : undefined}><option value="BDT">{tr("BDT ৳")}</option><option value="USD">{tr("USD (est.)")}</option></select><ChevronDown size={12} aria-hidden="true" /></label>
             <button className="pro-button pro-header-cta" onClick={() => openPlanner()}>{tr("Plan my trip ")}<ArrowUpRight size={16} aria-hidden="true" /></button>
-            <button className="pro-menu-button pro-icon-button" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="pro-navigation" ref={menuButton} onClick={() => setMenuOpen(value => !value)}>{tr(menuOpen ? <X size={22} /> : <Menu size={22} />)}</button>
+            <button className="pro-menu-button pro-icon-button" aria-label={t(menuOpen ? 'Close navigation menu' : 'Open navigation menu', menuOpen ? 'নেভিগেশন মেনু বন্ধ করুন' : 'নেভিগেশন মেনু খুলুন')} aria-expanded={menuOpen} aria-controls="pro-mobile-navigation" ref={menuButton} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>
           </div>
         </div>
       </header>
+      {menuOpen && <button type="button" className="pro-menu-backdrop" aria-label={t('Close navigation menu', 'নেভিগেশন মেনু বন্ধ করুন')} onClick={() => setMenuOpen(false)} />}
+      <aside id="pro-mobile-navigation" className={`pro-mobile-drawer ${menuOpen ? 'is-open' : ''}`} aria-label={tr('Mobile navigation')} aria-hidden={!menuOpen}>
+        <div className="pro-mobile-drawer-heading">
+          <a href={proHomeHref} onClick={() => setMenuOpen(false)} aria-label={tr('Rajshahi Tours and Travels home')}><Brand /></a>
+          <button type="button" className="pro-icon-button" aria-label={t('Close navigation menu', 'নেভিগেশন মেনু বন্ধ করুন')} onClick={() => setMenuOpen(false)}><X size={20} /></button>
+        </div>
+        <nav className="pro-mobile-drawer-links" aria-label={tr('Main navigation')}>
+          <a href="#destinations" onClick={() => setMenuOpen(false)}>{tr('Destinations')}</a>
+          <a href="#journeys" onClick={() => setMenuOpen(false)}>{tr('Our journeys')}</a>
+          <a href="#bus-tickets" onClick={() => setMenuOpen(false)}>{t('Bus tickets', 'বাসের টিকিট')}</a>
+          <a href="#our-story" onClick={() => setMenuOpen(false)}>{tr('Why Rajshahi')}</a>
+          <a href="#faqs" onClick={() => setMenuOpen(false)}>{tr('Good to know')}</a>
+          <a href={classicUrl} onClick={() => setMenuOpen(false)}>{tr('Classic Edition')}</a>
+        </nav>
+        <button className="pro-button pro-mobile-plan" onClick={() => openPlanner()}>{tr('Plan my trip ')}<ArrowUpRight size={17} /></button>
+      </aside>
 
       <main id="main-content">
-        <section className="pro-hero pro-container" aria-labelledby="pro-hero-title">
+        <section className="pro-hero pro-container" data-reveal="fade" aria-labelledby="pro-hero-title">
           <div className="pro-hero-frame">
             <img className="pro-hero-image" src={heroImage} alt={tr("Travelers overlooking the cloud-covered hills of Sajek Valley")} loading="eager" />
             <div className="pro-hero-overlay" />
@@ -280,7 +315,7 @@ export default function ProApp() {
 
         <div className="pro-promise-strip pro-container"><span><MapPin size={17} aria-hidden="true" />{tr(" Departures from Rajshahi")}</span><span><Users size={17} aria-hidden="true" />{tr(" Real local guides")}</span><span><ShieldCheck size={17} aria-hidden="true" />{tr(" Thoughtfully organized")}</span><span><Heart size={17} aria-hidden="true" />{tr(" Made for making memories")}</span></div>
 
-        <section className="pro-section pro-container pro-destinations" id="destinations" aria-labelledby="pro-destinations-title">
+        <section className="pro-section pro-container pro-destinations" data-reveal id="destinations" aria-labelledby="pro-destinations-title">
           <div className="pro-section-heading"><div><span className="pro-eyebrow">{tr("A WORLD OF WONDER, CLOSE TO HOME")}</span><h2 id="pro-destinations-title">{tr("Find your ")}<em>{tr("somewhere.")}</em></h2></div><p>{tr("Cloud-kissed hills. Wild waterways. Salt in the air.")}<br />{tr("There’s a different side of Bangladesh waiting for you.")}</p></div>
           <div className="pro-destination-grid">{destinations.map((destination, index) => {
             const count = tours.filter(tour => tour.destinationInfo.id === destination.id).length;
@@ -288,7 +323,7 @@ export default function ProApp() {
           })}</div>
         </section>
 
-        <section className="pro-section pro-container pro-journeys" id="journeys" aria-labelledby="pro-journeys-title">
+        <section className="pro-section pro-container pro-journeys" data-reveal id="journeys" aria-labelledby="pro-journeys-title">
           <div className="pro-section-heading"><div><span className="pro-eyebrow">{tr("THE DATES ARE SET. THE MEMORIES ARE YOURS.")}</span><h2 id="pro-journeys-title">{tr("Your next chapter")}<br className="pro-mobile-break" />{tr(" starts ")}<em>{tr("here.")}</em></h2></div><a className="pro-text-link" href={whatsapp} target="_blank" rel="noopener noreferrer">{tr("Need a little guidance? ")}<ArrowUpRight size={17} aria-hidden="true" /></a></div>
           <div className="pro-journey-tools"><div className="pro-category-filters" role="group" aria-label={tr("Journey style")}>{categories.map(({
               id,
@@ -308,14 +343,14 @@ export default function ProApp() {
               sort: event.target.value
             }))}><option value="recommended">{tr("Recommended")}</option><option value="soonest">{tr("Soonest departure")}</option><option value="price">{tr("Price: low to high")}</option></select></label></div>
           {currency === 'USD' && <p className="pro-currency-note" id="pro-currency-note" role="status">{tr("USD prices are estimates at ৳120 = US$1, not a live rate. Final quotes and payments are in BDT.")}</p>}
-          {tr(visibleTours.length ? <div className="pro-tour-grid">{visibleTours.map(tour => <TourCard tour={tour} key={tour.id} currency={currency} saved={saved.includes(tour.id)} onSave={toggleSave} onOpen={openTour} />)}</div> : <div className="pro-empty"><Compass size={36} strokeWidth={1.3} aria-hidden="true" /><h3>{tr(filters.savedOnly ? 'A little room for your favorites.' : 'A different adventure is calling.')}</h3><p>{tr(filters.savedOnly ? 'Tap the heart on a journey to save it here for later.' : 'No scheduled journeys match these plans just yet. Try another date or let us help you find your somewhere.')}</p><div><button className="pro-button" onClick={resetFilters}>{tr("Explore all journeys ")}<ArrowRight size={17} /></button><button className="pro-text-link" onClick={() => openPlanner(filters.destination)}>{tr("Help me plan a trip")}</button></div></div>)}
+          {tr(visibleTours.length ? <div className="pro-tour-grid">{visibleTours.map((tour, index) => <TourCard tour={tour} index={index} key={tour.id} currency={currency} saved={saved.includes(tour.id)} onSave={toggleSave} onOpen={openTour} />)}</div> : <div className="pro-empty"><Compass size={36} strokeWidth={1.3} aria-hidden="true" /><h3>{tr(filters.savedOnly ? 'A little room for your favorites.' : 'A different adventure is calling.')}</h3><p>{tr(filters.savedOnly ? 'Tap the heart on a journey to save it here for later.' : 'No scheduled journeys match these plans just yet. Try another date or let us help you find your somewhere.')}</p><div><button className="pro-button" onClick={resetFilters}>{tr("Explore all journeys ")}<ArrowRight size={17} /></button><button className="pro-text-link" onClick={() => openPlanner(filters.destination)}>{tr("Help me plan a trip")}</button></div></div>)}
           {(filters.destination !== 'all' || filters.month !== 'all' || filters.guests > 1) && <button className="pro-clear-filters" onClick={resetFilters}><X size={13} aria-hidden="true" />{tr("Clear search filters")}</button>}
           <p className="pro-pricing-footnote">{tr("Starting prices are per person in the lowest-priced available room package. Package details, add-ons and pickup arrangements are listed in each journey.")}</p>
         </section>
 
         <BusTicketSection theme="pro" />
 
-        <section className="pro-story-wrap" id="our-story" aria-labelledby="pro-story-title">
+        <section className="pro-story-wrap" data-reveal id="our-story" aria-labelledby="pro-story-title">
           <div className="pro-container pro-story">
             <div className="pro-story-photo"><img src={storyImage} alt={tr("Travelers watching the sunrise over a sea of clouds in Sajek")} loading="lazy" decoding="async" /><span className="pro-story-caption"><Compass size={18} aria-hidden="true" />{tr(" Moments, not just miles.")}</span><div className="pro-story-stamp"><Sun size={28} strokeWidth={1.3} aria-hidden="true" /><span>{tr("GO A LITTLE")}<br /><strong>{tr("further.")}</strong></span></div></div>
             <div className="pro-story-content"><span className="pro-eyebrow">{tr("THE RAJSHAHI WAY")}</span><h2 id="pro-story-title">{tr("Big on experience.")}<br /><em>{tr("Thoughtful on details.")}</em></h2><p>{tr("We believe the best trips leave you with more than photos. A new friend. A favorite flavor. A story you’ll tell for years.")}</p><div className="pro-story-features"><div><span><Users size={19} aria-hidden="true" /></span><div><h3>{tr("People, not just passengers.")}</h3><p>{tr("From solo explorers to families, our group journeys bring good company along for the ride.")}</p></div></div><div><span><MapPin size={19} aria-hidden="true" /></span><div><h3>{tr("Local roots. A different perspective.")}</h3><p>{tr("Travel with local guides and discover the places that make Bangladesh feel like nowhere else.")}</p></div></div><div><span><Check size={19} aria-hidden="true" /></span><div><h3>{tr("Less guesswork. More going.")}</h3><p>{tr("Room options, transport, dates and day-by-day plans, all in one place. Know your trip before you book.")}</p></div></div></div><a className="pro-text-link" href={whatsapp} target="_blank" rel="noopener noreferrer">{tr("Meet your next adventure ")}<ArrowUpRight size={17} aria-hidden="true" /></a></div>
@@ -323,11 +358,11 @@ export default function ProApp() {
           <div className="pro-container pro-stat-row"><div><strong>{toEnglishNumerals(settings.stats?.completedTours || '১২০+')}</strong><span>{tr("journeys brought to life")}</span></div><div><strong>{toEnglishNumerals(settings.stats?.happyTravelers || '৪,৫০০+')}</strong><span>{tr("travelers, countless stories")}</span></div><div><strong>{toEnglishNumerals(settings.stats?.destinations || '২৫+')}</strong><span>{tr("destinations to discover")}</span></div><div><strong>{toEnglishNumerals(settings.stats?.averageRating || '৪.৯/৫.০').split('/')[0]}<Star size={24} fill="currentColor" aria-hidden="true" /></strong><span>{tr("agency-reported traveler rating")}</span></div></div>
         </section>
 
-        {reviews.length > 0 && <section className="pro-section pro-container pro-reviews" id="traveler-stories" aria-labelledby="pro-reviews-title"><div className="pro-section-heading"><div><span className="pro-eyebrow">{tr("GOOD TRIPS. EVEN BETTER STORIES.")}</span><h2 id="pro-reviews-title">{tr("Don’t just take ")}<em>{tr("our word.")}</em></h2></div><span className="pro-review-note">{tr("A few words from our traveler reviews.")}</span></div><div className="pro-review-grid">{reviews.map(review => <figure className="pro-review-card" key={review.id}><Stars rating={Number(review.rating) || 5} /><blockquote lang={review.translated ? 'en' : 'bn'}>“{tr(review.quote)}”</blockquote><figcaption><span className="pro-review-avatar" aria-hidden="true">{review.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span><span><strong>{tr(review.name)}</strong><small>{tr(review.location)}</small></span></figcaption>{review.translated && <small className="pro-translation-note">{tr("Translated from Bangla")}</small>}</figure>)}</div></section>}
+        {reviews.length > 0 && <section className="pro-section pro-container pro-reviews" data-reveal id="traveler-stories" aria-labelledby="pro-reviews-title"><div className="pro-section-heading"><div><span className="pro-eyebrow">{tr("GOOD TRIPS. EVEN BETTER STORIES.")}</span><h2 id="pro-reviews-title">{tr("Don’t just take ")}<em>{tr("our word.")}</em></h2></div><span className="pro-review-note">{tr("A few words from our traveler reviews.")}</span></div><div className="pro-review-grid">{reviews.map(review => <figure className="pro-review-card" key={review.id}><Stars rating={Number(review.rating) || 5} /><blockquote lang={review.translated ? 'en' : 'bn'}>“{tr(review.quote)}”</blockquote><figcaption><span className="pro-review-avatar" aria-hidden="true">{review.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span><span><strong>{tr(review.name)}</strong><small>{tr(review.location)}</small></span></figcaption>{review.translated && <small className="pro-translation-note">{tr("Translated from Bangla")}</small>}</figure>)}</div></section>}
 
-        <section className="pro-section pro-container pro-faq-section" id="faqs" aria-labelledby="pro-faq-title"><div><span className="pro-eyebrow">{tr("A LITTLE CLARITY BEFORE YOU GO")}</span><h2 id="pro-faq-title">{tr("Curious?")}<br /><em>{tr("Good.")}</em></h2><p>{tr("Every great journey starts with a question.")}<br />{tr("Here are a few answers to get you going.")}</p><a className="pro-text-link" href={whatsapp} target="_blank" rel="noopener noreferrer">{tr("Ask us anything ")}<MessageCircle size={17} aria-hidden="true" /></a></div><div className="pro-faq-list">{faqs.map((faq, index) => <details key={faq.question}><summary><span><small>{tr("0")}{index + 1}</small>{tr(faq.question)}</span><span className="pro-faq-plus" aria-hidden="true">+</span></summary><p>{tr(faq.answer)}</p></details>)}</div></section>
+        <section className="pro-section pro-container pro-faq-section" data-reveal id="faqs" aria-labelledby="pro-faq-title"><div><span className="pro-eyebrow">{tr("A LITTLE CLARITY BEFORE YOU GO")}</span><h2 id="pro-faq-title">{tr("Curious?")}<br /><em>{tr("Good.")}</em></h2><p>{tr("Every great journey starts with a question.")}<br />{tr("Here are a few answers to get you going.")}</p><a className="pro-text-link" href={whatsapp} target="_blank" rel="noopener noreferrer">{tr("Ask us anything ")}<MessageCircle size={17} aria-hidden="true" /></a></div><div className="pro-faq-list">{faqs.map((faq, index) => <details key={faq.question}><summary><span><small>{tr("0")}{index + 1}</small>{tr(faq.question)}</span><span className="pro-faq-plus" aria-hidden="true">+</span></summary><p>{tr(faq.answer)}</p></details>)}</div></section>
 
-        <section className="pro-container pro-final-cta" aria-labelledby="pro-cta-title"><div className="pro-cta-inner"><Compass className="pro-cta-compass" size={200} strokeWidth={.5} aria-hidden="true" /><div><span className="pro-eyebrow">{tr("LESS SCROLLING. MORE STORIES.")}</span><h2 id="pro-cta-title">{tr("Your next “remember when”")}<br />{tr("is ")}<em>{tr("waiting.")}</em></h2><p>{tr("You bring the curiosity. We’ll help with the rest.")}</p></div><button className="pro-button" onClick={() => openPlanner()}>{tr("Let’s plan a trip ")}<ArrowUpRight size={20} aria-hidden="true" /></button></div></section>
+        <section className="pro-container pro-final-cta" data-reveal aria-labelledby="pro-cta-title"><div className="pro-cta-inner"><Compass className="pro-cta-compass" size={200} strokeWidth={.5} aria-hidden="true" /><div><span className="pro-eyebrow">{tr("LESS SCROLLING. MORE STORIES.")}</span><h2 id="pro-cta-title">{tr("Your next “remember when”")}<br />{tr("is ")}<em>{tr("waiting.")}</em></h2><p>{tr("You bring the curiosity. We’ll help with the rest.")}</p></div><button className="pro-button" onClick={() => openPlanner()}>{tr("Let’s plan a trip ")}<ArrowUpRight size={20} aria-hidden="true" /></button></div></section>
       </main>
 
       <footer className="pro-footer" id="contact"><div className="pro-container pro-footer-main"><div className="pro-footer-brand"><a href="#top" aria-label={tr("Rajshahi Tours and Travels home")}><Brand /></a><p>{tr("Local roots. Extraordinary journeys.")}<br />{tr("From Rajshahi, with a little more wonder.")}</p><a className="pro-footer-social" href={settings.facebookUrl || 'https://facebook.com/rajshahitoursandtravels'} target="_blank" rel="noopener noreferrer">{tr("Find our stories on Facebook ")}<ArrowUpRight size={14} aria-hidden="true" /></a></div><div><h3>{tr("A little exploring")}</h3><a href="#destinations">{tr("Destinations")}</a><a href="#journeys">{tr("Upcoming journeys")}</a><a href="#our-story">{tr("Our story")}</a><a href="#faqs">{tr("Good to know")}</a><a href={classicUrl}>{tr("Classic Edition ")}<span lang="bn">{tr("বাংলা")}</span> <ArrowUpRight size={12} aria-hidden="true" /></a></div><div><h3>{tr("Let’s talk travel")}</h3><a href={`tel:${telephone}`}><Phone size={14} aria-hidden="true" />{settings.phone || '01782250709'}</a><a href={`mailto:${settings.email || 'info@rajshahitours.com'}`}>{settings.email || 'info@rajshahitours.com'}</a><a href={whatsapp} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} aria-hidden="true" />{tr("Say hello on WhatsApp")}</a><span className="pro-office-hours" lang="bn">{tr(settings.officeHours)}</span></div><div className="pro-footer-office"><h3>{tr("Come say hello")}</h3><p>{tr("Sopura Mor, Rajshahi")}<br />{tr("Bangladesh")}</p><p className="pro-footer-address" lang="bn">{tr(settings.officeAddress)}</p><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.googleMapLocation || 'Sopura Mor, Rajshahi, Bangladesh')}`} target="_blank" rel="noopener noreferrer">{tr("Find us on the map ")}<ArrowUpRight size={14} aria-hidden="true" /></a></div></div><div className="pro-container pro-footer-bottom"><span>© {new Date().getFullYear()}{tr(" Rajshahi Tours & Travels")}</span><span>{tr(demoMode ? 'Static preview · Demo inquiries stay in this browser' : 'No online payment · Booking confirmed by our team')}</span><a href="#top">{tr("Back to top ")}<ArrowDown className="pro-up-arrow" size={13} aria-hidden="true" /></a></div></footer>
