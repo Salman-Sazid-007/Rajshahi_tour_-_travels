@@ -4,10 +4,22 @@ const express = require('express');
 const env = require('../config/env');
 const store = require('../services/store');
 const gsm7 = require('../utils/gsm7');
+const { todayDhaka } = require('../../../shared/transport.cjs');
+const transportStore = require('../services/transportStore');
 const { AppError, asyncHandler, sendResponse } = require('../utils/errors');
 const { signToken, authenticate, optionalAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Operational and customer records are staff-only; public tours use sanitized views.
+router.use(['/tours', '/bookings', '/inquiries', '/customers', '/staff', '/cms', '/network-contacts', '/meal-menus', '/accounting', '/sms', '/dashboard'], authenticate);
+router.use(['/tours', '/cms', '/staff'], (req, res, next) => req.method === 'GET' ? next() : requireRole('owner')(req, res, next));
+
+function publicTour(tour) {
+  if (!tour) return null;
+  const { bookings, totalCollected, totalBill, totalBillAmount, totalDue, budget, ...publicFields } = tour;
+  return { ...publicFields, guides: (tour.guides || []).map(({ id, name, avatar }) => ({ id, name, avatar })) };
+}
 
 // ── Health Check ─────────────────────────────────────────────────────────────
 
@@ -33,7 +45,7 @@ router.post(
   '/auth/login',
   asyncHandler(async (req, res) => {
     const { phoneOrRole, phone, role, password } = req.body || {};
-    const identifier = phoneOrRole || phone || role || 'owner';
+    const identifier = phoneOrRole || phone || role || '';
     const user = store.authenticateUser({ phoneOrRole: identifier, password });
     if (!user) {
       throw new AppError(401, 'INVALID_CREDENTIALS', 'ফোন নাম্বার অথবা পাসওয়ার্ড সঠিক নয়');
@@ -42,6 +54,7 @@ router.post(
     res.cookie(env.COOKIE_NAME, token, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: env.isProd,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     sendResponse(res, 200, `স্বাগতম, ${user.name}`, { user, token });
@@ -67,8 +80,8 @@ router.get(
   '/public/bootstrap',
   asyncHandler(async (_req, res) => {
     const cms = store.getCmsState();
-    const allPublished = store.listTours({ onlyPublished: true });
-    const today = '2026-10-02';
+    const allPublished = store.listTours({ onlyPublished: true }).map(publicTour);
+    const today = todayDhaka();
 
     const runningTours = allPublished.filter((t) => t.status === 'running');
     // Automatic date-based filtering: upcoming tours whose startDate has passed automatically move out
@@ -107,7 +120,7 @@ router.get(
     if (!tour) {
       throw new AppError(404, 'TOUR_NOT_FOUND', 'ট্যুরটি খুঁজে পাওয়া যায়নি');
     }
-    sendResponse(res, 200, 'ট্যুর বিস্তারিত', { tour });
+    sendResponse(res, 200, 'ট্যুর বিস্তারিত', { tour: publicTour(tour) });
   })
 );
 
@@ -446,20 +459,22 @@ router.post(
     if (!inq) {
       throw new AppError(404, 'INQUIRY_NOT_FOUND', 'কুয়েরি খুঁজে পাওয়া যায়নি');
     }
+    if (inq.seatRequestId) {
+      const created = transportStore.updateTourRequest(inq.seatRequestId, { status: 'confirmed' });
+      return sendResponse(res, 201, 'Seat request confirmed / সিটের অনুরোধ নিশ্চিত হয়েছে', created);
+    }
+    if (!req.body?.seatAssignments?.length) throw new AppError(400, 'SEATS_REQUIRED', 'Select seats in the bookings tab / বুকিং ট্যাবে সিট নির্বাচন করুন');
+    const created = store.createBooking({
+      tourId: req.body?.tourId || inq.tourId,
+      customerName: inq.name, customerPhone: inq.phone,
+      pax: req.body?.pax || inq.pax || 1,
+      seatAssignments: req.body.seatAssignments,
+      advancePaid: req.body?.advancePaid ?? 0,
+      packageId: req.body?.packageId, source: 'website', notes: inq.message,
+    });
     store.updateInquiry(inq.id, {
       status: 'converted',
       adminNote: req.body?.adminNote || 'বুকিংয়ে রূপান্তরিত করা হয়েছে',
-    });
-    const created = store.createBooking({
-      tourId: req.body?.tourId || inq.tourId || 'tour-sylhet-oct',
-      customerName: inq.name,
-      customerPhone: inq.phone,
-      pax: req.body?.pax || inq.pax || 1,
-      advancePaid: req.body?.advancePaid ?? 2000,
-      discount: req.body?.discount ?? 0,
-      paymentMethod: req.body?.paymentMethod || 'bkash',
-      source: 'website',
-      notes: inq.message,
     });
     sendResponse(res, 201, 'কুয়েরিটি সফলভাবে কনফার্ম বুকিংয়ে রূপান্তরিত হয়েছে!', created);
   })

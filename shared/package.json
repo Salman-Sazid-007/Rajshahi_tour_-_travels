@@ -1,0 +1,6 @@
+{
+  "name": "@rtt/transport",
+  "version": "1.0.0",
+  "private": true,
+  "main": "transport.cjs"
+}

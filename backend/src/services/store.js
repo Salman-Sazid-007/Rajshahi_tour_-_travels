@@ -1,15 +1,18 @@
 'use strict';
 
 const fs = require('fs');
+const env = require('../config/env');
+const { AppError } = require('../utils/errors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { buildDefaultData, calculateReturnDate } = require('../seed/defaultData');
 const { dispatchSms } = require('../channels/sms');
 const { toLocalBd } = require('../utils/phone');
 const gsm7 = require('../utils/gsm7');
+const transport = require('../../../shared/transport.cjs');
 
-const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
-const DATA_FILE = path.join(DATA_DIR, 'store.json');
+const DATA_FILE = process.env.RTT_DATA_FILE || path.resolve(__dirname, '..', '..', 'data', 'store.json');
+const DATA_DIR = path.dirname(DATA_FILE);
 
 let state = null;
 
@@ -22,6 +25,9 @@ function ensureLoaded() {
     try {
       const raw = fs.readFileSync(DATA_FILE, 'utf8');
       state = JSON.parse(raw);
+      const version = state.editionDataVersion;
+      transport.migrateEditionData(state);
+      if (version !== state.editionDataVersion) save();
       return state;
     } catch {
       // Fallback to default seed
@@ -37,7 +43,8 @@ function save() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2), 'utf8');
+  fs.writeFileSync(`${DATA_FILE}.tmp`, JSON.stringify(state, null, 2), 'utf8');
+  fs.renameSync(`${DATA_FILE}.tmp`, DATA_FILE);
 }
 
 function resetToDefault() {
@@ -70,7 +77,11 @@ function authenticateUser({ phoneOrRole, password }) {
       (u.email && u.email.toLowerCase() === q) ||
       u.id === q
   );
-  if (!user) return null;
+  if (!user || !user.isActive) return null;
+  if (env.isProd) {
+    if (['owner', 'guide', 'accountant'].includes(q) || String(user.phone).startsWith('000') || !password || ['demo', '123456', `${user.role}123`].includes(password)) return null;
+    return bcrypt.compareSync(password, user.passwordHash || '') ? sanitizeUser(user) : null;
+  }
   if (password && password !== 'demo') {
     const valid =
       password === '123456' ||
@@ -83,7 +94,7 @@ function authenticateUser({ phoneOrRole, password }) {
 
 function listDemoAccounts() {
   const s = ensureLoaded();
-  return s.users.map(sanitizeUser);
+  return env.isProd ? [] : s.users.map(sanitizeUser);
 }
 
 function listStaffWithHistory() {
@@ -124,12 +135,13 @@ function addStaff(payload) {
   const name = String(payload.name || '').trim();
   const phone = toLocalBd(payload.phone || '');
   const role = ['owner', 'accountant', 'guide'].includes(payload.role) ? payload.role : 'guide';
+  if (env.isProd && (String(payload.password || '').length < 12 || phone.startsWith('000') || !name || !phone)) throw new AppError(400, 'STAFF_SETUP', 'Real staff details and a password of at least 12 characters are required');
   const newStaff = {
     id,
     name,
     phone,
     email: payload.email || '',
-    passwordHash: bcrypt.hashSync(payload.password || '123456', 8),
+    passwordHash: bcrypt.hashSync(payload.password || '123456', 12),
     role,
     designation:
       payload.designation ||
@@ -149,6 +161,10 @@ function updateStaff(id, payload) {
   const idx = s.users.findIndex((u) => u.id === id);
   if (idx === -1) return null;
   const target = s.users[idx];
+  if (payload.password !== undefined) {
+    if (String(payload.password).length < 12) throw new AppError(400, 'WEAK_PASSWORD', 'Use a staff password of at least 12 characters');
+    target.passwordHash = bcrypt.hashSync(payload.password, 12);
+  }
   if (payload.name !== undefined) target.name = String(payload.name).trim();
   if (payload.phone !== undefined) target.phone = toLocalBd(payload.phone);
   if (payload.role !== undefined) target.role = payload.role;
@@ -166,7 +182,8 @@ function enrichTour(tour) {
   const s = ensureLoaded();
   const tourBookings = s.bookings.filter((b) => b.tourId === tour.id && b.status !== 'cancelled');
   const seatsBooked = tourBookings.reduce((sum, b) => sum + (Number(b.pax) || 1), 0);
-  const seatsRemaining = Math.max(0, (Number(tour.totalSeats) || 40) - seatsBooked);
+  const seatInfo = transport.getTourSeats(s, tour.id);
+  const seatsRemaining = seatInfo.seatsLeft;
   const totalBillAmount = tourBookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
   const totalCollected = tourBookings.reduce((sum, b) => sum + (Number(b.advancePaid) || 0), 0);
   const totalDue = tourBookings.reduce((sum, b) => sum + (Number(b.dueAmount) || 0), 0);
@@ -176,12 +193,16 @@ function enrichTour(tour) {
     .filter(Boolean)
     .map(sanitizeUser);
 
-  const prices = (tour.packages || []).map((p) => Number(p.price) || 0).filter((p) => p > 0);
+  const prices = (tour.packages || []).map((p) => Number(p.price) / Math.max(1, Number(p.personsPerUnit) || 1)).filter((p) => Number.isFinite(p) && p > 0);
   const startingPrice = prices.length ? Math.min(...prices) : 3800;
 
   return {
     ...tour,
     startingPrice,
+    seatsLeft: seatsRemaining,
+    bookedSeats: seatsBooked,
+    totalBill: totalBillAmount,
+    bus: seatInfo.bus,
     bookingsCount: tourBookings.length,
     seatsBooked,
     seatsRemaining,
@@ -258,7 +279,7 @@ function createTour(payload) {
   const id = `tour-${Date.now()}`;
   const days = Number(payload.days) || 2;
   const nights = Number(payload.nights) || 3;
-  const startDate = payload.startDate || '2026-10-15';
+  const startDate = payload.startDate || transport.todayDhaka();
   const returnDate = payload.returnDate || calculateReturnDate(startDate, days, nights);
   const totalSeats = Number(payload.totalSeats) || 40;
   const packages =
@@ -318,6 +339,9 @@ function createTour(payload) {
     returnDate,
     departureLocation: payload.departureLocation || 'সপুরা মোড়, রাজশাহী',
     totalSeats,
+    busId: payload.busId || '',
+    titleEn: String(payload.titleEn || '').trim(),
+    destinationEn: String(payload.destinationEn || '').trim(),
     coverImage: payload.coverImage || '/media/sajek-1.webp',
     posterImage: payload.posterImage || '/media/sajek-poster.svg',
     galleryImages:
@@ -337,6 +361,8 @@ function createTour(payload) {
     marketingCaption: payload.marketingCaption || '',
     budget,
   };
+
+  transport.validateTourBus(s, newTour);
 
   if (newTour.isFeatured) {
     s.tours.forEach((t) => {
@@ -407,6 +433,11 @@ function updateTour(id, payload) {
     packages,
     budget,
   };
+
+  transport.validateTourBus(s, updated);
+  const activeBookings = s.bookings.filter((b) => b.tourId === id && b.status !== "cancelled");
+  if (updated.busId !== current.busId && activeBookings.length) throw new transport.TransportError("BUS_IN_USE", "Cannot change bus with existing bookings / বুকিং থাকা ট্যুরের বাস বদলানো যাবে না", 409);
+  if (activeBookings.reduce((sum, b) => sum + b.pax, 0) > Number(updated.totalSeats)) throw new transport.TransportError("CAPACITY", "Capacity is below existing bookings / বুকিংয়ের চেয়ে সিট কম", 409);
 
   if (payload.isFeatured) {
     s.tours.forEach((t) => {
@@ -480,7 +511,9 @@ function buildBookingConfirmationSmsText(booking, tour) {
 
 function createBooking(payload) {
   const s = ensureLoaded();
-  const tour = s.tours.find((t) => t.id === payload.tourId) || s.tours[0];
+  const tour = s.tours.find((t) => t.id === payload.tourId);
+  if (!tour) throw new transport.TransportError('TOUR_NOT_FOUND', 'Tour not found / ট্যুর পাওয়া যায়নি', 404);
+  const assignments = transport.validateTourBooking(s, tour.id, payload);
   const phone = toLocalBd(payload.customerPhone || '');
   const pax = Math.max(1, Number(payload.pax) || 1);
 
@@ -518,14 +551,15 @@ function createBooking(payload) {
   const dueAmount = Math.max(0, totalAmount - advancePaid);
 
   const booking = {
-    id: `bk-${Date.now()}`,
+    id: transport.uid('bk'),
     bookingCode: `RTT-${Math.floor(300 + Math.random() * 699)}`,
     tourId: tour.id,
     customerId: payload.customerId || '',
     customerName: String(payload.customerName || 'ট্রাভেলার').trim(),
     customerPhone: phone,
     pax,
-    seatNumbers: payload.seatNumbers || '',
+    seatNumbers: assignments.length ? assignments.map((seat) => seat.id).join(', ') : payload.seatNumbers || '',
+    seatAssignments: assignments,
     packageId: selectedPkg.id,
     packageName: selectedPkg.name,
     packageUnitPrice,
@@ -564,7 +598,14 @@ function updateBooking(id, payload) {
     current.advancePaid += addPaid;
     current.dueAmount = Math.max(0, current.totalAmount - current.advancePaid);
   }
-  if (payload.seatNumbers !== undefined) current.seatNumbers = payload.seatNumbers;
+  if (payload.seatAssignments !== undefined) {
+    const assignments = transport.validateTourBooking(s, current.tourId, { ...current, ...payload }, current.id);
+    current.seatAssignments = assignments;
+    current.seatNumbers = assignments.map((seat) => seat.id).join(", ");
+  } else if (payload.seatNumbers !== undefined && s.tours.find((t) => t.id === current.tourId)?.busId) {
+    throw new transport.TransportError("SEATS_REQUIRED", "Use the seat map to update seats / সিট ম্যাপ ব্যবহার করুন");
+  }
+  if (payload.status === "confirmed" && current.status === "cancelled") transport.validateTourBooking(s, current.tourId, { ...current, ...payload }, current.id);
   if (payload.status !== undefined) current.status = payload.status;
   if (payload.notes !== undefined) current.notes = payload.notes;
   if (payload.paymentMethod !== undefined) current.paymentMethod = payload.paymentMethod;
@@ -1161,6 +1202,7 @@ function addMediaItem(payload) {
 
 module.exports = {
   ensureLoaded,
+  save,
   resetToDefault,
   calculateReturnDate,
   getUserById,
@@ -1175,6 +1217,7 @@ module.exports = {
   updateTour,
   deleteTour,
   createBooking,
+  syncCustomerFromBooking,
   updateBooking,
   getBookingById,
   listBookings,

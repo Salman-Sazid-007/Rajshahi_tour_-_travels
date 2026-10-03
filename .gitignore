@@ -7,3 +7,7 @@ dist/
 *.log
 .DS_Store
 backend/data/runtime-*.json
+backend/data/*.tmp
+frontend/test-results/
+frontend/playwright-report/
+.cache/

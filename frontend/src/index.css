@@ -1,8 +1,30 @@
 @import "tailwindcss";
 
+/* Keep Classic's layout while matching the supplied teal-and-orange identity. */
+@theme {
+  --color-emerald-950: #073e4d;
+  --color-emerald-900: #085366;
+  --color-emerald-800: #086a7d;
+  --color-emerald-700: #087e92;
+  --color-emerald-600: #0b93a4;
+  --color-emerald-500: #18adb5;
+  --color-emerald-400: #43c5ce;
+  --color-emerald-300: #80dce2;
+  --color-emerald-200: #b3e9ed;
+  --color-emerald-100: #d9f3f5;
+  --color-emerald-50: #f0fafb;
+  --color-amber-600: #c06b0e;
+  --color-amber-500: #f09224;
+  --color-amber-400: #ffb044;
+  --color-amber-300: #ffcc83;
+  --color-amber-200: #ffdfb0;
+  --color-amber-100: #ffedcf;
+  --color-amber-50: #fff6e7;
+}
+
 @layer base {
   body {
-    font-family: 'Hind Siliguri', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', 'Hind Siliguri', system-ui, -apple-system, sans-serif;
   }
 }
 

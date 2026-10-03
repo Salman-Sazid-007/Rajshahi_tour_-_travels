@@ -1,13 +1,14 @@
 {
   "name": "rajshahi-tours-backend",
   "version": "1.0.0",
-  "description": "Rajshahi Tours and Travels — Full-Stack Tour Management, CRM, SMS & Accounting Backend",
+  "description": "Rajshahi Tours and Travels \u2014 Full-Stack Tour Management, CRM, SMS & Accounting Backend",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node src/seed/resetSeed.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test ../tests/*.test.cjs",
+    "setup:owner": "node scripts/setup-owner.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

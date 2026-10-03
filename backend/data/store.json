@@ -3,7 +3,7 @@
     {
       "id": "staff-owner-1",
       "name": "সালমান সাজিদ (মালিক)",
-      "phone": "01711000001",
+      "phone": "00000000104",
       "email": "owner@rajshahitours.com",
       "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
       "role": "owner",
@@ -16,7 +16,7 @@
     {
       "id": "staff-accountant-1",
       "name": "তানভীর আহমেদ (একাউন্ট্যান্ট)",
-      "phone": "01711000002",
+      "phone": "00000000105",
       "email": "accounts@rajshahitours.com",
       "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
       "role": "accountant",
@@ -29,7 +29,7 @@
     {
       "id": "staff-guide-1",
       "name": "মনিরুল ইসলাম (মনিরুল ভাই)",
-      "phone": "01711000003",
+      "phone": "00000000106",
       "email": "monirul@rajshahitours.com",
       "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
       "role": "guide",
@@ -42,7 +42,7 @@
     {
       "id": "staff-guide-2",
       "name": "রাশেদুল ইসলাম",
-      "phone": "01711000004",
+      "phone": "00000000107",
       "email": "rashedul@rajshahitours.com",
       "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
       "role": "guide",
@@ -55,7 +55,7 @@
     {
       "id": "staff-guide-3",
       "name": "মেহেদী হাসান",
-      "phone": "01711000005",
+      "phone": "00000000108",
       "email": "mehedi@rajshahitours.com",
       "passwordHash": "$2a$08$94eU9iF7sED3RQ65R2UpwOoe79UvGzeJzr6Id6.OKbpiBmo.WZoE2",
       "role": "guide",
@@ -80,7 +80,7 @@
       "nights": 3,
       "returnDate": "2026-10-04",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 40,
+      "totalSeats": 46,
       "coverImage": "/media/sajek-2.jpg",
       "posterImage": "/media/sajek-poster.svg",
       "galleryImages": [
@@ -170,7 +170,10 @@
         "otherCost": 2000,
         "totalBudget": 115000,
         "minTravelersToBreakEven": 31
-      }
+      },
+      "busId": "bus-rajshahi-express",
+      "titleEn": "Sajek Valley & Khagrachhari — the kingdom of clouds",
+      "destinationEn": "Sajek Valley"
     },
     {
       "id": "tour-sylhet-oct",
@@ -185,7 +188,7 @@
       "nights": 3,
       "returnDate": "2026-11-02",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 40,
+      "totalSeats": 46,
       "coverImage": "/media/sylhet-1.jpg",
       "posterImage": "/media/sylhet-poster.svg",
       "galleryImages": [
@@ -283,7 +286,10 @@
         "otherCost": 2000,
         "totalBudget": 124000,
         "minTravelersToBreakEven": 33
-      }
+      },
+      "busId": "bus-rajshahi-express",
+      "titleEn": "Sylhet — Sadapathor, Jaflong & Ratargul",
+      "destinationEn": "Sylhet"
     },
     {
       "id": "tour-sajek-oct15",
@@ -298,7 +304,7 @@
       "nights": 3,
       "returnDate": "2026-10-18",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 40,
+      "totalSeats": 46,
       "coverImage": "/media/sajek-1.webp",
       "posterImage": "/media/sajek-poster.svg",
       "galleryImages": [
@@ -387,7 +393,10 @@
         "otherCost": 0,
         "totalBudget": 130000,
         "minTravelersToBreakEven": 35
-      }
+      },
+      "busId": "bus-rajshahi-express",
+      "titleEn": "Sajek Valley premium group tour — October special",
+      "destinationEn": "Sajek Valley"
     },
     {
       "id": "tour-coxs-nov",
@@ -402,7 +411,7 @@
       "nights": 4,
       "returnDate": "2026-11-16",
       "departureLocation": "সাহেব বাজার জিরো পয়েন্ট, রাজশাহী",
-      "totalSeats": 40,
+      "totalSeats": 46,
       "coverImage": "/media/coxs-1.jpg",
       "posterImage": "/media/coxs-poster.svg",
       "galleryImages": [
@@ -490,7 +499,10 @@
         "otherCost": 2500,
         "totalBudget": 166000,
         "minTravelersToBreakEven": 31
-      }
+      },
+      "busId": "bus-rajshahi-express",
+      "titleEn": "Cox’s Bazar, Inani & Marine Drive coastal escape",
+      "destinationEn": "Cox’s Bazar"
     },
     {
       "id": "tour-sep-sajek",
@@ -505,7 +517,7 @@
       "nights": 3,
       "returnDate": "2026-09-08",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 40,
+      "totalSeats": 46,
       "coverImage": "/media/sajek-3.jpg",
       "posterImage": "/media/sajek-poster.svg",
       "galleryImages": [
@@ -546,7 +558,10 @@
         "otherCost": 1500,
         "totalBudget": 113000,
         "minTravelersToBreakEven": 30
-      }
+      },
+      "busId": "bus-rajshahi-express",
+      "titleEn": "Sajek Valley autumn journey — September group",
+      "destinationEn": "Sajek Valley"
     },
     {
       "id": "tour-sep-sylhet",
@@ -561,7 +576,7 @@
       "nights": 3,
       "returnDate": "2026-09-17",
       "departureLocation": "সাহেব বাজার জিরো পয়েন্ট, রাজশাহী",
-      "totalSeats": 40,
+      "totalSeats": 46,
       "coverImage": "/media/sylhet-2.jpg",
       "posterImage": "/media/sylhet-poster.svg",
       "galleryImages": [
@@ -603,7 +618,10 @@
         "otherCost": 1000,
         "totalBudget": 129000,
         "minTravelersToBreakEven": 29
-      }
+      },
+      "busId": "bus-rajshahi-express",
+      "titleEn": "Sylhet & Tanguar Haor moonlit escape — September",
+      "destinationEn": "Sylhet & Sunamganj"
     },
     {
       "id": "tour-sep-sundarbans",
@@ -618,7 +636,7 @@
       "nights": 3,
       "returnDate": "2026-09-27",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 36,
+      "totalSeats": 46,
       "coverImage": "/media/sundarbans-1.jpg",
       "posterImage": "/media/sundarbans-poster.svg",
       "galleryImages": [
@@ -661,7 +679,10 @@
         "otherCost": 2500,
         "totalBudget": 175000,
         "minTravelersToBreakEven": 24
-      }
+      },
+      "busId": "bus-rajshahi-express",
+      "titleEn": "Sundarbans royal mangrove cruise — September",
+      "destinationEn": "Sundarbans"
     }
   ],
   "bookings": [
@@ -671,9 +692,9 @@
       "tourId": "tour-sajek-running",
       "customerId": "cust-2",
       "customerName": "ইসরাত জাহান",
-      "customerPhone": "01757950321",
+      "customerPhone": "00000000116",
       "pax": 2,
-      "seatNumbers": "A1, A2",
+      "seatNumbers": "A-1, A-2",
       "packageId": "pkg-sajek-run-share",
       "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
       "packageUnitPrice": 3800,
@@ -695,7 +716,17 @@
       "status": "confirmed",
       "notes": "রুইলুই পাড়া মেঘপল্লী রিসোর্ট রুম ২০২",
       "feedbackSubmitted": false,
-      "createdAt": "2026-09-26T10:20:00Z"
+      "createdAt": "2026-09-26T10:20:00Z",
+      "seatAssignments": [
+        {
+          "id": "A-1",
+          "gender": "unspecified"
+        },
+        {
+          "id": "A-2",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-run-2",
@@ -703,9 +734,9 @@
       "tourId": "tour-sajek-running",
       "customerId": "cust-3",
       "customerName": "মাহমুদুল হাসান সজীব",
-      "customerPhone": "01819445566",
+      "customerPhone": "00000000119",
       "pax": 2,
-      "seatNumbers": "B1, B2",
+      "seatNumbers": "B-1, B-2",
       "packageId": "pkg-sajek-run-couple",
       "packageName": "কাপল প্যাকেজ (২ জন এক রুমে)",
       "packageUnitPrice": 15000,
@@ -727,7 +758,17 @@
       "status": "confirmed",
       "notes": "কাপল ব্যালকনি রুম ১০১",
       "feedbackSubmitted": false,
-      "createdAt": "2026-09-27T14:00:00Z"
+      "createdAt": "2026-09-27T14:00:00Z",
+      "seatAssignments": [
+        {
+          "id": "B-1",
+          "gender": "unspecified"
+        },
+        {
+          "id": "B-2",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-run-3",
@@ -735,9 +776,9 @@
       "tourId": "tour-sajek-running",
       "customerId": "cust-5",
       "customerName": "আরিফুল ইসলাম রনি",
-      "customerPhone": "01677889900",
+      "customerPhone": "00000000103",
       "pax": 4,
-      "seatNumbers": "C1, C2, C3, C4",
+      "seatNumbers": "C-1, C-2, C-3, C-4",
       "packageId": "pkg-sajek-run-share",
       "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
       "packageUnitPrice": 3800,
@@ -753,7 +794,25 @@
       "status": "confirmed",
       "notes": "৪ জনের গ্রুপ রুম ২০৪",
       "feedbackSubmitted": false,
-      "createdAt": "2026-09-28T09:15:00Z"
+      "createdAt": "2026-09-28T09:15:00Z",
+      "seatAssignments": [
+        {
+          "id": "C-1",
+          "gender": "unspecified"
+        },
+        {
+          "id": "C-2",
+          "gender": "unspecified"
+        },
+        {
+          "id": "C-3",
+          "gender": "unspecified"
+        },
+        {
+          "id": "C-4",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-run-4",
@@ -761,9 +820,9 @@
       "tourId": "tour-sajek-running",
       "customerId": "cust-6",
       "customerName": "নুসরাত সুলতানা নিপা",
-      "customerPhone": "01788990011",
+      "customerPhone": "00000000117",
       "pax": 4,
-      "seatNumbers": "D1, D2, D3, D4",
+      "seatNumbers": "D-1, D-2, D-3, D-4",
       "packageId": "pkg-sajek-run-share",
       "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
       "packageUnitPrice": 3800,
@@ -779,7 +838,25 @@
       "status": "confirmed",
       "notes": "ফ্যামিলি রুম ২০৫",
       "feedbackSubmitted": false,
-      "createdAt": "2026-09-29T11:30:00Z"
+      "createdAt": "2026-09-29T11:30:00Z",
+      "seatAssignments": [
+        {
+          "id": "D-1",
+          "gender": "unspecified"
+        },
+        {
+          "id": "D-2",
+          "gender": "unspecified"
+        },
+        {
+          "id": "D-3",
+          "gender": "unspecified"
+        },
+        {
+          "id": "D-4",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-syl-1",
@@ -787,9 +864,9 @@
       "tourId": "tour-sylhet-oct",
       "customerId": "cust-1",
       "customerName": "তানিয়া পারভেজ",
-      "customerPhone": "01712345678",
+      "customerPhone": "00000000111",
       "pax": 5,
-      "seatNumbers": "A1, A2, A3, A4, B1",
+      "seatNumbers": "A-1, A-2, A-3, A-4, B-1",
       "packageId": "pkg-sylhet-share",
       "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
       "packageUnitPrice": 3800,
@@ -811,7 +888,29 @@
       "status": "confirmed",
       "notes": "তানিয়া পারভেজের সাথে মোট ৫ জন যাবেন (ভিডিও উদাহরণ)",
       "feedbackSubmitted": false,
-      "createdAt": "2026-10-01T11:00:00Z"
+      "createdAt": "2026-10-01T11:00:00Z",
+      "seatAssignments": [
+        {
+          "id": "A-1",
+          "gender": "unspecified"
+        },
+        {
+          "id": "A-2",
+          "gender": "unspecified"
+        },
+        {
+          "id": "A-3",
+          "gender": "unspecified"
+        },
+        {
+          "id": "A-4",
+          "gender": "unspecified"
+        },
+        {
+          "id": "B-1",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-syl-2",
@@ -819,9 +918,9 @@
       "tourId": "tour-sylhet-oct",
       "customerId": "cust-2",
       "customerName": "ইসরাত জাহান",
-      "customerPhone": "01757950321",
+      "customerPhone": "00000000116",
       "pax": 1,
-      "seatNumbers": "B2",
+      "seatNumbers": "B-2",
       "packageId": "pkg-sylhet-share",
       "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
       "packageUnitPrice": 3800,
@@ -843,7 +942,13 @@
       "status": "confirmed",
       "notes": "ফোন কলে বুকিং কনফার্ম ও বিকাশে ২০০০ টাকা এডভান্স",
       "feedbackSubmitted": false,
-      "createdAt": "2026-10-02T09:30:00Z"
+      "createdAt": "2026-10-02T09:30:00Z",
+      "seatAssignments": [
+        {
+          "id": "B-2",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-syl-3",
@@ -851,9 +956,9 @@
       "tourId": "tour-sylhet-oct",
       "customerId": "cust-4",
       "customerName": "ফারহানা ইয়াসমিন মিম",
-      "customerPhone": "01911223344",
+      "customerPhone": "00000000123",
       "pax": 4,
-      "seatNumbers": "C1, C2, C3, C4",
+      "seatNumbers": "C-1, C-2, C-3, C-4",
       "packageId": "pkg-sylhet-share",
       "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
       "packageUnitPrice": 3800,
@@ -869,7 +974,25 @@
       "status": "confirmed",
       "notes": "৪ জনের ফিমেল শেয়ারিং রুম",
       "feedbackSubmitted": false,
-      "createdAt": "2026-10-01T15:20:00Z"
+      "createdAt": "2026-10-01T15:20:00Z",
+      "seatAssignments": [
+        {
+          "id": "C-1",
+          "gender": "unspecified"
+        },
+        {
+          "id": "C-2",
+          "gender": "unspecified"
+        },
+        {
+          "id": "C-3",
+          "gender": "unspecified"
+        },
+        {
+          "id": "C-4",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-syl-4",
@@ -877,9 +1000,9 @@
       "tourId": "tour-sylhet-oct",
       "customerId": "cust-7",
       "customerName": "শাকিল আহমেদ",
-      "customerPhone": "01521445588",
+      "customerPhone": "00000000101",
       "pax": 4,
-      "seatNumbers": "D1, D2, D3, D4",
+      "seatNumbers": "D-1, D-2, D-3, D-4",
       "packageId": "pkg-sylhet-share",
       "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
       "packageUnitPrice": 3800,
@@ -895,7 +1018,25 @@
       "status": "confirmed",
       "notes": "রুয়েট ৪ জনের গ্রুপ",
       "feedbackSubmitted": false,
-      "createdAt": "2026-10-01T18:10:00Z"
+      "createdAt": "2026-10-01T18:10:00Z",
+      "seatAssignments": [
+        {
+          "id": "D-1",
+          "gender": "unspecified"
+        },
+        {
+          "id": "D-2",
+          "gender": "unspecified"
+        },
+        {
+          "id": "D-3",
+          "gender": "unspecified"
+        },
+        {
+          "id": "D-4",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-syl-5",
@@ -903,9 +1044,9 @@
       "tourId": "tour-sylhet-oct",
       "customerId": "cust-3",
       "customerName": "মাহমুদুল হাসান সজীব",
-      "customerPhone": "01819445566",
+      "customerPhone": "00000000119",
       "pax": 2,
-      "seatNumbers": "E1, E2",
+      "seatNumbers": "E-1, E-2",
       "packageId": "pkg-sylhet-couple",
       "packageName": "কাপল প্যাকেজ (২ জন এক রুমে)",
       "packageUnitPrice": 9500,
@@ -921,7 +1062,17 @@
       "status": "confirmed",
       "notes": "এসি কাপল রুম",
       "feedbackSubmitted": false,
-      "createdAt": "2026-10-02T08:00:00Z"
+      "createdAt": "2026-10-02T08:00:00Z",
+      "seatAssignments": [
+        {
+          "id": "E-1",
+          "gender": "unspecified"
+        },
+        {
+          "id": "E-2",
+          "gender": "unspecified"
+        }
+      ]
     },
     {
       "id": "bk-syl-6",
@@ -929,9 +1080,9 @@
       "tourId": "tour-sylhet-oct",
       "customerId": "cust-6",
       "customerName": "নুসরাত সুলতানা নিপা",
-      "customerPhone": "01788990011",
+      "customerPhone": "00000000117",
       "pax": 2,
-      "seatNumbers": "E3, E4",
+      "seatNumbers": "E-3, E-4",
       "packageId": "pkg-sylhet-share",
       "packageName": "শেয়ারিং প্যাকেজ (৪ জন এক রুমে - জনপ্রতি)",
       "packageUnitPrice": 3800,
@@ -947,7 +1098,17 @@
       "status": "confirmed",
       "notes": "অফিসে এসে এডভান্স দিয়েছেন",
       "feedbackSubmitted": false,
-      "createdAt": "2026-10-02T10:15:00Z"
+      "createdAt": "2026-10-02T10:15:00Z",
+      "seatAssignments": [
+        {
+          "id": "E-3",
+          "gender": "unspecified"
+        },
+        {
+          "id": "E-4",
+          "gender": "unspecified"
+        }
+      ]
     }
   ],
   "inquiries": [
@@ -956,7 +1117,7 @@
       "tourId": "tour-sajek-oct15",
       "tourTitle": "সাজেক ভ্যালি প্রিমিয়াম গ্রুপ ট্যুর (১৫ অক্টোবর)",
       "name": "রাকিবুল ইসলাম সৌরভ",
-      "phone": "01744556677",
+      "phone": "00000000115",
       "pax": 4,
       "preferredPackage": "সিঙ্গেল পারসন (৪ জন এক রুমে) - ৳৩,৮০০",
       "message": "ভাই আমরা ৪ জন বন্ধু ১৫ অক্টোবরের সাজেক ট্যুরে যেতে চাই, সামনের দিকে ৪টা সিট পাওয়া যাবে কি?",
@@ -969,7 +1130,7 @@
       "tourId": "tour-sylhet-oct",
       "tourTitle": "সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল (৩০ অক্টোবর)",
       "name": "সাদিয়া আফরিন মৌ",
-      "phone": "01855667788",
+      "phone": "00000000122",
       "pax": 2,
       "preferredPackage": "কাপল প্যাকেজ (২ জন এক রুমে) - ৳৯,৫০০",
       "message": "কাপল প্যাকেজে এসি রুম এবং বাসের সামনের সিট কনফার্ম করতে কত টাকা এডভান্স দিতে হবে?",
@@ -982,7 +1143,7 @@
       "tourId": "tour-coxs-nov",
       "tourTitle": "কক্সবাজার, ইনানী ও মেরিন ড্রাইভ সমুদ্র বিলাস ট্যুর",
       "name": "জুবায়ের হোসেন",
-      "phone": "01966778899",
+      "phone": "00000000124",
       "pax": 6,
       "preferredPackage": "শেয়ারিং প্যাকেজ - ৳৫,৫০০",
       "message": "ফ্যামিলি মেম্বার ৬ জন, কক্সবাজার ট্যুরে আলাদা ২টা রুম নিলে কত পড়বে?",
@@ -995,7 +1156,7 @@
       "tourId": "tour-sylhet-oct",
       "tourTitle": "সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল (৩০ অক্টোবর)",
       "name": "ইসরাত জাহান",
-      "phone": "01757950321",
+      "phone": "00000000116",
       "pax": 1,
       "preferredPackage": "শেয়ারিং প্যাকেজ - ৳৩,৮০০",
       "message": "৩০ অক্টোবরের সিলেট ট্যুরে ১টি সিট বুক করতে চাই।",
@@ -1008,7 +1169,7 @@
     {
       "id": "cust-1",
       "name": "তানিয়া পারভেজ",
-      "phone": "01712345678",
+      "phone": "00000000111",
       "email": "tania.parvez@gmail.com",
       "address": "উপশহর, রাজশাহী",
       "tags": [
@@ -1027,7 +1188,7 @@
     {
       "id": "cust-2",
       "name": "ইসরাত জাহান",
-      "phone": "01757950321",
+      "phone": "00000000116",
       "email": "israt.jahan@ru.ac.bd",
       "address": "কাজলা, মতিহার, রাজশাহী",
       "tags": [
@@ -1046,7 +1207,7 @@
     {
       "id": "cust-3",
       "name": "মাহমুদুল হাসান সজীব",
-      "phone": "01819445566",
+      "phone": "00000000119",
       "email": "sajib.rj@gmail.com",
       "address": "সাহেব বাজার, বোয়ালিয়া, রাজশাহী",
       "tags": [
@@ -1065,7 +1226,7 @@
     {
       "id": "cust-4",
       "name": "ফারহানা ইয়াসমিন মিম",
-      "phone": "01911223344",
+      "phone": "00000000123",
       "email": "farhana.mim@gmail.com",
       "address": "লক্ষ্মীপুর মোড়, রাজশাহী",
       "tags": [
@@ -1082,7 +1243,7 @@
     {
       "id": "cust-5",
       "name": "আরিফুল ইসলাম রনি",
-      "phone": "01677889900",
+      "phone": "00000000103",
       "email": "ariful.roni@gmail.com",
       "address": "তালাইমারি, রাজশাহী",
       "tags": [
@@ -1099,7 +1260,7 @@
     {
       "id": "cust-6",
       "name": "নুসরাত সুলতানা নিপা",
-      "phone": "01788990011",
+      "phone": "00000000117",
       "email": "nusrat.nipa@gmail.com",
       "address": "সপুরা, শাহ মখদুম, রাজশাহী",
       "tags": [
@@ -1118,7 +1279,7 @@
     {
       "id": "cust-7",
       "name": "শাকিল আহমেদ",
-      "phone": "01521445588",
+      "phone": "00000000101",
       "email": "shakil.ruet@gmail.com",
       "address": "রুয়েট গেট, রাজশাহী",
       "tags": [
@@ -1205,8 +1366,8 @@
       "role": "হোটেল ও রিসোর্ট মালিক",
       "category": "hotel",
       "destination": "সাজেক ভ্যালি",
-      "phone": "01819223344",
-      "altPhone": "01715223344",
+      "phone": "00000000118",
+      "altPhone": "00000000113",
       "address": "রুইলুই পাড়া, সাজেক ভ্যালি, রাঙ্গামাটি",
       "notes": "আমাদের রেগুলার পার্টনার রিসোর্ট। ১০টি রুম আগাম ব্লক করা যায়, মনিরুল ভাইয়ের রেফারেন্স দিলে স্পেশাল ডিসকাউন্ট পাওয়া যায়।",
       "rating": 4.9
@@ -1217,8 +1378,8 @@
       "role": "চাঁদের গাড়ি ও লোকাল ট্রান্সপোর্ট",
       "category": "transport",
       "destination": "খাগড়াছড়ি / সাজেক",
-      "phone": "01822889900",
-      "altPhone": "01556889900",
+      "phone": "00000000120",
+      "altPhone": "00000000102",
       "address": "শাপলা চত্বর জিপ স্ট্যান্ড, খাগড়াছড়ি সদর",
       "notes": "খাগড়াছড়ি থেকে বাঘাইহাট আর্মি এসকর্ট ও সাজেক রুটে অভিজ্ঞ ড্রাইভারদের গাড়ি দেন।",
       "rating": 4.8
@@ -1229,7 +1390,7 @@
       "role": "হোটেল মালিক / ম্যানেজার",
       "category": "hotel",
       "destination": "সিলেট",
-      "phone": "01712445566",
+      "phone": "00000000112",
       "altPhone": "",
       "address": "দরগাহ গেট, আম্বরখানা, সিলেট",
       "notes": "গ্রুপ ট্যুরের জন্য ৪ জনের রুম ও কাপল রুম এক ফ্লোরে পাওয়া যায়।",
@@ -1241,7 +1402,7 @@
       "role": "নৌকা ও ট্রলার মালিক",
       "category": "boat",
       "destination": "সিলেট",
-      "phone": "01733667788",
+      "phone": "00000000114",
       "altPhone": "",
       "address": "ভোলাগঞ্জ ১০ নং ঘাট ও রাতারগুল ঘাট, সিলেট",
       "notes": "৪০ জনের গ্রুপের জন্য একসাথে ৫টি ট্রলার ও নৌকা রেডি রাখেন।",
@@ -1253,8 +1414,8 @@
       "role": "বাস কাউন্টার ও রিজার্ভ ইনচার্জ",
       "category": "bus",
       "destination": "রাজশাহী (সপুরা মোড়)",
-      "phone": "01711334455",
-      "altPhone": "01711334456",
+      "phone": "00000000109",
+      "altPhone": "00000000110",
       "address": "সপুরা মোড় ও শিরোইল বাস টার্মিনাল, রাজশাহী",
       "notes": "৪০ সিটের এসি ও নন-এসি রিজার্ভ কোচ সরবরাহ করেন।",
       "rating": 4.9
@@ -1265,7 +1426,7 @@
       "role": "রেস্টুরেন্ট ও ক্যাটারিং",
       "category": "restaurant",
       "destination": "সাজেক ভ্যালি",
-      "phone": "01844556677",
+      "phone": "00000000121",
       "altPhone": "",
       "address": "হেলিপ্যাড সংলগ্ন, রুইলুই পাড়া, সাজেক",
       "notes": "ব্যাম্বু চিকেন ও ব্যাম্বু বিরিয়ানির অর্ডার কমপক্ষে ৪ ঘণ্টা আগে জানাতে হয়।",
@@ -1637,7 +1798,7 @@
     {
       "id": "sms-1",
       "recipientName": "ইসরাত জাহান",
-      "phone": "01757950321",
+      "phone": "00000000116",
       "message": "প্রিয় ইসরাত জাহান, সিলেট ভ্রমণ (৩০ অক্টোবর) ট্যুরে আপনার ১ জনের বুকিং কনফার্ম করা হয়েছে। মোট বিল: ৩,৬০০ টাকা, জমা দেওয়া হয়েছে: ২,০০০ টাকা, বাকি থাকলো: ১,৬০০ টাকা। ধন্যবাদ - রাজশাহী ট্যুরস এন্ড ট্রাভেলস।",
       "category": "booking_confirm",
       "tourId": "tour-sylhet-oct",
@@ -1652,7 +1813,7 @@
     {
       "id": "sms-2",
       "recipientName": "সাজেক ট্যুর গ্রুপ (১২ জন ট্রাভেলার)",
-      "phone": "01757950321, 01819445566, 01677889900, 01788990011",
+      "phone": "00000000116, 00000000119, 00000000103, 00000000117",
       "message": "দুপুরের খাবার রেডি, সবাই ডাইনিং এ চলে আসেন। - মনিরুল ভাই (রাজশাহী ট্যুরস এন্ড ট্রাভেলস)",
       "category": "running_tour",
       "tourId": "tour-sajek-running",
@@ -1667,7 +1828,7 @@
     {
       "id": "sms-3",
       "recipientName": "তানিয়া পারভেজ",
-      "phone": "01712345678",
+      "phone": "00000000111",
       "message": "প্রিয় তানিয়া পারভেজ, আমাদের সাজেক ভ্যালি ট্যুরটি আপনার কেমন লেগেছে? আপনার মূল্যবান মতামত দিন এই লিংকে: https://rajshahitours.com/feedback/bk-syl-1",
       "category": "feedback_link",
       "tourId": "tour-sep-sajek",
@@ -1688,8 +1849,8 @@
     "heroSubtitle": "সাজেক, সিলেট, কক্সবাজার, সেন্টমার্টিন ও সুন্দরবন সহ দেশের সেরা সব গন্তব্যে প্রতি মাসে আমাদের ফ্যামিলি ও গ্রুপ ট্যুর পরিচালিত হচ্ছে। আজই আপনার পছন্দের ট্যুরে সিট বুক করুন!",
     "heroBackgroundImage": "/media/sajek-2.jpg",
     "highlightedTourId": "tour-sylhet-oct",
-    "phone": "01711-987654",
-    "whatsapp": "8801711987654",
+    "phone": "01782250709",
+    "whatsapp": "8801782250709",
     "email": "info@rajshahitours.com",
     "officeAddress": "সপুরা মোড় (সাহেব বাজার জিরো পয়েন্ট শাখা সংলগ্ন), বোয়ালিয়া, রাজশাহী-৬১০০",
     "officeHours": "প্রতিদিন সকাল ১০:০০ টা – রাত ৯:০০ টা",
@@ -1700,6 +1861,62 @@
       "happyTravelers": "৪,৫০০+",
       "destinations": "২৫+",
       "averageRating": "৪.৯/৫.০"
+    },
+    "bkashNumber": "01782250709"
+  },
+  "buses": [
+    {
+      "id": "bus-rajshahi-express",
+      "name": "Rajshahi Express",
+      "nameBn": "রাজশাহী এক্সপ্রেস",
+      "registration": "",
+      "layout": "express46",
+      "status": "active",
+      "maintenanceFrom": "",
+      "maintenanceTo": "",
+      "maintenanceNote": "",
+      "services": [
+        {
+          "id": "rajshahi-dhaka",
+          "from": "Rajshahi",
+          "to": "Dhaka",
+          "departureTime": "",
+          "fare": 0,
+          "boardingPoint": "",
+          "enabled": false,
+          "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "id": "dhaka-rajshahi",
+          "from": "Dhaka",
+          "to": "Rajshahi",
+          "departureTime": "",
+          "fare": 0,
+          "boardingPoint": "",
+          "enabled": false,
+          "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      ]
     }
-  }
+  ],
+  "busTickets": [],
+  "busOverrides": [],
+  "tourSeatRequests": [],
+  "editionDataVersion": 3
 }

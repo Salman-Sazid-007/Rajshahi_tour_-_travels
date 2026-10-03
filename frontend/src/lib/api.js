@@ -12,7 +12,8 @@ export async function apiFetch(path, options = {}) {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
-  const token = localStorage.getItem('rtt_token');
+  let token;
+  try { token = localStorage.getItem('rtt_token'); } catch { /* storage unavailable */ }
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
@@ -50,6 +51,10 @@ export function formatTaka(amount) {
 
 export function formatBnDate(dateStr) {
   if (!dateStr) return '';
+  if (typeof document !== 'undefined' && document.documentElement.lang === 'en') {
+    const date = new Date(`${String(dateStr).slice(0, 10)}T12:00:00Z`);
+    return Number.isNaN(date.getTime()) ? dateStr : new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(date);
+  }
   const monthsBn = [
     'জানুয়ারি',
     'ফেব্রুয়ারি',

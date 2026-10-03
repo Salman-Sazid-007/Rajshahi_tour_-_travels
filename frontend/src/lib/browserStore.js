@@ -1,4 +1,5 @@
 import seedData from './seedData.json';
+import transport from '@rtt/transport';
 import { calculateReturnDateClient, formatBnDate, measureSmsClient } from './api';
 
 const STORAGE_KEY = 'rtt_github_pages_store_v1';
@@ -37,7 +38,9 @@ function getState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      const state = transport.migrateEditionData(JSON.parse(raw));
+      saveState(state);
+      return state;
     }
   } catch {
     // ignore
@@ -50,7 +53,9 @@ function getState() {
 function saveState(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
   } catch {
+    return false;
     // ignore quota errors
   }
 }
@@ -61,7 +66,8 @@ function enrichTour(state, tour) {
     (b) => b.tourId === tour.id && b.status !== 'cancelled'
   );
   const bookedSeats = tourBookings.reduce((sum, b) => sum + (Number(b.pax) || 0), 0);
-  const seatsLeft = Math.max(0, (Number(tour.totalSeats) || 40) - bookedSeats);
+  const seatInfo = transport.getTourSeats(state, tour.id);
+  const seatsLeft = seatInfo.seatsLeft;
   const totalBill = tourBookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
   const totalCollected = tourBookings.reduce((sum, b) => sum + (Number(b.advancePaid) || 0), 0);
   const totalDue = tourBookings.reduce((sum, b) => sum + (Number(b.dueAmount) || 0), 0);
@@ -81,6 +87,10 @@ function enrichTour(state, tour) {
     ...tour,
     bookedSeats,
     seatsLeft,
+    seatsBooked: bookedSeats,
+    seatsRemaining: seatsLeft,
+    totalBillAmount: totalBill,
+    bus: seatInfo.bus,
     bookingsCount: tourBookings.length,
     totalBill,
     totalCollected,
@@ -89,6 +99,12 @@ function enrichTour(state, tour) {
     startingPrice,
     bookings: tourBookings,
   };
+}
+
+function publicTour(tour) {
+  if (!tour) return null;
+  const { bookings, totalCollected, totalBill, totalBillAmount, totalDue, budget, ...publicFields } = tour;
+  return { ...publicFields, guides: (tour.guides || []).map(({ id, name, avatar }) => ({ id, name, avatar })) };
 }
 
 function getMonthlyAccounting(state, month = '2026-10') {
@@ -180,6 +196,22 @@ function buildBookingConfirmationSmsText(booking, tour) {
   return `প্রিয় ${booking.customerName}, ${tourName} (${startDateBn}) ${booking.pax} জনের বুকিং কনফার্ম করা হয়েছে। মোট ${booking.totalAmount} টাকা, জমা ${booking.advancePaid} টাকা, বাকি ${booking.dueAmount} টাকা। রওনা: ${tour?.departureLocation || 'রাজশাহী'}। ধন্যবাদ - রাজশাহী ট্যুরস এন্ড ট্রাভেলস।`;
 }
 
+function syncDemoCustomer(state, booking) {
+  state.customers ||= [];
+  const normalize = (phone) => String(phone || '').replace(/[ ()-]/g, '').replace(/^\+?880(?=1)/, '0');
+  const phone = normalize(booking.customerPhone);
+  let customer = state.customers.find((item) => normalize(item.phone) === phone);
+  if (!customer) { customer = { id: transport.uid('cust'), name: booking.customerName, phone, email: '', address: '', tags: ['new'], toursCompleted: [], notes: 'Added from a booking' }; state.customers.unshift(customer); }
+  customer.name = booking.customerName || customer.name;
+  const bookings = state.bookings.filter((item) => normalize(item.customerPhone) === phone && item.status !== 'cancelled');
+  customer.totalBookings = bookings.length;
+  customer.totalSpent = bookings.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0);
+  customer.totalDue = bookings.reduce((sum, item) => sum + Number(item.dueAmount || 0), 0);
+  customer.toursCompleted = [...new Set(bookings.map((item) => state.tours.find((tour) => tour.id === item.tourId)?.title).filter(Boolean))];
+  customer.tags ||= ['new'];
+  if (bookings.length >= 2 && !customer.tags.includes('repeat')) customer.tags = [...customer.tags.filter((tag) => tag !== 'new'), 'repeat'];
+}
+
 export async function handleBrowserApi(rawPath, options = {}) {
   const method = (options.method || 'GET').toUpperCase();
   const body = options.body ? JSON.parse(options.body) : {};
@@ -188,7 +220,36 @@ export async function handleBrowserApi(rawPath, options = {}) {
   const query = Object.fromEntries(url.searchParams.entries());
   const state = getState();
 
-  const respond = (payload) => deepMapMediaUrls({ success: true, ...payload });
+  const respond = (payload) => deepMapMediaUrls({ success: true, mode: "browser-demo", ...payload });
+
+  // Shared ticketing rules also power the explicitly local static demo.
+  if (pathname === '/api/public/bus-services' && method === 'GET') return respond({ services: transport.getBusServices(state, query) });
+  const seatMapMatch = pathname.match(/^\/api\/public\/tours\/([^/]+)\/seats$/);
+  if (seatMapMatch && method === 'GET') return respond(transport.getTourSeats(state, seatMapMatch[1]));
+  if (pathname === '/api/buses' && method === 'GET') return respond({ buses: state.buses, tickets: state.busTickets, overrides: state.busOverrides, tourSeatRequests: state.tourSeatRequests });
+  if (pathname === '/api/buses' && method === 'POST') { const bus = transport.saveBus(state, null, body); const persisted = saveState(state); return respond({ bus, persisted }); }
+  const busMatch = pathname.match(/^\/api\/buses\/([^/]+)$/);
+  if (busMatch && method === 'PUT') { const bus = transport.saveBus(state, busMatch[1], body); const persisted = saveState(state); return respond({ bus, persisted }); }
+  if (pathname === '/api/bus-overrides' && method === 'POST') { const overrides = transport.setBusOverride(state, body); const persisted = saveState(state); return respond({ overrides, persisted }); }
+  if (pathname === '/api/public/bus-tickets' && method === 'POST') { const ticket = transport.createBusTicket(state, body); const persisted = saveState(state); return respond({ ticket, persisted }); }
+  const ticketMatch = pathname.match(/^\/api\/bus-tickets\/([^/]+)$/);
+  if (ticketMatch && method === 'PATCH') { const ticket = transport.updateBusTicket(state, ticketMatch[1], body); const persisted = saveState(state); return respond({ ticket, persisted }); }
+  if (pathname === '/api/public/tour-seat-requests' && method === 'POST') { const request = transport.createTourSeatRequest(state, body); const persisted = saveState(state); return respond({ request, persisted }); }
+  const requestMatch = pathname.match(/^\/api\/tour-seat-requests\/([^/]+)$/);
+  if (requestMatch && method === 'PATCH') {
+    if (body.status === 'confirmed') { const result = transport.confirmTourSeatRequest(state, requestMatch[1]); syncDemoCustomer(state, result.booking); const persisted = saveState(state); return respond({ ...result, persisted }); }
+    const request = state.tourSeatRequests.find((item) => item.id === requestMatch[1]);
+    if (!request || body.status !== 'cancelled' || request.status === 'converted') throw new Error('Invalid request / ভুল অনুরোধ');
+    request.status = 'cancelled'; const inquiry = state.inquiries.find((item) => item.id === request.id); if (inquiry) inquiry.status = 'closed';
+    const persisted = saveState(state); return respond({ request, persisted });
+  }
+
+  if (pathname === '/api/auth/me' && method === 'GET') {
+    let token = ''; try { token = localStorage.getItem('rtt_token') || ''; } catch {}
+    return respond({ user: state.users.find((u) => token === `gh-pages-token-${u.id}`) || null });
+  }
+
+  if (pathname === '/api/auth/demo-accounts' && method === 'GET') return respond({ accounts: state.users });
 
   // 1. Auth
   if (pathname === '/api/auth/login' && method === 'POST') {
@@ -209,7 +270,7 @@ export async function handleBrowserApi(rawPath, options = {}) {
     const allPublished = (state.tours || [])
       .filter((t) => t.isPublished !== false)
       .map((t) => enrichTour(state, t));
-    const today = '2026-10-02';
+    const today = transport.todayDhaka();
     const runningTours = allPublished.filter((t) => t.status === 'running');
     const upcomingTours = allPublished.filter(
       (t) => t.status === 'upcoming' && String(t.startDate) >= today
@@ -238,8 +299,8 @@ export async function handleBrowserApi(rawPath, options = {}) {
   if (pathname === '/api/public/inquiries' && method === 'POST') {
     const inquiry = {
       id: `inq-${Date.now()}`,
-      tourId: body.tourId || 'tour-sylhet-oct',
-      tourTitle: body.tourTitle || 'সিলেট গ্রুপ ট্যুর',
+      tourId: body.tourId || '',
+      tourTitle: body.tourTitle || 'General trip inquiry',
       name: body.name,
       phone: body.phone,
       pax: Number(body.pax) || 2,
@@ -250,8 +311,9 @@ export async function handleBrowserApi(rawPath, options = {}) {
       createdAt: new Date().toISOString(),
     };
     state.inquiries = [inquiry, ...(state.inquiries || [])];
-    saveState(state);
+    const persisted = saveState(state);
     return respond({
+      persisted,
       message: 'আপনার বুকিং কুয়েরি সফলভাবে জমা হয়েছে! আমাদের প্রতিনিধি খুব শীঘ্রই আপনাকে কল করবেন।',
       inquiry,
     });
@@ -295,7 +357,7 @@ export async function handleBrowserApi(rawPath, options = {}) {
 
   // 3. Dashboard Overview
   if (pathname === '/api/dashboard/overview' && method === 'GET') {
-    const allTours = (state.tours || []).map((t) => enrichTour(state, t));
+    const allTours = (state.tours || []).map((t) => publicTour(enrichTour(state, t)));
     const runningTour = allTours.find((t) => t.status === 'running') || allTours[0];
     const upcomingTours = allTours.filter((t) => t.status === 'upcoming');
     const octAccounting = getMonthlyAccounting(state, '2026-10');
@@ -377,7 +439,7 @@ export async function handleBrowserApi(rawPath, options = {}) {
     if (query.status && query.status !== 'all') {
       tours = tours.filter((t) => t.status === query.status);
     }
-    return respond({ tours });
+    return respond({ tours: pathname === '/api/public/tours' ? tours.map(publicTour) : tours });
   }
 
   if (pathname === '/api/tours' && method === 'POST') {
@@ -395,6 +457,7 @@ export async function handleBrowserApi(rawPath, options = {}) {
       status: body.status || 'upcoming',
       isPublished: body.isPublished !== false,
     };
+    transport.validateTourBus(state, newTour);
     state.tours = [newTour, ...(state.tours || [])];
     saveState(state);
     return respond({
@@ -413,7 +476,10 @@ export async function handleBrowserApi(rawPath, options = {}) {
     if (method === 'PUT') {
       const idx = (state.tours || []).findIndex((t) => t.id === id);
       if (idx !== -1) {
-        state.tours[idx] = { ...state.tours[idx], ...body };
+        const updated = { ...state.tours[idx], ...body, id };
+        transport.validateTourBus(state, updated);
+        if (updated.busId !== state.tours[idx].busId && state.bookings.some((b) => b.tourId === id && b.status !== "cancelled")) throw new Error("Cannot change a booked bus / বুকিং থাকা বাস বদলানো যায় না");
+        state.tours[idx] = updated;
         saveState(state);
         return respond({
           message: 'ট্যুর তথ্য আপডেট করা হয়েছে!',
@@ -443,6 +509,7 @@ export async function handleBrowserApi(rawPath, options = {}) {
       (tour?.packages || []).find((p) => p.id === body.packageId) ||
       (tour?.packages || [])[0] || { id: 'pkg-default', name: 'রেগুলার প্যাকেজ', price: 3800 };
     const pax = Number(body.pax) || 1;
+    const assignments = transport.validateTourBooking(state, tour.id, { ...body, pax });
     const baseAmount =
       body.baseAmount !== undefined
         ? Number(body.baseAmount)
@@ -468,7 +535,8 @@ export async function handleBrowserApi(rawPath, options = {}) {
       packageId: pkg.id,
       packageName: body.packageName || pkg.name,
       roomType: body.roomType || pkg.roomType || 'non_ac',
-      seatNumbers: Array.isArray(body.seatNumbers) ? body.seatNumbers : [`B${pax}`],
+      seatNumbers: assignments.map((seat) => seat.id).join(', '),
+      seatAssignments: assignments,
       includeAddon: Boolean(body.includeAddon),
       addonAmount,
       baseAmount,
@@ -483,6 +551,7 @@ export async function handleBrowserApi(rawPath, options = {}) {
       createdAt: new Date().toISOString().slice(0, 10),
     };
     state.bookings = [newBooking, ...(state.bookings || [])];
+    syncDemoCustomer(state, newBooking);
     const smsPreview = buildBookingConfirmationSmsText(newBooking, tour);
     if (body.sendSmsImmediately) {
       state.smsLogs = [
@@ -608,12 +677,9 @@ export async function handleBrowserApi(rawPath, options = {}) {
   if (inqConvMatch && method === 'POST') {
     const inq = (state.inquiries || []).find((i) => i.id === inqConvMatch[1]);
     if (inq) {
-      inq.status = 'converted';
-      saveState(state);
+      if (inq.seatRequestId) { const result = transport.confirmTourSeatRequest(state, inq.seatRequestId); syncDemoCustomer(state, result.booking); saveState(state); return respond(result); }
+      throw new Error('Select seats in the bookings tab / বুকিং ট্যাবে সিট নির্বাচন করুন');
     }
-    return respond({
-      message: 'কুয়েরিটি সফলভাবে কনফার্ম বুকিংয়ে রূপান্তরিত হয়েছে!',
-    });
   }
 
   if (pathname === '/api/customers' && method === 'GET') {
@@ -845,5 +911,5 @@ export async function handleBrowserApi(rawPath, options = {}) {
     return respond({ member });
   }
 
-  return respond({});
+  throw new Error(`Unsupported demo endpoint: ${method} ${pathname}`);
 }

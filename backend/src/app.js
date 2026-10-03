@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const apiRouter = require('./routes/api');
+const transportRouter = require('./routes/transport');
 
 const app = express();
 
@@ -27,6 +28,7 @@ const publicDir = path.resolve(__dirname, '..', 'public');
 app.use(express.static(publicDir));
 
 // Mount API routes
+app.use('/api', transportRouter);
 app.use('/api', apiRouter);
 
 // Serve built frontend if available (single-origin preview + production support)
