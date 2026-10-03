@@ -50,11 +50,16 @@ jobs:
       - name: Add fonts, media and the SPA fallback
         run: node scripts/publish-pages.mjs --artifact-only
 
+      - name: Build the "Running locally" PDF guide
+        run: |
+          npm install --no-save pdfkit
+          node scripts/make-local-guide.mjs
+
       - name: Package the editions
         run: node scripts/package-editions.mjs
 
-      - name: Upload ZIPs to the release
-        run: gh release upload "$TAG" release-artifacts/*.zip --clobber
+      - name: Upload ZIPs and the guide to the release
+        run: gh release upload "$TAG" release-artifacts/*.zip release-artifacts/*.pdf --clobber
 
       - name: Verify the attached ZIPs download and unpack
         run: |
@@ -64,10 +69,14 @@ jobs:
             unzip -tq "$zip"
             echo "ok: $zip"
           done
-          # Each archive must carry a usable entry point.
+          # Each archive must carry a usable entry point and the guide.
           unzip -l rajshahi-tours-classic-*.zip | grep -q 'classic/index.html'
+          unzip -l rajshahi-tours-classic-*.zip | grep -q 'classic/Running-Locally.pdf'
           unzip -l rajshahi-tours-international-pro-*.zip | grep -q 'pro/index.html'
-          echo "Both archives download, pass an integrity test and contain index.html."
+          unzip -l rajshahi-tours-international-pro-*.zip | grep -q 'pro/Running-Locally.pdf'
+          # The standalone guide must be a real PDF.
+          head -c 5 Running-Locally.pdf | grep -q '%PDF'
+          echo "Archives and the PDF guide all download and verify."
 
       - name: Summarise
         run: |

@@ -6,7 +6,7 @@
 // Run `npm run build` (or `build:pages`) first so frontend/dist exists.
 // Output lands in release-artifacts/ at the repository root.
 
-import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, URL } from 'node:url';
 import path from 'node:path';
@@ -47,6 +47,16 @@ const pro = path.join(staging, 'pro');
 await cp(path.join(dist, 'pro'), pro, { recursive: true });
 await writeFile(path.join(pro, 'README.txt'), await readme('pro'));
 
+// Ship the setup guide inside both archives, and alongside them for upload.
+const guide = path.join(repo, 'Running-Locally.pdf');
+const hasGuide = await access(guide).then(() => true, () => false);
+if (hasGuide) {
+  await cp(guide, path.join(classic, 'Running-Locally.pdf'));
+  await cp(guide, path.join(pro, 'Running-Locally.pdf'));
+} else {
+  console.warn('Running-Locally.pdf not found — run `node scripts/make-local-guide.mjs` first.');
+}
+
 const archives = [
   { folder: 'classic', file: `rajshahi-tours-classic-v${version}.zip` },
   { folder: 'pro', file: `rajshahi-tours-international-pro-v${version}.zip` },
@@ -56,6 +66,8 @@ for (const { folder, file } of archives) {
   // -r recurse, -q quiet, -X drop platform extra fields for stable archives.
   execFileSync('zip', ['-rqX', path.join(outDir, file), folder], { cwd: staging, stdio: 'inherit' });
 }
+
+if (hasGuide) await cp(guide, path.join(outDir, 'Running-Locally.pdf'));
 
 await rm(staging, { recursive: true, force: true });
 
