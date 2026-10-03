@@ -54,8 +54,23 @@ jobs:
         run: node scripts/package-editions.mjs
 
       - name: Upload ZIPs to the release
+        run: gh release upload "$TAG" release-artifacts/*.zip --clobber
+
+      - name: Verify the attached ZIPs download and unpack
         run: |
-          gh release upload "$TAG" release-artifacts/*.zip --clobber
+          mkdir -p verify && cd verify
+          gh release download "$TAG" --clobber
+          for zip in *.zip; do
+            unzip -tq "$zip"
+            echo "ok: $zip"
+          done
+          # Each archive must carry a usable entry point.
+          unzip -l rajshahi-tours-classic-*.zip | grep -q 'classic/index.html'
+          unzip -l rajshahi-tours-international-pro-*.zip | grep -q 'pro/index.html'
+          echo "Both archives download, pass an integrity test and contain index.html."
+
+      - name: Summarise
+        run: |
           echo "### Attached to \`$TAG\`" >> "$GITHUB_STEP_SUMMARY"
           gh release view "$TAG" --json assets \
             --jq '.assets[] | "- \(.name) — \(.size) bytes"' >> "$GITHUB_STEP_SUMMARY"
