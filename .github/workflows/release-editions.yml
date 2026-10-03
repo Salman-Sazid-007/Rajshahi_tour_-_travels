@@ -1,0 +1,90 @@
+name: Attach edition ZIPs to a release
+
+# Builds Classic and International Pro, then uploads both ZIPs as release
+# assets. Asset uploads must go through uploads.github.com, so this runs on
+# a GitHub runner rather than from a local checkout.
+
+on:
+  push:
+    branches: ['arena/01a100db-rajshahi-tour-travels']
+    paths:
+      - '.github/workflows/release-editions.yml'
+      - 'scripts/package-editions.mjs'
+      - 'scripts/release-readme/**'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the ZIPs to
+        required: true
+        default: v1.0.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-editions
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TAG: ${{ inputs.tag || 'v1.0.0' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Build both editions
+        run: npm run build
+
+      - name: Add fonts, media and the SPA fallback
+        run: node scripts/publish-pages.mjs --artifact-only
+
+      - name: Build the PDF guides (English + Bangla)
+        run: |
+          npm install --no-save pdfkit @expo-google-fonts/hind-siliguri
+          node scripts/make-local-guide.mjs
+          node scripts/make-bangla-guide.mjs
+
+      - name: Package the editions
+        run: node scripts/package-editions.mjs
+
+      - name: Upload ZIPs and the guide to the release
+        run: gh release upload "$TAG" release-artifacts/*.zip release-artifacts/*.pdf --clobber
+
+      - name: Verify the attached ZIPs download and unpack
+        run: |
+          mkdir -p verify && cd verify
+          gh release download "$TAG" --clobber
+          for zip in *.zip; do
+            unzip -tq "$zip"
+            echo "ok: $zip"
+          done
+          # Each archive must carry a usable entry point and both guides.
+          for pair in "classic:rajshahi-tours-classic" "pro:rajshahi-tours-international-pro"; do
+            dir="${pair%%:*}"; zip="${pair##*:}"
+            unzip -l "$zip"-*.zip | grep -q "$dir/index.html"
+            unzip -l "$zip"-*.zip | grep -q "$dir/Running-Locally.pdf"
+            unzip -l "$zip"-*.zip | grep -q "$dir/Bangla-Guide.pdf"
+          done
+          # The standalone guides must be real PDFs.
+          for pdf in Running-Locally.pdf Bangla-Guide.pdf; do
+            head -c 5 "$pdf" | grep -q '%PDF'
+          done
+          echo "Archives and both PDF guides download and verify."
+
+      - name: Summarise
+        run: |
+          echo "### Attached to \`$TAG\`" >> "$GITHUB_STEP_SUMMARY"
+          gh release view "$TAG" --json assets \
+            --jq '.assets[] | "- \(.name) — \(.size) bytes"' >> "$GITHUB_STEP_SUMMARY"

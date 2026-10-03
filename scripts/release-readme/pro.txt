@@ -1,0 +1,43 @@
+Rajshahi Tours & Travels — International Pro Edition (static build)
+===================================================================
+
+Repository: Salman-Sazid-007/Rajshahi_tour_-_travels
+Edition:    International Pro (editorial, responsive experience)
+Build:      __BUILD__
+
+Contents
+--------
+  index.html    Entry point
+  assets/       Hashed JS, CSS, destination imagery and local font files
+  licenses/     Font licences (Cormorant Garamond, DM Sans, Hind Siliguri, Inter)
+
+Features
+--------
+  * Destination search and journey filters
+  * Shortlists and package planning
+  * Accessible inquiry dialogs
+  * Persistent বাংলা / EN language switch
+
+How to run
+----------
+This edition is fully self-contained — its imagery is bundled into
+assets/ — so it can be served from any path, including a sub-folder.
+
+  cd pro
+  python3 -m http.server 8080
+
+Then open http://localhost:8080/
+
+Opening index.html straight from the file system will not work, because
+the browser blocks ES module loading over file:// URLs.
+
+Notes
+-----
+* The "Classic edition" link in the header is driven by the
+  <meta name="classic-edition-url"> tag in index.html. It points at "../"
+  by default; edit it to match wherever you deploy the Classic build.
+* This is a browser-only build. With no API reachable it falls back to
+  local demo storage, so bookings are not persisted anywhere shared.
+* All bKash payment handling in this project is MANUAL. Entering a
+  transaction reference does not charge money, verify a payment, or
+  confirm a reservation.
