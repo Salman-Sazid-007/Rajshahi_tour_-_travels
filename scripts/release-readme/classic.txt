@@ -1,0 +1,39 @@
+Rajshahi Tours & Travels — Classic Edition (static build)
+=========================================================
+
+Repository: Salman-Sazid-007/Rajshahi_tour_-_travels
+Edition:    Classic (original main-site layout)
+Build:      __BUILD__
+
+Contents
+--------
+  index.html    Entry point
+  404.html      SPA fallback copy of index.html
+  assets/       Hashed JS, CSS and local Bangla/English font files
+  media/        Destination photography and posters
+  licenses/     Font licences (Cormorant Garamond, DM Sans, Hind Siliguri, Inter)
+  .nojekyll     Prevents GitHub Pages from stripping underscore paths
+
+How to run
+----------
+Serve the folder as the ROOT of a site. The Classic bundle loads
+photography from absolute "/media/..." paths, so it must be served at the
+domain root rather than from a sub-folder.
+
+  cd classic
+  python3 -m http.server 8080
+
+Then open http://localhost:8080/
+
+Opening index.html straight from the file system will not work, because
+the browser blocks ES module loading over file:// URLs.
+
+Notes
+-----
+* This is a browser-only build. With no API reachable it falls back to
+  local demo storage, so bookings are not persisted anywhere shared.
+* To use the real shared API, run the Express backend from the repository
+  and let it serve this build instead.
+* All bKash payment handling in this project is MANUAL. Entering a
+  transaction reference does not charge money, verify a payment, or
+  confirm a reservation.

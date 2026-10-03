@@ -2,7 +2,7 @@
   "name": "rajshahi-tour-and-travels",
   "version": "1.0.0",
   "private": true,
-  "description": "Rajshahi Tours & Travels \u2014 Full-Stack Tour Management, CRM, SMS & Accounting Platform",
+  "description": "Rajshahi Tours & Travels — Full-Stack Tour Management, CRM, SMS & Accounting Platform",
   "scripts": {
     "setup": "cd backend && npm install && cd ../frontend && npm install && npm run build",
     "build": "cd frontend && npm run build",
@@ -11,6 +11,7 @@
     "test": "node --test tests/*.test.cjs",
     "build:pages": "npm run build && node scripts/publish-pages.mjs",
     "test:e2e": "cd frontend && npx playwright test",
-    "preview": "node scripts/serve-pages.mjs"
+    "preview": "node scripts/serve-pages.mjs",
+    "package:editions": "npm run build && node scripts/publish-pages.mjs --artifact-only && node scripts/package-editions.mjs"
   }
 }

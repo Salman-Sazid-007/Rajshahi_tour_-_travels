@@ -11,3 +11,4 @@ backend/data/*.tmp
 frontend/test-results/
 frontend/playwright-report/
 .cache/
+release-artifacts/
