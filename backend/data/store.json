@@ -80,7 +80,7 @@
       "nights": 3,
       "returnDate": "2026-10-04",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 46,
+      "totalSeats": 40,
       "coverImage": "/media/sajek-2.jpg",
       "posterImage": "/media/sajek-poster.svg",
       "galleryImages": [
@@ -188,7 +188,7 @@
       "nights": 3,
       "returnDate": "2026-11-02",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 46,
+      "totalSeats": 40,
       "coverImage": "/media/sylhet-1.jpg",
       "posterImage": "/media/sylhet-poster.svg",
       "galleryImages": [
@@ -304,7 +304,7 @@
       "nights": 3,
       "returnDate": "2026-10-18",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 46,
+      "totalSeats": 40,
       "coverImage": "/media/sajek-1.webp",
       "posterImage": "/media/sajek-poster.svg",
       "galleryImages": [
@@ -411,7 +411,7 @@
       "nights": 4,
       "returnDate": "2026-11-16",
       "departureLocation": "সাহেব বাজার জিরো পয়েন্ট, রাজশাহী",
-      "totalSeats": 46,
+      "totalSeats": 40,
       "coverImage": "/media/coxs-1.jpg",
       "posterImage": "/media/coxs-poster.svg",
       "galleryImages": [
@@ -517,7 +517,7 @@
       "nights": 3,
       "returnDate": "2026-09-08",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 46,
+      "totalSeats": 40,
       "coverImage": "/media/sajek-3.jpg",
       "posterImage": "/media/sajek-poster.svg",
       "galleryImages": [
@@ -576,7 +576,7 @@
       "nights": 3,
       "returnDate": "2026-09-17",
       "departureLocation": "সাহেব বাজার জিরো পয়েন্ট, রাজশাহী",
-      "totalSeats": 46,
+      "totalSeats": 40,
       "coverImage": "/media/sylhet-2.jpg",
       "posterImage": "/media/sylhet-poster.svg",
       "galleryImages": [
@@ -636,7 +636,7 @@
       "nights": 3,
       "returnDate": "2026-09-27",
       "departureLocation": "সপুরা মোড়, রাজশাহী",
-      "totalSeats": 46,
+      "totalSeats": 40,
       "coverImage": "/media/sundarbans-1.jpg",
       "posterImage": "/media/sundarbans-poster.svg",
       "galleryImages": [
@@ -1870,7 +1870,7 @@
       "name": "Rajshahi Express",
       "nameBn": "রাজশাহী এক্সপ্রেস",
       "registration": "",
-      "layout": "express46",
+      "layout": "standard40",
       "status": "active",
       "maintenanceFrom": "",
       "maintenanceTo": "",
@@ -1918,5 +1918,5 @@
   "busTickets": [],
   "busOverrides": [],
   "tourSeatRequests": [],
-  "editionDataVersion": 3
+  "editionDataVersion": 4
 }

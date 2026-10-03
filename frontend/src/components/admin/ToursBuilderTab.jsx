@@ -59,10 +59,12 @@ function buildInitialDraft(tour = null) {
     nights,
     returnDate: calculateReturnDateClient(startDate, days, nights),
     departureLocation: 'সপুরা মোড়, রাজশাহী',
-    totalSeats: 46,
+    totalSeats: 40,
     busId: 'bus-rajshahi-express',
     titleEn: '',
     destinationEn: '',
+    description: '',
+    descriptionEn: '',
     coverImage: '/media/sajek-1.webp',
     posterImage: '/media/sajek-poster.svg',
     galleryImages: ['/media/sajek-1.webp', '/media/sajek-2.jpg', '/media/sajek-3.jpg'],
@@ -422,6 +424,26 @@ export default function ToursBuilderTab({
                 </div>
               </div>
 
+              <section className="rtt-tour-description-editor rounded-2xl border border-cyan-200 bg-cyan-50/40 p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="rtt-description-editor-icon"><Sparkles className="h-4 w-4" /></span>
+                  <div>
+                    <h4 className="text-sm font-black text-cyan-950">{t('Public tour description', 'ট্যুরের বিস্তারিত বিবরণ')}</h4>
+                    <p className="text-xs text-cyan-900/80 mt-1 leading-relaxed">{t('Write the complete overview travelers should see after opening this tour: what is included, accommodation, transport, highlights and any important notes. This appears in the tour details on both website editions.', 'ট্যুরে ক্লিক করার পর যাত্রীরা যে বিস্তারিত দেখবেন তা লিখুন—কী অন্তর্ভুক্ত, থাকা, যাতায়াত, আকর্ষণ ও জরুরি তথ্য। এটি ওয়েবসাইটের দুই সংস্করণেই দেখাবে।')}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label className="block text-xs font-bold text-slate-700">{t('Tour description in Bangla', 'ট্যুরের বিবরণ (বাংলা)')}
+                    <textarea aria-label={t('Tour description in Bangla', 'ট্যুরের বিবরণ (বাংলা)')} rows={6} maxLength={5000} value={draft.description || ''} onChange={event => setDraft({ ...draft, description: event.target.value })} placeholder={t('Describe what travelers can expect on this tour…', 'এই ট্যুরে যাত্রীরা কী কী অভিজ্ঞতা পাবেন তা লিখুন…')} className="rtt-tour-description-input mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm leading-relaxed" />
+                    <span className="rtt-description-char-count">{(draft.description || '').length}/5000</span>
+                  </label>
+                  <label className="block text-xs font-bold text-slate-700">{t('Tour description in English', 'ট্যুরের বিবরণ (ইংরেজি)')}
+                    <textarea aria-label={t('Tour description in English', 'ট্যুরের বিবরণ (ইংরেজি)')} rows={6} maxLength={5000} value={draft.descriptionEn || ''} onChange={event => setDraft({ ...draft, descriptionEn: event.target.value })} placeholder={t('Add an English overview for international travelers…', 'বিদেশি যাত্রীদের জন্য ইংরেজিতে বিবরণ লিখুন…')} className="rtt-tour-description-input mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-sm leading-relaxed" />
+                    <span className="rtt-description-char-count">{(draft.descriptionEn || '').length}/5000</span>
+                  </label>
+                </div>
+              </section>
+
               {/* Section 2: Schedule & Auto Return Date Calculation */}
               <div className="rounded-2xl border border-emerald-200 p-5 space-y-4 bg-emerald-50/40">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -459,7 +481,7 @@ export default function ToursBuilderTab({
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">{tr("মোট সিট (বাস)")}</label>
-                    <input type="number" min={1} max={transport.seatIds(buses.find(bus => bus.id === draft.busId)?.layout || "express46").length} value={draft.totalSeats} onChange={e => setDraft({
+                    <input type="number" min={1} max={transport.seatIds(buses.find(bus => bus.id === draft.busId)?.layout || "standard40").length} value={draft.totalSeats} onChange={e => setDraft({
                   ...draft,
                   totalSeats: Number(e.target.value) || 40
                 })} className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold" />

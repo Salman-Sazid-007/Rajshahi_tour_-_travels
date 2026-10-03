@@ -76,6 +76,9 @@ export function presentTour(tour) {
   const translated = source?.title === tour.title ? translations[tour.id] : null;
   const isBangla = currentLanguage() === 'bn';
   const translatedItinerary = translated && JSON.stringify(source.itinerary) === JSON.stringify(tour.itinerary);
+  const customDescription = isBangla
+    ? tour.description || tour.descriptionEn || ''
+    : tour.descriptionEn || (tour.description ? translateText(tour.description, 'en') : '');
   const prices = (tour.packages || [])
     .filter((pkg) => Number(pkg.price) > 0)
     .map((pkg) => Number(pkg.price) / Math.max(1, Number(pkg.personsPerUnit) || 1));
@@ -83,7 +86,7 @@ export function presentTour(tour) {
     ...tour,
     destinationInfo: destination,
     displayTitle: isBangla ? tour.title : tour.titleEn || translated?.title || translateText(tour.title, 'en'),
-    description: translated?.description || 'A locally guided journey from Rajshahi. Explore the itinerary and talk to our team about the right package for you.',
+    description: customDescription || translated?.description || 'A locally guided journey from Rajshahi. Explore the itinerary and talk to our team about the right package for you.',
     displayItinerary: !isBangla && translatedItinerary
       ? translated.itinerary
       : (tour.itinerary || []).map((day) => ({ title: day.dateLabel, spots: day.spots, details: day.details, original: true })),

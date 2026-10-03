@@ -21,7 +21,7 @@ function todayDhaka(now = new Date()) {
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value || '') && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
 }
-function seatIds(layout = 'express46') {
+function seatIds(layout = 'standard40') {
   const rows = 'ABCDEFGHIJ'.split('').flatMap((row) => [1, 2, 3, 4].map((n) => `${row}-${n}`));
   return layout === 'express46' ? ['1', ...rows, ...[1, 2, 3, 4, 5].map((n) => `K-${n}`)] : rows;
 }
@@ -32,7 +32,7 @@ function normalizeSeat(id) {
 function defaultBus() {
   return {
     id: 'bus-rajshahi-express', name: 'Rajshahi Express', nameBn: 'রাজশাহী এক্সপ্রেস',
-    registration: '', layout: 'express46', status: 'active', maintenanceFrom: '', maintenanceTo: '',
+    registration: '', layout: 'standard40', status: 'active', maintenanceFrom: '', maintenanceTo: '',
     maintenanceNote: '', services: [
       { id: 'rajshahi-dhaka', from: 'Rajshahi', to: 'Dhaka', departureTime: '', fare: 0, boardingPoint: '', enabled: false, days: [0,1,2,3,4,5,6] },
       { id: 'dhaka-rajshahi', from: 'Dhaka', to: 'Rajshahi', departureTime: '', fare: 0, boardingPoint: '', enabled: false, days: [0,1,2,3,4,5,6] },
@@ -198,7 +198,7 @@ function validateTourBooking(state, tourId, payload, excludeId = null, now = Dat
   const seats = validateSeats(payload.seatAssignments, seatIds(bus.layout), bookedTourSeats(state, tourId, excludeId, now, payload.seatRequestId), payload.pax);
   const bookedPax = (state.bookings || []).filter((item) => item.tourId === tourId && item.id !== excludeId && item.status !== 'cancelled').reduce((sum, item) => sum + Number(item.pax || 0), 0);
   const requestsPax = state.tourSeatRequests.filter((r) => r.tourId === tourId && r.id !== payload.seatRequestId && activeRequest(r, now)).reduce((sum, r) => sum + r.seats.length, 0);
-  if (bookedPax + requestsPax + seats.length > Math.min(Number(tour.totalSeats) || 46, seatIds(bus.layout).length)) fail('CAPACITY', 'Not enough seats / পর্যাপ্ত সিট নেই', 409);
+  if (bookedPax + requestsPax + seats.length > Math.min(Number(tour.totalSeats) || 40, seatIds(bus.layout).length)) fail('CAPACITY', 'Not enough seats / পর্যাপ্ত সিট নেই', 409);
   return seats;
 }
 function confirmTourSeatRequest(state, id, now = new Date()) {
@@ -299,7 +299,8 @@ const legacyPhoneMap = {
 };
 function migrateEditionData(state) {
   ensureTransport(state);
-  if (state.editionDataVersion === 3) return state;
+  const currentVersion = Number(state.editionDataVersion) || 0;
+  if (currentVersion >= 4) return state;
   const visit = (value) => {
     if (typeof value === 'string') { for (const [old, next] of Object.entries(legacyPhoneMap)) value = value.split(old).join(next); return value; }
     if (Array.isArray(value)) return value.map(visit);
@@ -310,7 +311,10 @@ function migrateEditionData(state) {
   state.siteSettings = { ...state.siteSettings, phone: CONTACT, whatsapp: WHATSAPP, bkashNumber: CONTACT };
   const seededTours = ['tour-sajek-running','tour-sylhet-oct','tour-sajek-oct15','tour-coxs-nov','tour-sep-sajek','tour-sep-sylhet','tour-sep-sundarbans'];
   for (const tour of state.tours || []) {
-    if (seededTours.includes(tour.id) && tour.busId === undefined) { tour.busId = 'bus-rajshahi-express'; tour.totalSeats = 46; }
+    if (seededTours.includes(tour.id) && tour.busId === undefined) {
+      tour.busId = 'bus-rajshahi-express';
+      tour.totalSeats = Math.min(Number(tour.totalSeats) || 40, 40);
+    }
   }
   for (const booking of state.bookings || []) {
     if (!booking.seatAssignments) {
@@ -319,12 +323,33 @@ function migrateEditionData(state) {
       booking.seatNumbers = booking.seatAssignments.map((s) => s.id).join(', ');
     }
   }
+
+  // Move the original demo/reference coach to the requested 40-seat 2+2 map.
+  // If existing reservations use the six seats absent from that layout, keep
+  // the legacy map so an upgrade never silently invalidates an assigned seat.
+  const referenceBus = (state.buses || []).find((bus) => bus.id === 'bus-rajshahi-express');
+  if (referenceBus?.layout === 'express46') {
+    const valid40 = new Set(seatIds('standard40'));
+    const assignedTourIds = new Set((state.tours || []).filter((tour) => tour.busId === referenceBus.id).map((tour) => tour.id));
+    const assignedSeats = [
+      ...(state.busTickets || []).filter((ticket) => ticket.busId === referenceBus.id).flatMap((ticket) => ticket.seats || []),
+      ...(state.bookings || []).filter((booking) => assignedTourIds.has(booking.tourId)).flatMap((booking) => booking.seatAssignments || []),
+      ...(state.tourSeatRequests || []).filter((request) => assignedTourIds.has(request.tourId)).flatMap((request) => request.seats || []),
+    ].map((seat) => normalizeSeat(typeof seat === 'string' ? seat : seat?.id));
+    if (assignedSeats.every((seat) => valid40.has(seat))) {
+      referenceBus.layout = 'standard40';
+      for (const tour of state.tours || []) {
+        if (tour.busId === referenceBus.id) tour.totalSeats = Math.min(Number(tour.totalSeats) || 40, 40);
+      }
+    }
+  }
+
   const translations = {"tour-sajek-running":{"title":"সাজেক ভ্যালি ও খাগড়াছড়ি মেঘের রাজ্য গ্রুপ ট্যুর","titleEn":"Sajek Valley & Khagrachhari — the kingdom of clouds","destinationEn":"Sajek Valley"},"tour-sylhet-oct":{"title":"সিলেট ভ্রমণ — সাদাপাথর, জাফলং ও রাতারগুল স্পেশাল ট্যুর","titleEn":"Sylhet — Sadapathor, Jaflong & Ratargul","destinationEn":"Sylhet"},"tour-sajek-oct15":{"title":"সাজেক ভ্যালি প্রিমিয়াম গ্রুপ ট্যুর (অক্টোবর স্পেশাল)","titleEn":"Sajek Valley premium group tour — October special","destinationEn":"Sajek Valley"},"tour-coxs-nov":{"title":"কক্সবাজার, ইনানী ও মেরিন ড্রাইভ সমুদ্র বিলাস ট্যুর","titleEn":"Cox’s Bazar, Inani & Marine Drive coastal escape","destinationEn":"Cox’s Bazar"},"tour-sep-sajek":{"title":"সাজেক ভ্যালি শরতের মেঘের রাজ্য ট্যুর (সেপ্টেম্বর ব্যাচ)","titleEn":"Sajek Valley autumn journey — September group","destinationEn":"Sajek Valley"},"tour-sep-sylhet":{"title":"সিলেট ও টাঙ্গুয়ার হাওর পূর্ণিমা বিলাস ট্যুর (সেপ্টেম্বর)","titleEn":"Sylhet & Tanguar Haor moonlit escape — September","destinationEn":"Sylhet & Sunamganj"},"tour-sep-sundarbans":{"title":"সুন্দরবন রয়েল ম্যানগ্রোভ ক্রুজ ট্যুর (সেপ্টেম্বর)","titleEn":"Sundarbans royal mangrove cruise — September","destinationEn":"Sundarbans"}};
   for (const tour of state.tours || []) {
     const translation = translations[tour.id];
     if (translation && tour.title === translation.title && !tour.titleEn) { tour.titleEn = translation.titleEn; tour.destinationEn = translation.destinationEn; }
   }
-  state.editionDataVersion = 3;
+  state.editionDataVersion = 4;
   return state;
 }
 

@@ -5,14 +5,18 @@ import StaffLoginModal from './components/StaffLoginModal';
 import FeedbackModal from './components/FeedbackModal';
 import { apiFetch } from './lib/api';
 import { useI18n, localizeData } from './lib/i18n';
+import PageLoader from './components/PageLoader';
+import useScrollReveal from './lib/useScrollReveal';
 
 export default function App() {
   const { language, t } = useI18n();
+  useScrollReveal();
   const [viewMode, setViewMode] = useState(() => {
     if (window.location.pathname.startsWith('/admin')) return 'admin';
     return 'public';
   });
   const [publicPayload, setPublicPayload] = useState(null);
+  const [publicLoadError, setPublicLoadError] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(() => new URLSearchParams(window.location.search).has('staff'));
   const [feedbackBookingId, setFeedbackBookingId] = useState(() => {
     const match = window.location.pathname.match(/^\/feedback\/([^/]+)/);
@@ -21,9 +25,13 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
 
   const loadPublicHome = () => {
+    setPublicLoadError(false);
     apiFetch('/api/public/bootstrap')
       .then((res) => setPublicPayload(res))
-      .catch((err) => console.error('Failed to load public home:', err));
+      .catch((err) => {
+        console.error('Failed to load public home:', err);
+        setPublicLoadError(true);
+      });
   };
 
   useEffect(() => {
@@ -58,7 +66,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {viewMode === 'admin' && currentUser ? (
-        <Suspense fallback={<div className="p-10">{t("Loading staff dashboard…", "ড্যাশবোর্ড লোড হচ্ছে…")}</div>}><AdminDashboard
+        <Suspense fallback={<PageLoader message={t("Loading staff dashboard…", "ড্যাশবোর্ড লোড হচ্ছে…")} fullScreen />}><AdminDashboard
           currentUser={currentUser}
           onSwitchRole={handleQuickRoleSwitch}
           onBackToWebsite={() => {
@@ -73,6 +81,8 @@ export default function App() {
       ) : (
         <PublicWebsite
           data={localizeData(publicPayload, language)}
+          loadError={publicLoadError}
+          onRetryLoad={loadPublicHome}
           currentUser={currentUser}
           onRefresh={loadPublicHome}
           onOpenLogin={() => setLoginModalOpen(true)}

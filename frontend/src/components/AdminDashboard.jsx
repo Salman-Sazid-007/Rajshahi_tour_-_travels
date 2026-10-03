@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Briefcase, Calculator, Calendar, Compass, Globe, HelpCircle, LayoutDashboard, LogOut, MessageSquare, PhoneCall, Shield, Users, Utensils } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Briefcase, Calculator, Calendar, Compass, Globe, HelpCircle, LayoutDashboard, LogOut, Menu, MessageSquare, PhoneCall, Shield, Users, Utensils, X } from 'lucide-react';
 import DashboardHomeTab from './admin/DashboardHomeTab';
 import ToursBuilderTab from './admin/ToursBuilderTab';
 import BookingsTab from './admin/BookingsTab';
@@ -78,11 +78,30 @@ export default function AdminDashboard({
   onRefreshPublic
 }) {
   const {
-    tr
+    tr,
+    t
   } = useI18n();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const menuToggleRef = useRef(null);
   const [selectedTourId, setSelectedTourId] = useState('tour-sylhet-oct');
   const [toast, setToast] = useState(null);
+  useEffect(() => {
+    if (!mobileNavOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMobileNavOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    };
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [mobileNavOpen]);
   const showToast = msg => {
     setToast(msg);
     setTimeout(() => setToast(null), 4000);
@@ -95,11 +114,11 @@ export default function AdminDashboard({
   const roleName = { owner: 'মালিক / এডমিন', accountant: 'একাউন্ট্যান্ট', guide: 'ট্যুর গাইড' }[userRole] || 'Staff';
   return <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col lg:flex-row">
       {/* Left Sidebar Navigation */}
-      <aside className="w-full lg:w-72 bg-emerald-950 text-white shrink-0 flex flex-col justify-between no-print">
+      <aside id="admin-navigation" className={`rtt-admin-sidebar w-full lg:w-72 bg-emerald-950 text-white shrink-0 flex flex-col justify-between no-print ${mobileNavOpen ? 'is-open' : ''}`} aria-label={t('Staff navigation', 'স্টাফ নেভিগেশন')}>
         <div>
           {/* Brand Header */}
           <div className="p-5 border-b border-emerald-900 flex items-center justify-between">
-            <AgencyLogo compact />
+            <button type="button" className="rtt-admin-brand-home" aria-label={t('Go to the public home page', 'পাবলিক হোম পেজে যান')} onClick={() => { setMobileNavOpen(false); onBackToWebsite(); }}><AgencyLogo compact /></button>
             <button onClick={onBackToWebsite} className="lg:hidden rounded-xl bg-emerald-800 px-3 py-1.5 text-xs font-bold text-amber-300">{tr("ওয়েবসাইট →")}</button>
           </div>
 
@@ -129,12 +148,12 @@ export default function AdminDashboard({
           </div>
 
           {/* Navigation Menu */}
-          <nav className="p-3 flex lg:flex-col gap-1 overflow-x-auto">
+          <nav className="rtt-admin-navigation p-3 flex lg:flex-col gap-1 overflow-x-auto">
             {NAV_ITEMS.map(item => {
             const Icon = item.icon;
             const isAllowed = item.roles.includes(userRole);
             const active = activeTab === item.id;
-            return <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex items-center justify-between gap-2.5 rounded-2xl px-3.5 py-2.5 text-xs font-bold whitespace-nowrap transition ${active ? 'bg-amber-400 text-slate-950 shadow-md font-black' : 'text-emerald-100 hover:bg-emerald-900/80'}`}>
+            return <button key={item.id} onClick={() => { setActiveTab(item.id); setMobileNavOpen(false); }} className={`flex items-center justify-between gap-2.5 rounded-2xl px-3.5 py-2.5 text-xs font-bold whitespace-nowrap transition ${active ? 'bg-amber-400 text-slate-950 shadow-md font-black' : 'text-emerald-100 hover:bg-emerald-900/80'}`}>
                   <div className="flex items-center gap-2.5">
                     <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-slate-950' : 'text-amber-300'}`} />
                     <span>{tr(item.label)}</span>
@@ -151,20 +170,22 @@ export default function AdminDashboard({
             <Globe className="h-4 w-4 text-amber-300" />{tr("পাবলিক ওয়েবসাইটে ফিরে যান")}</button>
         </div>
       </aside>
+      {mobileNavOpen && <button type="button" className="rtt-admin-sidebar-backdrop" aria-label={t('Close staff navigation', 'স্টাফ নেভিগেশন বন্ধ করুন')} onClick={() => setMobileNavOpen(false)} />}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 no-print">
-          <div>
-            <h2 className="text-lg font-black text-slate-900">
-              {tr(NAV_ITEMS.find(i => i.id === activeTab)?.label)}
-            </h2>
-            <p className="text-xs text-slate-500">{tr("রাজশাহী ট্যুরস এন্ড ট্রাভেলস • সাহেব বাজার জিরো পয়েন্ট ও সপুরা মোড়, রাজশাহী")}</p>
+        <header className="rtt-admin-topbar bg-white border-b border-slate-200 px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 no-print">
+          <div className="rtt-admin-top-heading flex items-start gap-3 min-w-0">
+            <button ref={menuToggleRef} type="button" className="rtt-admin-menu-trigger" aria-label={mobileNavOpen ? t('Close staff navigation', 'স্টাফ নেভিগেশন বন্ধ করুন') : t('Open staff navigation', 'স্টাফ নেভিগেশন খুলুন')} aria-expanded={mobileNavOpen} aria-controls="admin-navigation" onClick={() => setMobileNavOpen((open) => !open)}>{mobileNavOpen ? <X size={20} /> : <Menu size={20} />}</button>
+            <div className="min-w-0">
+              <h2 className="text-lg font-black text-slate-900">{tr(NAV_ITEMS.find(i => i.id === activeTab)?.label)}</h2>
+              <p className="text-xs text-slate-500">{tr("রাজশাহী ট্যুরস এন্ড ট্রাভেলস • সাহেব বাজার জিরো পয়েন্ট ও সপুরা মোড়, রাজশাহী")}</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2.5"><LanguageSwitcher />
-            <button onClick={() => onOpenFeedbackPreview('bkg-israt-sylhet')} className="rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3.5 py-2 text-xs font-bold text-amber-950 transition">{tr("★ কাস্টমার ফিডব্যাক পেজ প্রিভিউ")}</button>
+          <div className="rtt-admin-top-actions flex items-center gap-2.5"><LanguageSwitcher />
+            <button onClick={() => onOpenFeedbackPreview('bkg-israt-sylhet')} className="rtt-admin-feedback-preview rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3.5 py-2 text-xs font-bold text-amber-950 transition">{tr("★ কাস্টমার ফিডব্যাক পেজ প্রিভিউ")}</button>
             <button onClick={onBackToWebsite} className="rounded-xl bg-slate-900 hover:bg-slate-800 px-4 py-2 text-xs font-bold text-white transition">{tr("পাবলিক ওয়েবসাইট দেখুন")}</button>
           </div>
         </header>
@@ -178,7 +199,7 @@ export default function AdminDashboard({
           </div>}
 
         {/* Active Module Content */}
-        <main className="p-4 sm:p-6 flex-1 overflow-y-auto">
+        <main data-reveal className="p-4 sm:p-6 flex-1 overflow-y-auto">
           {activeTab === 'buses' && <BusFleetTab currentUser={currentUser} showToast={showToast} onRefreshPublic={onRefreshPublic} />}
           {activeTab === 'dashboard' && <DashboardHomeTab onNavigateTab={setActiveTab} onOpenTourBookings={handleOpenTourBookings} showToast={showToast} />}
           {activeTab === 'tours' && <ToursBuilderTab onSelectTourForBookings={handleOpenTourBookings} onNavigateTab={setActiveTab} onRefreshPublic={onRefreshPublic} showToast={showToast} />}

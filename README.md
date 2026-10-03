@@ -51,7 +51,7 @@ The Express server binds `0.0.0.0:3000` and serves Classic plus `/pro/`. For sou
 Staff dashboard → **Bus profiles & tickets**:
 
 1. Choose the seeded Rajshahi Express profile or add another bus profile.
-2. Select the reference **46-seat layout** or standard 40-seat 2+2 layout.
+2. The default coach uses the standard **40-seat 2+2 layout**; add another profile only when its real seat plan is different.
 3. Configure each direction's departure time (Bangladesh time), fare, boarding point and operating days.
 4. Enable ticket sales only after entering the correct operational details. No active schedule or fare is invented in the seed.
 5. Set an indefinite repair status or an inclusive repair-date period when needed.
@@ -59,9 +59,7 @@ Staff dashboard → **Bus profiles & tickets**:
 
 Assigned bus tours automatically pause regular Rajshahi → Dhaka and Dhaka → Rajshahi departures from the tour's start date through its return date, inclusive. Overlapping tour assignments and new tours that conflict with active regular tickets are rejected.
 
-In **Tours & budget planner**, enter Bangla and English titles, select the bus profile, and preview its layout. Tour bookings and regular tickets use the same seat rules:
-
-- Front `1`; A–J have `-1,-2 | aisle | -3,-4`; K has five rear seats.
+In **Tours & budget planner**, enter Bangla and English titles, select the bus profile, and preview its layout. The default Rajshahi Express uses a standard **40-seat 2+2 map**: rows A–J with four seats per row and a center aisle. The optional legacy 46-seat layout remains available for a different real vehicle. Admins can also save Bangla and English public descriptions; the matching description appears in the tour details dialog. Tour bookings and regular tickets use the same seat rules:
 - New reservations require male/female per passenger. Public maps show M/F and status, never passenger names or phone numbers.
 - Legacy seats keep an explicit unspecified marker rather than guessing gender.
 - Duplicate, invalid and over-capacity seat selections are rejected by the shared engine and API.
