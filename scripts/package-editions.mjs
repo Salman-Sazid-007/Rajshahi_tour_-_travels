@@ -47,14 +47,18 @@ const pro = path.join(staging, 'pro');
 await cp(path.join(dist, 'pro'), pro, { recursive: true });
 await writeFile(path.join(pro, 'README.txt'), await readme('pro'));
 
-// Ship the setup guide inside both archives, and alongside them for upload.
-const guide = path.join(repo, 'Running-Locally.pdf');
-const hasGuide = await access(guide).then(() => true, () => false);
-if (hasGuide) {
-  await cp(guide, path.join(classic, 'Running-Locally.pdf'));
-  await cp(guide, path.join(pro, 'Running-Locally.pdf'));
-} else {
-  console.warn('Running-Locally.pdf not found — run `node scripts/make-local-guide.mjs` first.');
+// Ship both setup guides inside each archive, and alongside them for upload.
+const guides = ['Running-Locally.pdf', 'Bangla-Guide.pdf'];
+const present = [];
+for (const name of guides) {
+  const src = path.join(repo, name);
+  if (await access(src).then(() => true, () => false)) {
+    await cp(src, path.join(classic, name));
+    await cp(src, path.join(pro, name));
+    present.push(name);
+  } else {
+    console.warn(`${name} not found — run the matching scripts/make-*-guide.mjs first.`);
+  }
 }
 
 const archives = [
@@ -67,7 +71,7 @@ for (const { folder, file } of archives) {
   execFileSync('zip', ['-rqX', path.join(outDir, file), folder], { cwd: staging, stdio: 'inherit' });
 }
 
-if (hasGuide) await cp(guide, path.join(outDir, 'Running-Locally.pdf'));
+for (const name of present) await cp(path.join(repo, name), path.join(outDir, name));
 
 await rm(staging, { recursive: true, force: true });
 

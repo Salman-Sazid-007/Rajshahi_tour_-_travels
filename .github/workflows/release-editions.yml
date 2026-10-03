@@ -50,10 +50,11 @@ jobs:
       - name: Add fonts, media and the SPA fallback
         run: node scripts/publish-pages.mjs --artifact-only
 
-      - name: Build the "Running locally" PDF guide
+      - name: Build the PDF guides (English + Bangla)
         run: |
-          npm install --no-save pdfkit
+          npm install --no-save pdfkit @expo-google-fonts/hind-siliguri
           node scripts/make-local-guide.mjs
+          node scripts/make-bangla-guide.mjs
 
       - name: Package the editions
         run: node scripts/package-editions.mjs
@@ -69,14 +70,18 @@ jobs:
             unzip -tq "$zip"
             echo "ok: $zip"
           done
-          # Each archive must carry a usable entry point and the guide.
-          unzip -l rajshahi-tours-classic-*.zip | grep -q 'classic/index.html'
-          unzip -l rajshahi-tours-classic-*.zip | grep -q 'classic/Running-Locally.pdf'
-          unzip -l rajshahi-tours-international-pro-*.zip | grep -q 'pro/index.html'
-          unzip -l rajshahi-tours-international-pro-*.zip | grep -q 'pro/Running-Locally.pdf'
-          # The standalone guide must be a real PDF.
-          head -c 5 Running-Locally.pdf | grep -q '%PDF'
-          echo "Archives and the PDF guide all download and verify."
+          # Each archive must carry a usable entry point and both guides.
+          for pair in "classic:rajshahi-tours-classic" "pro:rajshahi-tours-international-pro"; do
+            dir="${pair%%:*}"; zip="${pair##*:}"
+            unzip -l "$zip"-*.zip | grep -q "$dir/index.html"
+            unzip -l "$zip"-*.zip | grep -q "$dir/Running-Locally.pdf"
+            unzip -l "$zip"-*.zip | grep -q "$dir/Bangla-Guide.pdf"
+          done
+          # The standalone guides must be real PDFs.
+          for pdf in Running-Locally.pdf Bangla-Guide.pdf; do
+            head -c 5 "$pdf" | grep -q '%PDF'
+          done
+          echo "Archives and both PDF guides download and verify."
 
       - name: Summarise
         run: |

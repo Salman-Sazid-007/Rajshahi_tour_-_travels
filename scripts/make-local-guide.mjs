@@ -3,11 +3,14 @@
 //
 //   npm install --no-save pdfkit
 //   node scripts/make-local-guide.mjs [outputPath]
+//
+// For the full Bangla handbook (hosting, custom domain, customer handover)
+// see scripts/make-bangla-guide.mjs.
 
-import { createWriteStream } from 'node:fs';
-import { mkdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath, URL } from 'node:url';
 import path from 'node:path';
+import { createGuide, COLORS } from './lib/pdf-layout.mjs';
 
 let PDFDocument;
 try {
@@ -20,197 +23,43 @@ try {
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const { version } = JSON.parse(await readFile(path.join(repo, 'package.json'), 'utf8'));
 const out = path.resolve(process.argv[2] ?? path.join(repo, 'Running-Locally.pdf'));
-await mkdir(path.dirname(out), { recursive: true });
 
-const INK = '#1f2937';
-const MUTED = '#6b7280';
-const TEAL = '#0f766e';
-const DEEP = '#173c34';
-const ORANGE = '#c2410c';
-const RULE = '#d1d5db';
-const CODE_BG = '#f3f4f6';
-const NOTE_BG = '#ecfdf5';
-const WARN_BG = '#fff7ed';
-
-const doc = new PDFDocument({
-  size: 'A4',
-  margins: { top: 64, bottom: 64, left: 64, right: 64 },
-  bufferPages: true,
+const g = await createGuide({
+  PDFDocument,
+  outPath: out,
   info: {
     Title: 'Rajshahi Tours & Travels — Running Locally',
     Author: 'Rajshahi Tours & Travels',
     Subject: 'How to run the Classic and International Pro editions on your own machine',
   },
+  fonts: { regular: 'Helvetica', bold: 'Helvetica-Bold', mono: 'Courier' },
+  lineGap: 2.5,
+  baseSize: 10.5,
 });
-doc.pipe(createWriteStream(out));
 
-const LEFT = doc.page.margins.left;
-const WIDTH = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-const BOTTOM = () => doc.page.height - doc.page.margins.bottom;
-
-function space(h) {
-  if (doc.y + h > BOTTOM()) doc.addPage();
-}
-
-function h1(text) {
-  space(70);
-  doc.moveDown(0.6);
-  doc.fillColor(DEEP).font('Helvetica-Bold').fontSize(19).text(text, LEFT, doc.y, { width: WIDTH });
-  const y = doc.y + 6;
-  doc.moveTo(LEFT, y).lineTo(LEFT + WIDTH, y).lineWidth(2).strokeColor(TEAL).stroke();
-  doc.y = y + 14;
-}
-
-function h2(text) {
-  space(52);
-  doc.moveDown(0.5);
-  doc.fillColor(TEAL).font('Helvetica-Bold').fontSize(13).text(text, LEFT, doc.y, { width: WIDTH });
-  doc.moveDown(0.35);
-}
-
-function para(text, opts = {}) {
-  space(30);
-  doc
-    .fillColor(opts.color ?? INK)
-    .font(opts.font ?? 'Helvetica')
-    .fontSize(opts.size ?? 10.5)
-    .text(text, LEFT + (opts.indent ?? 0), doc.y, {
-      width: WIDTH - (opts.indent ?? 0),
-      align: 'left',
-      lineGap: 2.5,
-    });
-  doc.moveDown(0.45);
-}
-
-function bullets(items) {
-  for (const item of items) {
-    space(26);
-    const y = doc.y;
-    doc.fillColor(TEAL).font('Helvetica-Bold').fontSize(10.5).text('\u2022', LEFT + 4, y, { width: 12 });
-    doc
-      .fillColor(INK)
-      .font('Helvetica')
-      .fontSize(10.5)
-      .text(item, LEFT + 20, y, { width: WIDTH - 20, lineGap: 2.5 });
-    doc.moveDown(0.3);
-  }
-  doc.moveDown(0.25);
-}
-
-function steps(items) {
-  items.forEach((item, i) => {
-    space(26);
-    const y = doc.y;
-    doc.fillColor(ORANGE).font('Helvetica-Bold').fontSize(10.5).text(`${i + 1}.`, LEFT + 2, y, { width: 16 });
-    doc
-      .fillColor(INK)
-      .font('Helvetica')
-      .fontSize(10.5)
-      .text(item, LEFT + 22, y, { width: WIDTH - 22, lineGap: 2.5 });
-    doc.moveDown(0.3);
-  });
-  doc.moveDown(0.25);
-}
-
-function code(lines) {
-  const rows = Array.isArray(lines) ? lines : [lines];
-  const lh = 13.5;
-  const pad = 10;
-  const h = rows.length * lh + pad * 2;
-  space(h + 6);
-  // Capture the top first: text() below mutates doc.y as it draws.
-  const top = doc.y;
-  doc.roundedRect(LEFT, top, WIDTH, h, 4).fill(CODE_BG);
-  let y = top + pad;
-  for (const row of rows) {
-    const comment = row.trimStart().startsWith('#');
-    doc
-      .fillColor(comment ? MUTED : '#111827')
-      .font('Courier')
-      .fontSize(9.5)
-      .text(row, LEFT + pad, y, { width: WIDTH - pad * 2, lineBreak: false });
-    y += lh;
-  }
-  doc.y = top + h + 8;
-}
-
-function box(kind, title, text) {
-  const bg = kind === 'warn' ? WARN_BG : NOTE_BG;
-  const edge = kind === 'warn' ? ORANGE : TEAL;
-  const pad = 11;
-  doc.font('Helvetica').fontSize(10);
-  const th = doc.heightOfString(text, { width: WIDTH - pad * 2 - 6, lineGap: 2 });
-  const h = th + pad * 2 + 15;
-  space(h + 6);
-  const top = doc.y;
-  doc.roundedRect(LEFT, top, WIDTH, h, 4).fill(bg);
-  doc.rect(LEFT, top, 3.5, h).fill(edge);
-  doc
-    .fillColor(edge)
-    .font('Helvetica-Bold')
-    .fontSize(10)
-    .text(title, LEFT + pad + 4, top + pad, { width: WIDTH - pad * 2 - 6 });
-  doc
-    .fillColor(INK)
-    .font('Helvetica')
-    .fontSize(10)
-    .text(text, LEFT + pad + 4, top + pad + 14, { width: WIDTH - pad * 2 - 6, lineGap: 2 });
-  doc.y = top + h + 10;
-}
-
-function table(headers, rows, widths) {
-  const cols = widths.map((w) => w * WIDTH);
-  const pad = 7;
-  const draw = (cells, bold, bg) => {
-    doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(9.5);
-    const h =
-      Math.max(
-        ...cells.map((c, i) => doc.heightOfString(String(c), { width: cols[i] - pad * 2, lineGap: 1.5 })),
-      ) +
-      pad * 2;
-    space(h);
-    const top = doc.y;
-    if (bg) doc.rect(LEFT, top, WIDTH, h).fill(bg);
-    let x = LEFT;
-    cells.forEach((c, i) => {
-      doc
-        .fillColor(bold ? '#ffffff' : INK)
-        .font(bold ? 'Helvetica-Bold' : 'Helvetica')
-        .fontSize(9.5)
-        .text(String(c), x + pad, top + pad, { width: cols[i] - pad * 2, lineGap: 1.5 });
-      x += cols[i];
-    });
-    doc.y = top + h;
-    doc.moveTo(LEFT, doc.y).lineTo(LEFT + WIDTH, doc.y).lineWidth(0.5).strokeColor(RULE).stroke();
-  };
-  draw(headers, true, TEAL);
-  rows.forEach((r, i) => draw(r, false, i % 2 ? '#f9fafb' : null));
-  doc.moveDown(0.8);
-}
+const { h1, h2, para, bullets, code, box, table } = g;
 
 /* ---------------------------------------------------------------- cover --- */
 
-doc.rect(0, 0, doc.page.width, 190).fill(DEEP);
-doc.fillColor('#5eead4').font('Helvetica-Bold').fontSize(10).text('RAJSHAHI TOURS & TRAVELS', LEFT, 56, {
-  characterSpacing: 1.6,
+g.cover({
+  eyebrow: 'RAJSHAHI TOURS & TRAVELS',
+  title: 'Running the site locally',
+  subtitle: 'Classic and International Pro editions \u2014 a step-by-step setup guide',
+  footnote: `Version ${version}`,
+  eyebrowSpacing: 1.6,
 });
-doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(27).text('Running the site locally', LEFT, 80);
-doc
-  .fillColor('#a7f3d0')
-  .font('Helvetica')
-  .fontSize(12)
-  .text('Classic and International Pro editions \u2014 a step-by-step setup guide', LEFT, 118, {
-    width: WIDTH - 40,
-  });
-doc.fillColor('#6ee7b7').font('Helvetica').fontSize(9).text(`Version ${version}`, LEFT, 156);
-
-doc.y = 220;
-doc.fillColor(INK);
 
 para(
   'This guide covers two separate things: running the ready-made ZIP downloads from the GitHub Release, ' +
     'and running the whole project from source. Start with Part 1 if you only want to look at the websites. ' +
     'Use Part 2 if you want live reloading, the staff dashboard with a real API, or you plan to change the code.',
+);
+
+box(
+  'note',
+  'Looking for the Bangla guide?',
+  'Bangla-Guide.pdf covers all of this in Bangla, plus uploading to a hosting provider, pointing a custom ' +
+    'domain at the site, and handing the admin panel over to a customer.',
 );
 
 h2('The two editions');
@@ -269,7 +118,7 @@ code([
   'python3 -m http.server 8080',
 ]);
 para('Then open http://localhost:8080/ in your browser. Press Ctrl+C in the terminal to stop the server.');
-para('On Windows, use "py -m http.server 8080" if "python3" is not recognised.', { color: MUTED, size: 10 });
+para('On Windows, use "py -m http.server 8080" if "python3" is not recognised.', { color: COLORS.muted, size: 10 });
 
 h2('Option B \u2014 Node.js');
 para('If you have Node.js installed, no separate install step is needed:');
@@ -334,6 +183,7 @@ h2('3. Full stack with the real API');
 para('To use shared availability and operator-visible requests instead of demo storage:');
 code(['npm run build', 'npm start']);
 para('The Express server binds 0.0.0.0:3000 and serves Classic plus /pro/ from one origin.');
+para('The staff dashboard is reached by adding ?staff to the address, for example http://localhost:3000/?staff');
 
 h2('4. Development servers with live reload');
 para('Start the backend first, then run the edition you are working on in a second terminal:');
@@ -379,14 +229,8 @@ table(
       'Photos missing in Classic',
       'Classic is not being served at the site root. Point the server at the classic folder itself, not its parent.',
     ],
-    [
-      'Port already in use',
-      'Another program holds that port. Pass a different number, for example 8081.',
-    ],
-    [
-      '"python3: command not found"',
-      'Use Option B with Node, or try "py -m http.server 8080" on Windows.',
-    ],
+    ['Port already in use', 'Another program holds that port. Pass a different number, for example 8081.'],
+    ['"python3: command not found"', 'Use Option B with Node, or try "py -m http.server 8080" on Windows.'],
     [
       'Bookings vanish after a refresh',
       'Expected without a running API. The static builds fall back to browser-local demo storage. Use Part 2, step 3.',
@@ -424,46 +268,19 @@ h1('Rebuilding the archives yourself');
 
 para('The two ZIPs on the Releases page are produced from source by:');
 code(['npm ci --prefix frontend', 'npm run package:editions']);
-para('The archives are written to release-artifacts/. To regenerate this PDF:');
-code(['npm install --no-save pdfkit', 'node scripts/make-local-guide.mjs']);
+para('The archives are written to release-artifacts/. To regenerate the two PDF guides:');
+code([
+  'npm install --no-save pdfkit @expo-google-fonts/hind-siliguri',
+  'node scripts/make-local-guide.mjs',
+  'node scripts/make-bangla-guide.mjs',
+]);
 
 para(
   'Verification commands, publishing paths and the full operational notes live in README.md at the root of the ' +
     'repository.',
-  { color: MUTED, size: 10 },
+  { color: COLORS.muted, size: 10 },
 );
 
-/* --------------------------------------------------------------- footer --- */
+g.finish('Rajshahi Tours & Travels \u2014 Running the site locally');
 
-const range = doc.bufferedPageRange();
-for (let i = 0; i < range.count; i += 1) {
-  doc.switchToPage(range.start + i);
-  // The footer sits below the bottom margin; without this pdfkit treats it as
-  // overflow and appends a fresh page for every footer it draws.
-  const keep = doc.page.margins.bottom;
-  doc.page.margins.bottom = 0;
-  const y = doc.page.height - 44;
-  doc.moveTo(LEFT, y - 10).lineTo(LEFT + WIDTH, y - 10).lineWidth(0.5).strokeColor(RULE).stroke();
-  doc
-    .fillColor(MUTED)
-    .font('Helvetica')
-    .fontSize(8.5)
-    .text('Rajshahi Tours & Travels \u2014 Running the site locally', LEFT, y, {
-      width: WIDTH / 2,
-      lineBreak: false,
-    });
-  doc
-    .fillColor(MUTED)
-    .font('Helvetica')
-    .fontSize(8.5)
-    .text(`Page ${i + 1} of ${range.count}`, LEFT + WIDTH / 2, y, {
-      width: WIDTH / 2,
-      align: 'right',
-      lineBreak: false,
-    });
-  doc.page.margins.bottom = keep;
-}
-
-doc.flushPages();
-doc.end();
 console.log(path.relative(repo, out));
