@@ -6,6 +6,7 @@ import AgencyLogo from './AgencyLogo';
 import BusTicketSection from './BusTicketSection';
 import TourSeatPicker from './TourSeatPicker';
 import PageLoader from './PageLoader';
+import TourTicker from './TourTicker';
 export default function PublicWebsite({
   data,
   currentUser,
@@ -149,19 +150,6 @@ export default function PublicWebsite({
       : selectedTour.description || selectedTour.descriptionEn || ''
     : '';
   return <div className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Running Tour Live Ticker Banner */}
-      {runningTours.length > 0 && <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 px-4 py-2 text-xs sm:text-sm font-bold">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-900 animate-ping" />
-              <span>{tr("চলমান ট্যুর (Live):")}<strong>{tr(runningTours[0].title)}</strong>{tr(" — গাইড:")}{' '}
-                {tr(runningTours[0].guides?.[0]?.name || 'মনিরুল ভাই')}
-              </span>
-            </div>
-            <button onClick={() => openTourModal(runningTours[0], 'details')} className="underline font-extrabold hover:text-emerald-950">{tr("চলমান ট্যুরের বিস্তারিত দেখুন →")}</button>
-          </div>
-        </div>}
-
       {/* Top Sticky Navbar */}
       <header className="rtt-public-header sticky top-0 z-40 bg-emerald-950/95 backdrop-blur-md border-b border-emerald-800/60 text-white">
         <div className="rtt-public-header-inner max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-4 py-3">
@@ -223,6 +211,7 @@ export default function PublicWebsite({
           <a href={`https://wa.me/${siteSettings.whatsapp || '8801782250709'}`} target="_blank" rel="noreferrer"><MessageCircle size={16} />{t('Chat on WhatsApp', 'হোয়াটসঅ্যাপে কথা বলুন')}</a>
         </div>
       </aside>
+      <TourTicker runningTours={runningTours} upcomingTours={upcomingTours} onOpenTour={(tour) => openTourModal(tour, 'details')} />
 
       {/* Hero Section + Next Tour Highlight */}
       <section id="top" data-reveal className="relative overflow-hidden bg-emerald-950 text-white py-12 sm:py-18 lg:py-22">

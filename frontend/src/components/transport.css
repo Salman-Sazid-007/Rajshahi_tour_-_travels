@@ -348,3 +348,61 @@ header.bg-emerald-950\/95 .rtt-agency-logo, footer.bg-slate-950 .rtt-agency-logo
   .rtt-admin-top-actions > button:last-child { flex: 1; min-height: 39px; padding: 8px 10px; font-size: 10px; }
   .rtt-admin-sidebar .p-5 { padding: 15px; }
 }
+
+/* A compact, swipeable live/upcoming tour rail below the main navigation. */
+.rtt-tour-ticker { padding: 15px 0 13px; background: #eef8f9; border-bottom: 1px solid #d8eaed; }
+.rtt-tour-ticker-inner { width: calc(100% - 64px); max-width: 1280px; margin-inline: auto; }
+.rtt-tour-ticker-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 11px; }
+.rtt-tour-ticker-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.rtt-tour-ticker-eyebrow { display: inline-flex; align-items: center; gap: 6px; padding-right: 12px; border-right: 1px solid #cce0e4; color: #0d7382; font-size: 9px; font-weight: 800; letter-spacing: .8px; white-space: nowrap; }
+.rtt-tour-ticker-title > div { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+.rtt-tour-ticker-title > div strong { color: #244c58; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.rtt-tour-ticker-title > div small { color: #738a91; font-size: 9px; }
+.rtt-tour-ticker-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.rtt-tour-ticker-controls button { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #c6dfe3; border-radius: 9px; background: #fff; color: #0d7183; transition: background .18s ease, transform .18s ease; }
+.rtt-tour-ticker-controls button:hover { background: #dff2f4; transform: translateY(-1px); }
+.rtt-tour-ticker-track { position: relative; display: flex; gap: 11px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: #9fcbd1 transparent; padding: 2px 2px 7px; }
+.rtt-tour-ticker-track::-webkit-scrollbar { height: 4px; }
+.rtt-tour-ticker-track::-webkit-scrollbar-thumb { border-radius: 999px; background: #9fcbd1; }
+.rtt-tour-ticker-card { position: relative; display: grid; grid-template-columns: auto minmax(110px,1fr) auto; align-items: center; gap: 12px; flex: 0 0 min(370px, 36vw); min-height: 68px; padding: 11px 13px; border: 1px solid #d8e8ea; border-radius: 13px; background: #fff; text-align: left; scroll-snap-align: start; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.rtt-tour-ticker-card:hover, .rtt-tour-ticker-card:focus-visible { z-index: 1; border-color: #8bc7cf; box-shadow: 0 7px 20px #164e5a12; transform: translateY(-1px); outline: none; }
+.rtt-tour-ticker-status { display: inline-flex; align-items: center; gap: 5px; align-self: start; padding: 5px 7px; border-radius: 999px; background: #edf4f3; color: #637b77; font-size: 8px; font-weight: 800; letter-spacing: .2px; white-space: nowrap; }
+.rtt-tour-ticker-status i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.rtt-tour-ticker-status.live { background: #e5f6ec; color: #287452; }
+.rtt-tour-ticker-status.live i { animation: rtt-live-pulse 1.8s ease-in-out infinite; }
+.rtt-tour-ticker-status.upcoming { background: #e9f5f8; color: #19778a; }
+.rtt-tour-ticker-card-main { display: grid; gap: 4px; min-width: 0; }
+.rtt-tour-ticker-card-main strong { display: -webkit-box; overflow: hidden; color: #254652; font-size: 11px; font-weight: 800; line-height: 1.45; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+.rtt-tour-ticker-card-main small { overflow: hidden; color: #789097; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.rtt-tour-ticker-card-meta { display: grid; justify-items: end; gap: 5px; color: #68828a; font-size: 8px; white-space: nowrap; }
+.rtt-tour-ticker-card-meta > span { display: inline-flex; align-items: center; gap: 4px; }
+.rtt-tour-ticker-card-meta > span svg { color: #d88d37; }
+.rtt-tour-ticker-card-meta > small { color: #758e8d; }
+@keyframes rtt-live-pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 #37a86b55; } 50% { opacity: .75; box-shadow: 0 0 0 4px #37a86b00; } }
+@media (max-width: 720px) {
+  .rtt-tour-ticker { padding-block: 12px 9px; }
+  .rtt-tour-ticker-inner { width: calc(100% - 28px); }
+  .rtt-tour-ticker-heading { margin-bottom: 8px; }
+  .rtt-tour-ticker-title { gap: 8px; }
+  .rtt-tour-ticker-eyebrow { padding-right: 8px; font-size: 8px; letter-spacing: .4px; }
+  .rtt-tour-ticker-title > div { display: grid; gap: 1px; }
+  .rtt-tour-ticker-title > div strong { font-size: 11px; }
+  .rtt-tour-ticker-title > div small { font-size: 8px; }
+  .rtt-tour-ticker-controls { gap: 4px; }
+  .rtt-tour-ticker-controls button { width: 28px; height: 28px; }
+  .rtt-tour-ticker-track { gap: 8px; margin-inline: -1px; }
+  .rtt-tour-ticker-card { flex-basis: min(330px, calc(100vw - 38px)); min-height: 64px; gap: 8px; padding: 9px; }
+  .rtt-tour-ticker-card-main strong { font-size: 10px; }
+}
+@media (max-width: 390px) {
+  .rtt-tour-ticker-eyebrow { width: 28px; overflow: hidden; border-right: 0; padding-right: 0; font-size: 0; }
+  .rtt-tour-ticker-eyebrow svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .rtt-tour-ticker-title > div small { display: none; }
+  .rtt-tour-ticker-card { grid-template-columns: auto minmax(84px,1fr) auto; gap: 6px; }
+  .rtt-tour-ticker-status { padding: 4px 5px; font-size: 7px; }
+  .rtt-tour-ticker-card-meta { font-size: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rtt-tour-ticker-status.live i { animation: none; }
+  .rtt-tour-ticker-controls button, .rtt-tour-ticker-card { transition: none; }
+}

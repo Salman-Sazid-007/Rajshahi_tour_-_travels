@@ -25,6 +25,19 @@ test('both static editions load at the GitHub project prefix with no runtime err
   await expect(page.locator('#bus-tickets')).toBeVisible();
   expect(errors).toEqual([]);
 });
+test('upper tour rail scrolls through live and upcoming tour cards', async ({ page }) => {
+  await setEnglish(page);await page.goto(classic);
+  const rail=page.locator('.rtt-tour-ticker');
+  await expect(rail).toBeVisible();
+  await expect(rail.locator('.rtt-tour-ticker-status.live')).toHaveCount(1);
+  await expect(rail.locator('.rtt-tour-ticker-status.upcoming').first()).toBeVisible();
+  await rail.getByRole('button',{name:'Pause tour carousel'}).click();
+  await expect(rail.getByRole('button',{name:'Resume tour carousel'})).toHaveAttribute('aria-pressed','true');
+  const track=rail.locator('.rtt-tour-ticker-track');
+  const before=await track.evaluate((element)=>element.scrollLeft);
+  await rail.getByRole('button',{name:'Next tours'}).click();
+  await expect.poll(()=>track.evaluate((element)=>element.scrollLeft)).toBeGreaterThan(before);
+});
 test('language switching stays in the same edition and persists across both designs', async ({ page }) => {
   await page.goto(pro);
   await page.getByRole('button',{name:'বাংলা',exact:true}).click();
