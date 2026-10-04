@@ -9,6 +9,13 @@ Two editions, one shared tour and transport model:
 
 ## Desktop counter app (bookings and PDF receipts)
 
+**Download the app as a zip:** [latest desktop release](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop)
+
+| Download | For |
+| --- | --- |
+| [`RajshahiTours-Windows-1.0.0.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.0/RajshahiTours-Windows-1.0.0.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
+| [`RajshahiTours-Desktop-1.0.0.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.0/RajshahiTours-Desktop-1.0.0.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
+
 `desktop/` holds a separate Tkinter program for the office counter: it collects
 Name, Phone Number, Seat, Total Amount, Advance, Due, Booking Date, Tour Date and
 Tour Name, stores them in a local SQLite file, and prints a PDF receipt for the

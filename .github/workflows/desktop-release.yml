@@ -1,0 +1,141 @@
+name: Desktop app — build zips and publish
+
+# Publishes the office-counter desktop program as downloadable zips on the
+# repository's Releases page:
+#
+#   RajshahiTours-Windows-<version>.zip   double-clickable, no Python needed
+#   RajshahiTours-Desktop-<version>.zip   source, runs with `python app.py`
+#
+# Trigger it by pushing a desktop-v<version> tag, or run it by hand from the
+# Actions tab (workflow_dispatch) and type the version you want.
+
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (without the desktop-v prefix)'
+        required: true
+        default: '1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - id: read
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#desktop-v}"
+          fi
+          echo "Publishing desktop version $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  source-zip:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package the pure-Python desktop app
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          rm -rf /tmp/pkg && mkdir -p /tmp/pkg/RajshahiTours-Desktop
+          cp -r desktop/app.py desktop/rtt desktop/assets desktop/samples \
+                desktop/tests desktop/README.md desktop/requirements.txt \
+                desktop/rajshahi_tours.spec desktop/build_windows.bat \
+                desktop/build_linux_mac.sh desktop/START-HERE.txt \
+                /tmp/pkg/RajshahiTours-Desktop/
+          find /tmp/pkg \( -name '__pycache__' -o -name '*.pyc' -o -name '.DS_Store' \) -exec rm -rf {} +
+          (cd /tmp/pkg && zip -r -9 -X "RajshahiTours-Desktop-${VERSION}.zip" RajshahiTours-Desktop)
+          mv "/tmp/pkg/RajshahiTours-Desktop-${VERSION}.zip" .
+      - name: Smoke-test the packaged copy
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          rm -rf /tmp/verify && mkdir -p /tmp/verify
+          (cd /tmp/verify && unzip -q "$GITHUB_WORKSPACE/RajshahiTours-Desktop-${VERSION}.zip")
+          (cd /tmp/verify/RajshahiTours-Desktop && python3 tests/test_app.py)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-source-zip
+          path: RajshahiTours-Desktop-*.zip
+
+  windows-exe:
+    needs: version
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Make sure the app still passes its tests
+        working-directory: desktop
+        run: python tests/test_app.py
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+      - name: Build RajshahiTours.exe
+        working-directory: desktop
+        run: pyinstaller rajshahi_tours.spec --noconfirm --clean
+      - name: Check the build produced an executable
+        shell: pwsh
+        run: |
+          $exe = "desktop/dist/RajshahiTours/RajshahiTours.exe"
+          if (-not (Test-Path $exe)) { throw "PyInstaller did not produce $exe" }
+          Get-Item $exe | Format-List Name, Length
+      - name: Package the executable folder
+        shell: pwsh
+        run: |
+          $v = "${{ needs.version.outputs.version }}"
+          $target = "desktop/dist/RajshahiTours"
+          Copy-Item desktop/START-HERE.txt $target
+          Copy-Item desktop/README.md $target
+          Copy-Item desktop/samples $target -Recurse
+          Compress-Archive -Path $target -DestinationPath "RajshahiTours-Windows-$v.zip" -CompressionLevel Optimal
+          Get-Item "RajshahiTours-Windows-$v.zip" | Format-List Name, Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-windows-zip
+          path: RajshahiTours-Windows-*.zip
+
+  publish:
+    needs: [version, source-zip, windows-exe]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Show what will be uploaded
+        run: ls -lh assets
+      - name: Create or update the desktop release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          TAG="desktop-v${VERSION}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — uploading into it."
+          else
+            gh release create "$TAG" \
+              --title "Rajshahi Tours & Travels — Desktop app ${VERSION}" \
+              --notes-file desktop/RELEASE-NOTES.md \
+              --target "$GITHUB_SHA"
+          fi
+          gh release upload "$TAG" assets/*.zip --clobber
+      - name: Print the download links
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          echo "### Download links" >> "$GITHUB_STEP_SUMMARY"
+          for f in assets/*.zip; do
+            echo "- https://github.com/$GITHUB_REPOSITORY/releases/download/desktop-v${VERSION}/$(basename "$f")" >> "$GITHUB_STEP_SUMMARY"
+          done
