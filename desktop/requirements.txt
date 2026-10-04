@@ -1,0 +1,6 @@
+# The program itself needs nothing but Python 3.8+ (Tkinter is included with
+# the standard Windows and macOS installers).
+#
+# Optional: uharfbuzz improves how Bangla names are printed inside the PDF
+# (correct vowel/conjunct placement). English text is identical either way.
+# Install it with:  pip install uharfbuzz

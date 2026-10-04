@@ -7,6 +7,24 @@ Two editions, one shared tour and transport model:
 - Both editions have a persistent **বাংলা / EN** switch, teal/sky-blue/orange branding, and local Bangla/English fonts.
 - Public hotline, WhatsApp and manual bKash contact: **01782250709**; WhatsApp link uses **8801782250709**.
 
+## Desktop counter app (bookings and PDF receipts)
+
+`desktop/` holds a separate Tkinter program for the office counter: it collects
+Name, Phone Number, Seat, Total Amount, Advance, Due, Booking Date, Tour Date and
+Tour Name, stores them in a local SQLite file, and prints a PDF receipt for the
+customer plus a booking-list report. It needs nothing but Python and builds into
+a double-clickable `RajshahiTours.exe` with PyInstaller.
+
+```bash
+cd desktop
+python app.py            # run from source
+build_windows.bat        # or build dist\RajshahiTours\RajshahiTours.exe
+python tests/test_app.py # headless checks
+```
+
+Full instructions are in [`desktop/README.md`](desktop/README.md); sample output
+is in `desktop/samples/`.
+
 ## Publishing paths
 
 | Location | Purpose |
