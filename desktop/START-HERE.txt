@@ -1,0 +1,58 @@
+RAJSHAHI TOURS & TRAVELS - BOOKING & RECEIPT MANAGER (DESKTOP)
+===============================================================
+This program runs on your own computer. Nothing is sent anywhere.
+No internet connection is used.
+
+
+HOW TO OPEN IT
+--------------
+1. Install Python 3.10 or newer from  https://www.python.org/downloads/
+   WINDOWS: during setup, TICK the box "Add Python to PATH".
+2. Double-click  app.py
+
+   If double-clicking does not work:
+     - Open the folder in a terminal / command prompt and type:
+         python app.py
+     - On Linux, if the window does not appear, run:
+         sudo apt install python3-tk
+
+
+WHAT THE PROGRAM DOES
+---------------------
+* Type the nine booking details (name, phone, seat, amounts, dates, tour).
+* The Due amount is calculated for you as you type.
+* Save the booking - it is kept in a local database on this computer.
+* Click "Receipt PDF" to make the page you hand or send to the customer.
+* Click "List PDF" or "Due list PDF" for a report of what is on the screen.
+* Tools -> Settings: change company name, address, phone, receipt prefix,
+  currency symbol, the printed terms and the tour-name list.
+
+Example PDFs are already in the  samples  folder - open them to see the
+receipt and the booking-list report.
+
+
+WHERE YOUR BOOKINGS ARE KEPT
+----------------------------
+  Documents\Rajshahi Tours & Travels\bookings.db      <- every booking
+  Documents\Rajshahi Tours & Travels\settings.json    <- your settings
+  Documents\Rajshahi Tours & Travels\Backups\         <- backups
+
+On macOS / Linux the same folder is inside your home folder.
+Use  File -> Backup database  regularly, and keep a copy on Google Drive.
+
+IMPORTANT: do not delete bookings.db - it is all your data.
+
+
+WANT A DOUBLE-CLICKABLE .EXE (WINDOWS)
+--------------------------------------
+Double-click  build_windows.bat  once. It makes
+dist\RajshahiTours\RajshahiTours.exe . Copy that whole "RajshahiTours"
+folder to the office computer and put a shortcut on the desktop.
+
+On macOS / Linux run  ./build_linux_mac.sh  instead.
+
+
+MORE HELP
+---------
+The full manual is README.md in this folder. The user guide PDF and all
+downloads are on the GitHub releases page of this project.

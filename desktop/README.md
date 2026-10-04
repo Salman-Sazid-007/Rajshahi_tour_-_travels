@@ -1,5 +1,19 @@
 # Rajshahi Tours & Travels — Booking & Receipt Manager (Desktop)
 
+## Download the zip
+
+Both zips are on the Releases page — no build step, no GitHub account needed:
+
+| Download | For |
+| --- | --- |
+| [**RajshahiTours-Windows-1.0.0.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.0/RajshahiTours-Windows-1.0.0.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.0.0.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.0/RajshahiTours-Desktop-1.0.0.zip) | Run from source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+
+All versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
+Open `START-HERE.txt` inside the zip first if you just want to start using it.
+
+---
+
 A small Windows/Mac/Linux program for the office counter. It collects the nine
 booking details, stores them in a local database, and prints a PDF you can hand
 to the customer, email, or send over WhatsApp.
