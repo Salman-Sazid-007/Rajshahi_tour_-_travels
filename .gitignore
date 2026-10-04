@@ -11,3 +11,7 @@ backend/data/*.tmp
 frontend/test-results/
 frontend/playwright-report/
 .cache/
+
+# Python
+__pycache__/
+*.py[cod]
