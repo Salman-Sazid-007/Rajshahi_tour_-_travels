@@ -1,36 +1,36 @@
-## Rajshahi Tours & Travels — Desktop counter app 1.1.3
+## Rajshahi Tours & Travels — Desktop counter app 1.1.4
 
-This patch fixes duplicate-seat selection and booking for tour departures. Starting
-another booking retains the active tour and travel date, and validation clearly
-rejects seats already reserved for that same tour/date before anything is saved.
-Seats remain available for reuse on a different travel date; cancelled bookings
-release their seats.
+This update makes consecutive tour bookings create separate records instead of
+leaving the saved passenger loaded for editing. After a new booking saves, the
+form clears, retains the current tour and departure date, and displays the next
+unique booking number. Bus ticketing remains a separate workflow with its own
+serial numbers and seat inventory.
 
 ### What changed
 
-* **Reliable trip context:** creating the next booking keeps the current tour and
-  departure date instead of silently switching the trip date to today.
-* **Clear duplicate-seat validation:** the booking form checks all selected seats
-  against active bookings for the same tour and date, including manually entered
-  or edited seat labels, and tells the operator which seats are already taken.
-* **Date-specific availability is preserved:** seats can be reused on another
-  departure date, and cancelled bookings do not block a seat.
+* **New entry after each save:** a successfully added tour booking clears the
+  form and assigns the next booking serial automatically. A new save inserts a
+  new record; an existing booking is changed only after the operator selects it.
+* **Booked tour seats stay locked:** the seat map marks seats booked for the same
+  tour/date as unavailable. Form validation and the database also reject a
+  duplicate reservation. Cancelled bookings release their seats, and the same
+  seat can be reused for another departure date.
+* **Independent bus tickets:** bus-ticket records, numbering and route/date seat
+  availability are kept separate from tour bookings.
 
 ### Included features
 
-* **Date-specific tour seat map:** assign open seats for a selected tour and
-  travel date. Occupied seats are locked; edits and cancellations keep
-  availability in sync. Standard 40-seat and extended 46-seat labels match the
-  website layout.
+* **Date-specific tour seat map:** standard 40-seat and extended 46-seat layouts;
+  occupied seats are locked for the selected tour/date.
 * **Editable bookings and payments:** update passenger, seat, status, total or
-  advance; the outstanding due is recalculated automatically.
+  advance after selecting a saved entry; the outstanding due is recalculated.
 * **Monthly travel report:** review trips, passengers, seats, availability and
   balances, then export a printable PDF or CSV spreadsheet.
 * **Offline bus tickets:** issue a ticket for any route/date, choose from a
   40-seat map, prevent duplicate route/date/seat sales, reprint or cancel
   tickets, and export the register.
 * **Tour data controls:** archive a tour to preserve its history, or permanently
-  delete the tour and its associated bookings after a clear warning and
+  delete the tour and associated bookings after a clear warning and
   confirmation.
 * **Professional receipts and larger UI text:** supplied company artwork and
   brand colors appear across receipts and reports; receipt typography, spacing

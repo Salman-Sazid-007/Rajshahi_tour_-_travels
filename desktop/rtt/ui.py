@@ -1854,8 +1854,9 @@ class BookingApp:
                 parent=self.root,
             )
             return
+        creating_new = self.selected_id is None
         try:
-            if self.selected_id is None:
+            if creating_new:
                 self.selected_id = self.db.add(data)
                 message = f"Booking {data['booking_no']} saved."
             else:
@@ -1864,8 +1865,17 @@ class BookingApp:
         except Exception as exc:  # pragma: no cover - defensive
             messagebox.showerror("Database error", str(exc), parent=self.root)
             return
-        self.refresh(keep_selection=True)
-        self.set_status(message)
+
+        if creating_new:
+            # A successful new booking is complete. Clear the editor and prepare
+            # a fresh unique serial so the next passenger cannot overwrite it.
+            self.selected_id = None
+            self.refresh()
+            self.new_booking()
+            self.set_status(f"{message} Ready for next booking: {self.vars['booking_no'].get()}.")
+        else:
+            self.refresh(keep_selection=True)
+            self.set_status(message)
 
     def delete_booking(self) -> None:
         if self.selected_id is None:

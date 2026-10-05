@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.1.3.
+These are the **latest published** downloads: desktop version 1.1.4.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.1.3.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.3/RajshahiTours-Windows-1.1.3.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.1.3.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.3/RajshahiTours-Desktop-1.1.3.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+| [**RajshahiTours-Windows-1.1.4.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.4/RajshahiTours-Windows-1.1.4.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.1.4.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.4/RajshahiTours-Desktop-1.1.4.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.3 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.4 in **Help → About**.
 
 ---
 
@@ -31,11 +31,12 @@ explicit warning and confirmation.
 seats, and save the customer and payment. Occupied seats are locked for that
 same tour/date, and form validation also blocks duplicate seats before saving.
 Starting the next entry keeps the active tour/date; seats can still be reused on
-another departure date. Edit bookings or payments later; the remaining due is
-recalculated.
-* **Issue offline bus tickets:** enter a route and any travel date, choose from
-the 40-seat map, record passenger and payment information, and print a ticket.
-The same route/date/seat cannot be sold twice. Cancelled tickets release seats.
+another departure date. After a new booking saves, the form clears and shows the
+next unique booking number. Existing entries are edited only when selected.
+* **Issue offline bus tickets:** a separate workflow with its own ticket numbers,
+route/date and seat inventory; it is not linked to tour bookings. Choose from the
+40-seat map, record passenger and payment information, and print a ticket. The
+same route/date/seat cannot be sold twice. Cancelled tickets release seats.
 * **Track trips:** see booked/open seats, trip totals and outstanding amounts on
 the Overview and in the monthly travel report.
 * **Export a monthly sheet:** filter by travel month, review each departure,

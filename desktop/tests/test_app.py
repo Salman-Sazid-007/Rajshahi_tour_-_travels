@@ -380,16 +380,20 @@ class UiTests(unittest.TestCase):
 
     def test_new_booking_keeps_trip_and_rejects_seats_already_booked_on_that_date(self) -> None:
         self.app.new_booking()
+        first_number = self.app.vars["booking_no"].get()
         self.app.vars["tour_name"].set("Sajek Valley Tour")
         self.app.vars["tour_date"].set("2026-12-11")
         self.app.vars["name"].set("Sazid")
         self.app.vars["seat"].set("A1, A2")
         self.app.save_booking()
         self.assertEqual(len(self.database.list()), 1)
-
-        self.app.new_booking()
+        self.assertIsNone(self.app.selected_id)
+        self.assertEqual(self.app.vars["name"].get(), "")
+        self.assertNotEqual(self.app.vars["booking_no"].get(), first_number)
+        self.assertEqual(self.app.vars["booking_no"].get(), self.database.next_number("RTT"))
         self.assertEqual(self.app.vars["tour_name"].get(), "Sajek Valley Tour")
         self.assertEqual(self.app.vars["tour_date"].get(), "2026-12-11")
+
         self.app.vars["name"].set("Second passenger")
         self.app.vars["seat"].set("A-1, A-2")
         error = self.app.validate_form(self.app.collect_form())
@@ -403,12 +407,33 @@ class UiTests(unittest.TestCase):
         # Seats belong to a departure, not to a tour for all time.
         self.app.vars["tour_date"].set("2026-12-12")
         self.assertIsNone(self.app.validate_form(self.app.collect_form()))
+        second_number = self.app.vars["booking_no"].get()
         self.app.save_booking()
-        self.assertEqual(len(self.database.list()), 2)
+        rows = {row["name"]: row for row in self.database.list()}
+        self.assertEqual(set(rows), {"Sazid", "Second passenger"})
+        self.assertNotEqual(rows["Sazid"]["id"], rows["Second passenger"]["id"])
+        self.assertEqual(rows["Second passenger"]["booking_no"], second_number)
+        self.assertNotEqual(rows["Sazid"]["booking_no"], rows["Second passenger"]["booking_no"])
         self.assertEqual(
             sorted(self.database.tour_seat_occupancy("Sajek Valley Tour", "2026-12-12")),
             ["A-1", "A-2"],
         )
+
+    def test_tour_seat_map_disables_seats_booked_for_the_departure(self) -> None:
+        self.database.add({
+            "booking_no": self.database.next_number("RTT"), "name": "Already booked",
+            "tour_name": "Sajek Valley Tour", "tour_date": "2026-12-11", "seat": "A1",
+        })
+        occupied = self.database.tour_seat_occupancy("Sajek Valley Tour", "2026-12-11")
+        dialog = ui.SeatMapDialog(
+            self.root, "Sajek Valley Tour · 11 Dec 2026", 40, occupied, [],
+        )
+        self.assertEqual(dialog.buttons["A-1"].cget("style"), "BookedSeat.TButton")
+        self.assertEqual(dialog.buttons["A-1"].cget("state"), "disabled")
+        dialog.toggle("A-1")
+        self.assertNotIn("A-1", dialog.selected)
+        self.assertEqual(dialog.buttons["A-2"].cget("state"), "normal")
+        dialog.destroy()
 
     def test_due_updates_live(self) -> None:
         self.app.vars["total"].set("1000")
