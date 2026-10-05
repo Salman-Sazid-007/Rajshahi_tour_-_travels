@@ -239,7 +239,7 @@ class BookingApp:
                     pass
 
         self.ui_font = _pick_font("Segoe UI", "Helvetica Neue", "DejaVu Sans", "TkDefaultFont")
-        self.ui_font_bold = (self.ui_font, 10, "bold")
+        self.ui_font_bold = (self.ui_font, 11, "bold")
 
         self._build_style()
         self._build_layout()
@@ -256,7 +256,7 @@ class BookingApp:
                 break
             except tk.TclError:
                 continue
-        style.configure(".", font=(self.ui_font, 10), foreground=INK)
+        style.configure(".", font=(self.ui_font, 11), foreground=INK)
         style.configure("TFrame", background=PAGE_BG)
         style.configure("Page.TFrame", background=PAGE_BG)
         style.configure("Topbar.TFrame", background=WHITE)
@@ -265,67 +265,67 @@ class BookingApp:
         style.configure("SidebarBrand.TFrame", background=SIDEBAR_BG)
         style.configure("SidebarCard.TFrame", background=SIDEBAR_DEEP)
         style.configure("Card.TFrame", background=WHITE, relief="flat")
-        style.configure("Title.TLabel", font=(self.ui_font, 19, "bold"), foreground=INK,
+        style.configure("Title.TLabel", font=(self.ui_font, 20, "bold"), foreground=INK,
                         background=WHITE)
-        style.configure("PageTitle.TLabel", font=(self.ui_font, 18, "bold"), foreground=INK,
+        style.configure("PageTitle.TLabel", font=(self.ui_font, 19, "bold"), foreground=INK,
                         background=PAGE_BG)
-        style.configure("Sub.TLabel", font=(self.ui_font, 9), foreground=MUTED,
+        style.configure("Sub.TLabel", font=(self.ui_font, 10), foreground=MUTED,
                         background=PAGE_BG)
-        style.configure("Topbar.Sub.TLabel", font=(self.ui_font, 8, "bold"), foreground=ACCENT,
+        style.configure("Topbar.Sub.TLabel", font=(self.ui_font, 10, "bold"), foreground=ACCENT,
                         background=WHITE)
-        style.configure("Topbar.PageTitle.TLabel", font=(self.ui_font, 16, "bold"),
+        style.configure("Topbar.PageTitle.TLabel", font=(self.ui_font, 18, "bold"),
                         foreground=INK, background=WHITE)
-        style.configure("Topbar.Description.TLabel", font=(self.ui_font, 8),
+        style.configure("Topbar.Description.TLabel", font=(self.ui_font, 10),
                         foreground=MUTED, background=WHITE)
-        style.configure("Sidebar.Brand.TLabel", font=(self.ui_font, 10, "bold"),
+        style.configure("Sidebar.Brand.TLabel", font=(self.ui_font, 11, "bold"),
                         foreground=WHITE, background=SIDEBAR_BG)
-        style.configure("Sidebar.Sub.TLabel", font=(self.ui_font, 8, "bold"),
+        style.configure("Sidebar.Sub.TLabel", font=(self.ui_font, 10, "bold"),
                         foreground="#80dce2", background=SIDEBAR_BG)
-        style.configure("Sidebar.Eyebrow.TLabel", font=(self.ui_font, 8, "bold"),
+        style.configure("Sidebar.Eyebrow.TLabel", font=(self.ui_font, 10, "bold"),
                         foreground="#ffcc83", background=SIDEBAR_BG)
-        style.configure("Sidebar.Muted.TLabel", font=(self.ui_font, 8),
+        style.configure("Sidebar.Muted.TLabel", font=(self.ui_font, 10),
                         foreground="#b3e9ed", background=SIDEBAR_BG)
-        style.configure("Sidebar.Section.TLabel", font=(self.ui_font, 8, "bold"),
+        style.configure("Sidebar.Section.TLabel", font=(self.ui_font, 10, "bold"),
                         foreground="#80dce2", background=SIDEBAR_BG)
-        style.configure("SidebarNav.TButton", font=(self.ui_font, 9, "bold"),
-                        padding=(12, 10), anchor="w", foreground="#d9f3f5",
+        style.configure("SidebarNav.TButton", font=(self.ui_font, 10, "bold"),
+                        padding=(12, 11), anchor="w", foreground="#d9f3f5",
                         background=SIDEBAR_BG, relief="flat", borderwidth=0)
         style.map("SidebarNav.TButton", background=[("active", "#086a7d")],
                   foreground=[("active", WHITE)])
-        style.configure("SidebarSelected.TButton", font=(self.ui_font, 9, "bold"),
-                        padding=(12, 10), anchor="w", foreground=INK,
+        style.configure("SidebarSelected.TButton", font=(self.ui_font, 10, "bold"),
+                        padding=(12, 11), anchor="w", foreground=INK,
                         background=ORANGE_LIGHT, relief="flat", borderwidth=0)
         style.map("SidebarSelected.TButton", background=[("active", "#ffcc83")])
-        style.configure("Offline.TLabel", font=(self.ui_font, 8, "bold"),
+        style.configure("Offline.TLabel", font=(self.ui_font, 10, "bold"),
                         foreground="#24745e", background="#e6f4ec", padding=(9, 5))
-        style.configure("Field.TLabel", font=(self.ui_font, 9, "bold"), foreground="#385158",
+        style.configure("Field.TLabel", font=(self.ui_font, 10, "bold"), foreground="#385158",
                         background=WHITE)
-        style.configure("Card.TLabel", font=(self.ui_font, 10, "bold"), foreground=ACCENT_DARK,
+        style.configure("Card.TLabel", font=(self.ui_font, 11, "bold"), foreground=ACCENT_DARK,
                         background=WHITE)
-        style.configure("Header.TLabel", font=(self.ui_font, 11, "bold"), foreground=ACCENT_DARK,
+        style.configure("Header.TLabel", font=(self.ui_font, 13, "bold"), foreground=ACCENT_DARK,
                         background=WHITE)
-        style.configure("Muted.TLabel", font=(self.ui_font, 8), foreground=MUTED,
+        style.configure("Muted.TLabel", font=(self.ui_font, 10), foreground=MUTED,
                         background=WHITE)
-        style.configure("Accent.TButton", font=(self.ui_font, 9, "bold"), padding=(12, 7),
+        style.configure("Accent.TButton", font=(self.ui_font, 10, "bold"), padding=(13, 8),
                         foreground=WHITE, background=ACCENT)
         style.map("Accent.TButton", background=[("active", ACCENT_DARK), ("disabled", "#9bbfc0")],
                   foreground=[("disabled", "#f5f7f8")])
-        style.configure("Secondary.TButton", font=(self.ui_font, 9, "bold"), padding=(10, 6),
+        style.configure("Secondary.TButton", font=(self.ui_font, 10, "bold"), padding=(11, 7),
                         foreground=ACCENT_DARK, background=ACCENT_SOFT)
         style.map("Secondary.TButton", background=[("active", ACCENT_SOFT)])
-        style.configure("Danger.TButton", font=(self.ui_font, 9, "bold"), padding=(10, 6),
+        style.configure("Danger.TButton", font=(self.ui_font, 10, "bold"), padding=(11, 7),
                         foreground=WHITE, background=DANGER)
-        style.configure("Treeview", font=(self.ui_font, 9), rowheight=31,
+        style.configure("Treeview", font=(self.ui_font, 10), rowheight=36,
                         background=WHITE, fieldbackground=WHITE, foreground=INK, borderwidth=0)
-        style.configure("Treeview.Heading", font=(self.ui_font, 9, "bold"),
-                        background=PAGE_BG, foreground=ACCENT_DARK, relief="flat", padding=(9, 8))
+        style.configure("Treeview.Heading", font=(self.ui_font, 10, "bold"),
+                        background=PAGE_BG, foreground=ACCENT_DARK, relief="flat", padding=(10, 9))
         style.map("Treeview", background=[("selected", ACCENT_SOFT)],
                   foreground=[("selected", ACCENT_DARK)])
-        style.configure("Seat.TButton", font=(self.ui_font, 8, "bold"), padding=(5, 5),
+        style.configure("Seat.TButton", font=(self.ui_font, 10, "bold"), padding=(6, 6),
                         foreground=ACCENT_DARK, background=WHITE)
-        style.configure("SelectedSeat.TButton", font=(self.ui_font, 8, "bold"), padding=(5, 5),
+        style.configure("SelectedSeat.TButton", font=(self.ui_font, 10, "bold"), padding=(6, 6),
                         foreground=WHITE, background=ACCENT)
-        style.configure("BookedSeat.TButton", font=(self.ui_font, 8, "bold"), padding=(5, 5),
+        style.configure("BookedSeat.TButton", font=(self.ui_font, 10, "bold"), padding=(6, 6),
                         foreground="#6a777a", background="#e4e9e9")
         self.root.configure(background=PAGE_BG)
 
@@ -452,7 +452,7 @@ class BookingApp:
         self.header_owner_label.pack(anchor="w", pady=(4, 1))
         self.header_owner_phone_label = ttk.Label(
             owner_card, text=str(self.settings.get("owner_phone") or self.settings.get("phone", "")),
-            font=(self.ui_font, 9), foreground="#b3e9ed", background=SIDEBAR_DEEP)
+            font=(self.ui_font, 10), foreground="#b3e9ed", background=SIDEBAR_DEEP)
         self.header_owner_phone_label.pack(anchor="w")
         ttk.Label(footer, text="●  LOCAL DATABASE  ·  NO SYNC", style="Sidebar.Muted.TLabel").pack(
             anchor="center", pady=(12, 4))
@@ -546,10 +546,10 @@ class BookingApp:
         for column, (title, key, color, caption) in enumerate(cards):
             card = ttk.Frame(metrics, style="Card.TFrame", padding=(16, 12))
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 7, 0))
-            ttk.Label(card, text=title.upper(), font=(self.ui_font, 8, "bold"),
+            ttk.Label(card, text=title.upper(), font=(self.ui_font, 10, "bold"),
                       foreground=MUTED, background=WHITE).pack(anchor="w")
             ttk.Label(card, textvariable=self.dashboard_values[key],
-                      font=(self.ui_font, 20, "bold"), foreground=color,
+                      font=(self.ui_font, 22, "bold"), foreground=color,
                       background=WHITE).pack(anchor="w", pady=(6, 1))
             ttk.Label(card, text=caption, style="Muted.TLabel").pack(anchor="w")
 
@@ -594,7 +594,7 @@ class BookingApp:
             item = ttk.Frame(note_card, style="Card.TFrame")
             item.grid(row=row, column=0, sticky="ew", pady=(0, 10))
             item.columnconfigure(0, weight=1)
-            ttk.Label(item, text=title, font=(self.ui_font, 10, "bold"), foreground=ACCENT_DARK,
+            ttk.Label(item, text=title, font=(self.ui_font, 11, "bold"), foreground=ACCENT_DARK,
                       background=WHITE).grid(row=0, column=0, sticky="w")
             ttk.Label(item, text=detail, style="Muted.TLabel", wraplength=360,
                       justify="left").grid(row=1, column=0, sticky="w", pady=(3, 5))
@@ -655,9 +655,14 @@ class BookingApp:
             side="left", padx=(0, 6))
         ttk.Button(buttons, text="Save changes", style="Secondary.TButton", command=self.save_tour).pack(
             side="left", padx=6)
-        ttk.Button(buttons, text="Remove / archive", style="Danger.TButton", command=self.remove_tour).pack(
-            side="right", padx=(6, 0))
         ttk.Button(buttons, text="Clear", command=self.clear_tour_editor).pack(side="right")
+
+        tour_actions = ttk.Frame(tour_form, style="Card.TFrame")
+        tour_actions.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(7, 0))
+        ttk.Button(tour_actions, text="Archive (keep history)", style="Secondary.TButton",
+                   command=self.archive_tour).pack(side="left", padx=(0, 6))
+        ttk.Button(tour_actions, text="Delete tour + bookings", style="Danger.TButton",
+                   command=self.delete_tour_permanently).pack(side="right")
 
         reports = ttk.Frame(content, style="Card.TFrame", padding=14)
         reports.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
@@ -766,7 +771,7 @@ class BookingApp:
         self.bus_status_combo.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
         ttk.Label(card, text="Notes", style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(7, 0))
-        self.bus_notes_text = tk.Text(card, height=3, width=30, font=(self.ui_font, 9),
+        self.bus_notes_text = tk.Text(card, height=3, width=30, font=(self.ui_font, 10),
                                       relief="solid", borderwidth=1, wrap="word")
         self.bus_notes_text.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
@@ -970,24 +975,20 @@ class BookingApp:
         self.refresh()
         self.set_status(message)
 
-    def remove_tour(self) -> None:
+    def _selected_catalog_tour(self, action: str) -> Optional[Dict[str, Any]]:
         if self.selected_tour_catalog_id is None:
-            messagebox.showinfo("Remove tour", "Select a tour in the catalogue first.", parent=self.root)
-            return
+            messagebox.showinfo(action, "Select a tour in the catalogue first.", parent=self.root)
+            return None
         tour = next((item for item in self.db.tour_catalog(include_inactive=True)
                      if int(item["id"]) == self.selected_tour_catalog_id), None)
         if not tour:
-            messagebox.showinfo("Remove tour", "This tour no longer exists.", parent=self.root)
+            messagebox.showinfo(action, "This tour no longer exists.", parent=self.root)
             self.clear_tour_editor()
             self.refresh_tour_catalog()
-            return
-        name = str(tour["name"])
-        if not messagebox.askyesno(
-            "Remove tour", f"Remove '{name}' from the active tour list? Existing booking history will be kept.",
-            parent=self.root,
-        ):
-            return
-        archived = self.db.remove_tour(self.selected_tour_catalog_id)
+            return None
+        return tour
+
+    def _finish_tour_action(self, name: str) -> None:
         self.settings["tour_suggestions"] = [
             item for item in (self.settings.get("tour_suggestions") or [])
             if str(item).strip().casefold() != name.casefold()
@@ -997,8 +998,69 @@ class BookingApp:
         self.refresh_tour_catalog()
         self.apply_tour_choices()
         self.refresh()
-        self.set_status(f"'{name}' archived; its bookings remain in reports." if archived
-                        else f"'{name}' removed from the tour list.")
+
+    def archive_tour(self) -> None:
+        tour = self._selected_catalog_tour("Archive tour")
+        if not tour:
+            return
+        name = str(tour["name"])
+        booking_count = int(tour.get("booking_count") or 0)
+        if not messagebox.askyesno(
+            "Archive tour",
+            f"Archive '{name}' and remove it from new booking choices? Its {booking_count} saved "
+            "booking(s) and payment history will remain in the database and reports. You can reactivate "
+            "it later by adding the same name again.",
+            parent=self.root,
+        ):
+            return
+        if not self.db.archive_tour(self.selected_tour_catalog_id):
+            messagebox.showinfo("Archive tour", "This tour no longer exists.", parent=self.root)
+            self.clear_tour_editor()
+            self.refresh_tour_catalog()
+            return
+        self._finish_tour_action(name)
+        self.set_status(f"'{name}' archived; its {booking_count} booking(s) remain in history.")
+
+    def delete_tour_permanently(self) -> None:
+        tour = self._selected_catalog_tour("Delete tour")
+        if not tour:
+            return
+        name = str(tour["name"])
+        booking_count = int(tour.get("booking_count") or 0)
+        saved_data = (
+            f"This will permanently delete all {booking_count} associated booking/payment record(s) "
+            "from the local database."
+            if booking_count else "There are no saved bookings for this tour."
+        )
+        if not messagebox.askyesno(
+            "Permanently delete tour and bookings",
+            f"Delete '{name}'?\n\n{saved_data}\n\nThis cannot be undone. Back up the database first "
+            "if you may need these records later.",
+            parent=self.root,
+        ):
+            return
+        if not self.db.delete_tour(self.selected_tour_catalog_id):
+            messagebox.showinfo("Delete tour", "This tour no longer exists.", parent=self.root)
+            self.clear_tour_editor()
+            self.refresh_tour_catalog()
+            return
+        selected_booking_was_deleted = (
+            self.selected_id is not None and self.db.get(self.selected_id) is None
+        )
+        if selected_booking_was_deleted:
+            self.clear_form()
+        elif hasattr(self, "vars") and str(self.vars["tour_name"].get()).strip().casefold() == name.casefold():
+            remaining = next((item for item in self.db.active_tours()
+                              if item.casefold() != name.casefold()), "")
+            self.vars["tour_name"].set(remaining)
+            self.vars["seat"].set("")
+            self.update_tour_seat_summary()
+        self._finish_tour_action(name)
+        self.set_status(f"'{name}' and its {booking_count} associated booking(s) were permanently deleted.")
+
+    def remove_tour(self) -> None:
+        """Compatibility action for older shortcuts; removal is permanent."""
+        self.delete_tour_permanently()
 
     def refresh_tour_catalog(self) -> None:
         if not hasattr(self, "tour_catalog_tree"):
@@ -1493,7 +1555,7 @@ class BookingApp:
         ttk.Label(card, text="Notes", style="Field.TLabel").grid(row=row, column=0, sticky="w",
                                                                  pady=(8, 0))
         row += 1
-        self.notes_text = tk.Text(card, height=4, width=30, font=(self.ui_font, 9),
+        self.notes_text = tk.Text(card, height=4, width=30, font=(self.ui_font, 10),
                                   relief="solid", borderwidth=1, wrap="word")
         self.notes_text.grid(row=row, column=0, columnspan=3, sticky="ew")
         row += 1
@@ -1623,7 +1685,7 @@ class BookingApp:
                   background=WHITE).pack(side="left")
         self.totals_var = tk.StringVar()
         ttk.Label(bar, textvariable=self.totals_var,
-                  font=(self.ui_font, 9, "bold"), foreground=ACCENT_DARK,
+                  font=(self.ui_font, 10, "bold"), foreground=ACCENT_DARK,
                   background=WHITE).pack(side="right")
 
     def _bind_keys(self) -> None:
@@ -2084,7 +2146,7 @@ class BookingApp:
             "TOUR BOOKINGS\n"
             "Choose a tour and date, click Map, select open seats, and save. Click a row to edit the passenger or payment; due is Total minus Advance.\n\n"
             "TOURS & MONTHLY REPORTS\n"
-            "Add or edit tours and capacity here. Select a travel month to preview trips and export a PDF or CSV sheet. Used tours are archived so their history stays safe.\n\n"
+            "Add or edit tours and capacity here. Archive a tour to keep its booking history, or permanently delete the tour and all associated booking/payment records. Confirm the delete carefully because it cannot be undone. Select a travel month to preview trips and export a PDF or CSV sheet.\n\n"
             "BUS TICKETS\n"
             "Enter any route/date, use Map to pick a free seat, save, then print the ticket. Seats are checked per route and date.\n\n"
             "Use File → Backup database regularly. Everything is stored offline on this computer.\n\n"
@@ -2214,7 +2276,7 @@ class SeatMapDialog(tk.Toplevel):
         ttk.Label(self, text=title, font=("Segoe UI", 14, "bold"),
                   foreground=ACCENT_DARK, background=PAGE_BG).grid(row=0, column=0, sticky="w")
         ttk.Label(self, text="Click open seats to assign or release them. Booked seats are locked.",
-                  font=("Segoe UI", 9), foreground=MUTED, background=PAGE_BG).grid(
+                  font=("Segoe UI", 10), foreground=MUTED, background=PAGE_BG).grid(
             row=1, column=0, sticky="w", pady=(3, 10))
 
         plan = ttk.Frame(self, style="Card.TFrame", padding=12)
@@ -2222,9 +2284,9 @@ class SeatMapDialog(tk.Toplevel):
         plan.columnconfigure(0, weight=1)
         top = ttk.Frame(plan, style="Card.TFrame")
         top.grid(row=0, column=0, sticky="ew", pady=(0, 9))
-        ttk.Label(top, text="FRONT OF BUS", font=("Segoe UI", 8, "bold"),
+        ttk.Label(top, text="FRONT OF BUS", font=("Segoe UI", 10, "bold"),
                   foreground=MUTED, background=WHITE).pack(side="left")
-        ttk.Label(top, text="DRIVER  ◉", font=("Segoe UI", 8, "bold"),
+        ttk.Label(top, text="DRIVER  ◉", font=("Segoe UI", 10, "bold"),
                   foreground=ACCENT_DARK, background=WHITE).pack(side="right")
 
         self.map_frame = ttk.Frame(plan, style="Card.TFrame")
@@ -2243,7 +2305,7 @@ class SeatMapDialog(tk.Toplevel):
                 break
             grid_row = first_row + index
             ttk.Label(self.map_frame, text=letter, width=3, anchor="center",
-                      font=("Segoe UI", 8, "bold"), foreground=MUTED,
+                      font=("Segoe UI", 10, "bold"), foreground=MUTED,
                       background=WHITE).grid(row=grid_row, column=2, padx=5, pady=2)
             self._make_seat_button(row_seats[0], grid_row, 0)
             self._make_seat_button(row_seats[1], grid_row, 1)
@@ -2260,10 +2322,10 @@ class SeatMapDialog(tk.Toplevel):
         for text, color in (("Available", ACCENT_SOFT), ("Selected", ACCENT), ("Booked", "#e4e9e9")):
             key = ttk.Label(legend, text=f"  {text}  ", background=color,
                             foreground=ACCENT_DARK if text != "Selected" else WHITE,
-                            font=("Segoe UI", 8, "bold"), padding=(4, 3))
+                            font=("Segoe UI", 10, "bold"), padding=(4, 3))
             key.pack(side="left", padx=(0, 7))
         self.summary_var = tk.StringVar()
-        ttk.Label(self, textvariable=self.summary_var, font=("Segoe UI", 9, "bold"),
+        ttk.Label(self, textvariable=self.summary_var, font=("Segoe UI", 10, "bold"),
                   foreground=ACCENT_DARK, background=PAGE_BG).grid(row=4, column=0, sticky="w", pady=(5, 10))
         buttons = ttk.Frame(self, style="Page.TFrame")
         buttons.grid(row=5, column=0, sticky="e")

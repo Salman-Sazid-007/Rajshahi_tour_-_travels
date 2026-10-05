@@ -222,9 +222,10 @@ class Canvas:
             return
         if w <= 0 or h <= 0:
             return
-        y1 = self._y(y)
-        y2 = self._y(y + h)
-        path = self._path(x, y1, w, h, radius)
+        # Coordinates in Canvas are top-left based; PDF rectangle origins are
+        # bottom-left based, so position the lower edge at page_height - (y+h).
+        y_bottom = self._y(y + h)
+        path = self._path(x, y_bottom, w, h, radius)
         ops: List[str] = []
         if dash:
             ops.append(f"[{' '.join(_fmt(d) for d in dash)}] 0 d")

@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads. They are desktop version 1.0.1; the new workflows described below are in the current **1.1.1 source** and have not been published as a new release yet.
+These are the **latest published** downloads: desktop version 1.1.2.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.0.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Windows-1.0.1.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.0.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Desktop-1.0.1.zip) | Run the published source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+| [**RajshahiTours-Windows-1.1.2.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.2/RajshahiTours-Windows-1.1.2.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.1.2.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.2/RajshahiTours-Desktop-1.1.2.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. New source builds show version 1.1.1 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.2 in **Help → About**.
 
 ---
 
@@ -23,9 +23,10 @@ computer. The interface is organized into **Overview**, **Tour bookings**,
 
 ## What it does
 
-* **Manage tours:** create, rename, adjust seat capacity, and remove tours. A
-tour with booking history is archived instead of erased; its reports and old
-bookings remain available.
+* **Manage tours:** create, rename and adjust seat capacity. Archive a tour to
+hide it from new bookings while keeping its history, or permanently delete the
+tour and every associated booking/payment record from the database after an
+explicit warning and confirmation.
 * **Book a tour:** choose a tour and travel date, open the seat map, select free
 seats, and save the customer and payment. Occupied seats are locked for that
 same tour/date. Edit bookings or payments later; the remaining due is recalculated.
@@ -55,7 +56,9 @@ the Tkinter sidebar, so no image package is required at runtime. Brand accents
 match the supplied palette: teal `#22B4B3`, orange `#F97000` / `#EE8625`, and
 black `#000000`. The owner **Safayet Hossain** and phone **01782250709** appear
 in the upper-right PDF header; booking details and payment balances follow
-below. Company and owner details can be edited in **Tools → Settings**.
+below in an aligned layout with a compact logo and larger, more legible type.
+The desktop UI and tables also use larger fonts. Company and owner details can
+be edited in **Tools → Settings**.
 
 * **Receipt PDF / Print** — a branded A4 receipt for one tour booking.
 * **Monthly PDF / CSV** — tour bookings for the selected travel month, with
@@ -86,7 +89,7 @@ Bangla names are spaced inside the PDF. English output is identical either way.)
 ## 2. Build a double-clickable program
 
 **Windows** — double-click `build_windows.bat`. It installs PyInstaller and
-creates `dist\\RajshahiTours\\RajshahiTours.exe`. Copy the whole
+creates `dist\RajshahiTours\RajshahiTours.exe`. Copy the whole
 `RajshahiTours` folder to the office computer and create a shortcut on the desktop.
 
 **macOS / Linux** — run `./build_linux_mac.sh`, which produces
@@ -96,10 +99,10 @@ creates `dist\\RajshahiTours\\RajshahiTours.exe`. Copy the whole
 
 | Item | Location |
 | --- | --- |
-| Database (bookings, tour catalogue, bus tickets) | `Documents\\Rajshahi Tours & Travels\\bookings.db` |
-| Settings | `Documents\\Rajshahi Tours & Travels\\settings.json` |
-| Backups | `Documents\\Rajshahi Tours & Travels\\Backups\\` |
-| PDF/CSV exports | wherever you choose (defaults to `...\\Exports\\`) |
+| Database (bookings, tour catalogue, bus tickets) | `Documents\Rajshahi Tours & Travels\bookings.db` |
+| Settings | `Documents\Rajshahi Tours & Travels\settings.json` |
+| Backups | `Documents\Rajshahi Tours & Travels\Backups\` |
+| PDF/CSV exports | wherever you choose (defaults to `...\Exports\`) |
 
 *Help → About* shows the exact folder. Back up `bookings.db` regularly; it
 contains the tour catalogue, booking history, and offline bus tickets.
@@ -115,10 +118,11 @@ due, bus-ticket count and upcoming departures.
 then save. Select a row and edit it to change customer details, seats, status,
 or payment; due is recalculated as Total − Advance. The seat map excludes the
 currently edited booking from its occupied-seat list.
-* **Tours & monthly reports** — add a tour, set its seat capacity, select a tour
-to edit it, or remove/archive it. Choose a travel month (`YYYY-MM`) and use
-**Monthly PDF** or **Export CSV**. Archived tours are not offered for new
-bookings, but their booking history remains in reports.
+* **Tours & monthly reports** — add a tour, set its seat capacity, or select a
+tour to edit it. **Archive (keep history)** removes it from new-booking choices
+while retaining its bookings and reports. **Delete tour + bookings** permanently
+removes that tour and its associated booking/payment records after confirmation.
+Choose a travel month (`YYYY-MM`) and use **Monthly PDF** or **Export CSV**.
 * **Bus tickets** — enter a route, date, departure time, passenger and fare;
 click **Map** to choose an open seat. Save, edit, cancel or delete a ticket, and
 print the branded ticket. Seat occupancy is scoped to route + travel date.
@@ -171,7 +175,7 @@ The optional render tests rasterize PDFs and verify glyph placement.
 * *"Python was not found"* — reinstall Python and tick *Add Python to PATH*.
 * The window does not open on Linux — `sudo apt install python3-tk`.
 * Want a fresh start — close the program and delete
-  `Documents\\Rajshahi Tours & Travels\\bookings.db` (or restore a backup first).
+  `Documents\Rajshahi Tours & Travels\bookings.db` (or restore a backup first).
 
 ## 8. Notes
 

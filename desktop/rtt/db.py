@@ -451,23 +451,47 @@ class Database:
             self.connection.rollback()
             raise
 
-    def remove_tour(self, tour_id: int) -> bool:
-        """Remove an unused tour; archive it if bookings depend on its history.
-
-        Returns True when the tour was archived, False when it was deleted.
-        """
-        row = self.connection.execute("SELECT name FROM tour_catalog WHERE id = ?", (tour_id,)).fetchone()
-        if not row:
-            return False
-        used = self.connection.execute(
-            "SELECT 1 FROM bookings WHERE tour_name = ? COLLATE NOCASE LIMIT 1", (row["name"],)
-        ).fetchone()
-        if used:
+    def archive_tour(self, tour_id: int) -> bool:
+        """Hide a tour from new bookings while retaining all records and reports."""
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            row = self.connection.execute(
+                "SELECT id FROM tour_catalog WHERE id = ?", (tour_id,)
+            ).fetchone()
+            if not row:
+                self.connection.rollback()
+                return False
             self.connection.execute("UPDATE tour_catalog SET active = 0 WHERE id = ?", (tour_id,))
-        else:
+            self.connection.commit()
+            return True
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def delete_tour(self, tour_id: int) -> bool:
+        """Permanently delete a tour and every booking/payment record attached to it."""
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            row = self.connection.execute(
+                "SELECT name FROM tour_catalog WHERE id = ?", (tour_id,)
+            ).fetchone()
+            if not row:
+                self.connection.rollback()
+                return False
+            name = str(row["name"])
+            self.connection.execute(
+                "DELETE FROM bookings WHERE tour_name = ? COLLATE NOCASE", (name,)
+            )
             self.connection.execute("DELETE FROM tour_catalog WHERE id = ?", (tour_id,))
-        self.connection.commit()
-        return bool(used)
+            self.connection.commit()
+            return True
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def remove_tour(self, tour_id: int) -> bool:
+        """Compatibility alias: removing a tour is now a permanent deletion."""
+        return self.delete_tour(tour_id)
 
     def tour_capacity(self, name: str) -> int:
         row = self.connection.execute(

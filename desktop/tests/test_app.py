@@ -81,7 +81,7 @@ class DatabaseTests(unittest.TestCase):
         self.assertTrue(os.path.exists(target))
         self.assertGreater(os.path.getsize(target), 0)
 
-    def test_tour_catalog_archives_without_losing_booking_history(self) -> None:
+    def test_archiving_tour_preserves_booking_history(self) -> None:
         tour_id = self.database.add_tour("Sajek Weekend", 32)
         self.assertIn("Sajek Weekend", self.database.active_tours())
         booking_id = self.database.add({
@@ -90,10 +90,46 @@ class DatabaseTests(unittest.TestCase):
             "total": 5000, "advance": 1000,
         })
         self.assertEqual(self.database.tour_seat_conflicts("Sajek Weekend", "2026-12-10", "A-1"), ["A-1"])
-        self.assertTrue(self.database.remove_tour(tour_id))
+        self.assertTrue(self.database.archive_tour(tour_id))
         self.assertNotIn("Sajek Weekend", self.database.active_tours())
         self.assertIn("Sajek Weekend", self.database.tours())
         self.assertEqual(self.database.get(booking_id)["name"], "Tour customer")
+        self.assertEqual(self.database.tour_catalog(include_inactive=True)[-1]["active"], 0)
+
+    def test_permanent_tour_delete_removes_bookings_and_payment_data(self) -> None:
+        tour_id = self.database.add_tour("Delete Weekend", 32)
+        keeper_id = self.database.add_tour("Keep Weekend", 32)
+        deleted_booking = self.database.add({
+            "booking_no": self.database.next_number("RTT"), "name": "Delete customer",
+            "tour_name": "Delete Weekend", "tour_date": "2026-12-10", "seat": "A1",
+            "total": 5000, "advance": 1000,
+        })
+        kept_booking = self.database.add({
+            "booking_no": self.database.next_number("RTT"), "name": "Keep customer",
+            "tour_name": "Keep Weekend", "tour_date": "2026-12-10", "seat": "A2",
+            "total": 4000, "advance": 2000,
+        })
+        self.database.connection.execute(
+            "UPDATE bookings SET tour_name = 'delete weekend' WHERE id = ?", (deleted_booking,)
+        )
+        self.database.connection.commit()
+        self.assertTrue(self.database.delete_tour(tour_id))
+        self.assertIsNone(self.database.get(deleted_booking))
+        self.assertEqual(self.database.list(tour="Delete Weekend"), [])
+        self.assertNotIn("Delete Weekend", self.database.tours())
+        self.assertNotIn("Delete Weekend", [tour["name"] for tour in self.database.tour_catalog(True)])
+        self.assertEqual(self.database.get(kept_booking)["name"], "Keep customer")
+        self.assertIn(keeper_id, [tour["id"] for tour in self.database.tour_catalog()])
+        self.assertFalse(self.database.delete_tour(tour_id))
+
+    def test_remove_tour_is_a_permanent_delete_alias(self) -> None:
+        tour_id = self.database.add_tour("Removed tour", 30)
+        booking_id = self.database.add({
+            "booking_no": self.database.next_number("RTT"), "name": "Removed passenger",
+            "tour_name": "Removed tour", "total": 1200, "advance": 300,
+        })
+        self.assertTrue(self.database.remove_tour(tour_id))
+        self.assertIsNone(self.database.get(booking_id))
 
     def test_legacy_trip_dates_and_routes_are_normalised_on_open(self) -> None:
         booking_id = self.database.add({
@@ -119,12 +155,13 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual(ticket["travel_date"], "2026-12-22")
         self.assertEqual(ticket["route"], "Rajshahi → Dhaka")
 
-    def test_removed_unused_tour_stays_removed_after_reopen(self) -> None:
+    def test_deleted_tour_stays_removed_after_reopen(self) -> None:
         tour_id = self.database.add_tour("One-time special", 30)
-        self.assertFalse(self.database.remove_tour(tour_id))
+        self.assertTrue(self.database.delete_tour(tour_id))
         self.database.close()
         self.database = db.Database(config.database_path())
         self.assertNotIn("One-time special", self.database.active_tours())
+        self.assertNotIn("One-time special", [tour["name"] for tour in self.database.tour_catalog(True)])
 
     def test_renaming_tour_keeps_booking_history_with_the_tour(self) -> None:
         tour_id = self.database.add_tour("Old tour name", 40)
@@ -245,6 +282,12 @@ class FontEngineTests(unittest.TestCase):
 
 
 class DocumentTests(unittest.TestCase):
+    def test_pdf_rect_uses_top_left_coordinates(self) -> None:
+        doc = type("StubDocument", (), {"default_style": "regular"})()
+        canvas = pdf.Canvas(doc, width=100, height=100)
+        canvas.rect(5, 10, 20, 30, fill=(1, 0, 0))
+        self.assertIn("5 60 20 30 re", canvas.ops[0])
+
     def setUp(self) -> None:
         temp_dir()
         self.settings = config.load_settings()
@@ -410,16 +453,56 @@ class UiTests(unittest.TestCase):
         self.app.backup_database()
         self.assertGreater(ANSWERS.get("showinfo", 0), 0)
 
-    def test_tour_catalog_can_add_and_remove_a_tour(self) -> None:
+    def test_tour_catalog_can_add_and_permanently_delete_saved_data(self) -> None:
         self.app.tour_name_var.set("UI-created day trip")
         self.app.tour_capacity_var.set("28")
         self.app.save_tour(add_only=True)
         tour = next(item for item in self.database.tour_catalog() if item["name"] == "UI-created day trip")
         self.assertEqual(tour["seat_capacity"], 28)
+        booking_id = self.database.add({
+            "booking_no": self.database.next_number("RTT"), "name": "UI trip customer",
+            "tour_name": "UI-created day trip", "tour_date": "2026-12-10", "seat": "A1",
+            "total": 2800, "advance": 1000,
+        })
         self.app.selected_tour_catalog_id = int(tour["id"])
         self.app.tour_name_var.set(tour["name"])
-        self.app.remove_tour()
+        self.app.delete_tour_permanently()
+        self.assertIsNone(self.database.get(booking_id))
         self.assertNotIn("UI-created day trip", self.database.active_tours())
+        self.assertNotIn("UI-created day trip", [item["name"] for item in self.database.tour_catalog(True)])
+        self.assertIn("permanently deleted", self.app.status_var.get())
+
+    def test_tour_catalog_archive_keeps_history(self) -> None:
+        tour_id = self.database.add_tour("UI archive test", 28)
+        booking_id = self.database.add({
+            "booking_no": self.database.next_number("RTT"), "name": "Archive customer",
+            "tour_name": "UI archive test", "tour_date": "2026-12-10", "seat": "A1",
+            "total": 2800, "advance": 1000,
+        })
+        self.app.selected_tour_catalog_id = tour_id
+        self.app.archive_tour()
+        self.assertNotIn("UI archive test", self.database.active_tours())
+        self.assertEqual(self.database.get(booking_id)["name"], "Archive customer")
+        self.assertIn("UI archive test", self.database.tours())
+
+    def test_deleting_default_tour_persists_across_app_restart(self) -> None:
+        name = "Cox's Bazar Tour"
+        tour = next(item for item in self.database.tour_catalog() if item["name"] == name)
+        booking_id = self.database.add({
+            "booking_no": self.database.next_number("RTT"), "name": "Default tour passenger",
+            "tour_name": name, "tour_date": "2026-12-10", "seat": "A1",
+            "total": 5000, "advance": 1500,
+        })
+        self.app.selected_tour_catalog_id = int(tour["id"])
+        self.app.delete_tour_permanently()
+        self.assertIsNone(self.database.get(booking_id))
+        self.assertNotIn(name, config.load_settings()["tour_suggestions"])
+        self.database.close()
+        self.database = db.Database(config.database_path())
+        restarted = ui.BookingApp(fake_tkinter.Tk(), self.database, config.load_settings())
+        self.assertNotIn(name, self.database.active_tours())
+        self.assertNotIn(name, [item["name"] for item in self.database.tour_catalog(True)])
+        self.assertNotIn(name, restarted.settings["tour_suggestions"])
 
     def test_monthly_report_groups_trips_and_shows_open_seats(self) -> None:
         for index, seat in enumerate(("A-1", "A-2"), start=1):

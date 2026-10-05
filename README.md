@@ -13,19 +13,21 @@ Two editions, one shared tour and transport model:
 
 | Download | For |
 | --- | --- |
-| [`RajshahiTours-Windows-1.0.1.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Windows-1.0.1.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
-| [`RajshahiTours-Desktop-1.0.1.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Desktop-1.0.1.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
+| [`RajshahiTours-Windows-1.1.2.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.2/RajshahiTours-Windows-1.1.2.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
+| [`RajshahiTours-Desktop-1.1.2.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.2/RajshahiTours-Desktop-1.1.2.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
 
-`desktop/` holds an offline Tkinter counter workspace (current source version
-1.1.1): manage tours and capacity, assign date-specific seats from a map, edit
-bookings and payments, issue route/date-specific bus tickets, and export monthly
-tour reports as PDF or CSV. Data stays in a local SQLite database. The supplied
-full company logo and brand colors appear in the desktop sidebar and customer
-PDFs, with owner **Safayet Hossain** and phone **01782250709** at the upper right.
+`desktop/` holds the offline Tkinter counter workspace (version 1.1.2): manage
+tours and capacity, assign date-specific seats from a map, edit bookings and
+payments, issue route/date-specific bus tickets, and export monthly tour reports
+as PDF or CSV. Data stays in a local SQLite database. This release improves
+receipt alignment and readability, enlarges the app fonts, and provides separate
+tour archive (keep history) and permanent delete (remove all associated bookings)
+actions. The supplied full company logo and exact brand colors appear in the
+desktop sidebar and customer PDFs, with owner **Safayet Hossain** and phone
+**01782250709** at the upper right.
 
-The download links above are the latest **published** release (1.0.1); the new
-1.1.1 source workflows have not yet been published as a release. To run the
-current source:
+The download links above are the latest **published** release (1.1.2). To run
+the current source:
 
 ```bash
 cd desktop

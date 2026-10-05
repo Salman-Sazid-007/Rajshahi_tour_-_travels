@@ -1,29 +1,44 @@
-## Rajshahi Tours & Travels — Desktop counter app 1.1.1
+## Rajshahi Tours & Travels — Desktop counter app 1.1.2
 
-A locally stored, offline counter workspace for tour bookings and manual bus
-ticket sales. Tour catalogues, bookings, payment balances, bus tickets and seat
-occupancy are stored in the local SQLite database.
+This release improves receipt readability and alignment, increases desktop UI
+font sizes, and makes tour deletion an explicit permanent action while keeping
+history-preserving archive as a separate choice. The app remains a local,
+offline workspace for bookings, payments, bus tickets and reports.
 
-### What is included
+### What changed
 
-* **Tour catalogue:** add, edit, set seat capacity, remove, or safely archive a
-tour. Tours with booking history stay available in reports.
-* **Date-specific tour seat map:** assign open seats for the selected tour and
-travel date. Occupied seats are locked; edits and cancellations keep availability
-in sync. Standard 40-seat and extended 46-seat labels match the website layout.
+* **Professional receipts:** reduced the company-logo footprint, aligned the
+  receipt sections and payment cards, and increased small type on receipts,
+  bus tickets and PDF reports. Corrected PDF rectangle placement so filled and
+  stroked boxes render at their intended positions.
+* **Larger desktop text:** raised the default app font and improved legibility
+  across forms, tour and booking tables, buttons, the dashboard and seat maps.
+* **Tour data controls:** archive a tour to remove it from new-booking choices
+  while retaining its booking/payment history. The separate **Delete tour +
+  bookings** action permanently removes the tour and all associated booking
+  records from the local database after a clear confirmation warning.
+* **Tour creation:** create tours with a configurable seat capacity, edit their
+  names and capacity, and reactivate archived tours by adding the same name.
+
+### Included features
+
+* **Date-specific tour seat map:** assign open seats for a selected tour and
+  travel date. Occupied seats are locked; edits and cancellations keep
+  availability in sync. Standard 40-seat and extended 46-seat labels match the
+  website layout.
 * **Editable bookings and payments:** update passenger, seat, status, total or
-advance; the outstanding due is recalculated automatically.
+  advance; the outstanding due is recalculated automatically.
 * **Monthly travel report:** review trips, passengers, seats, availability and
-balances, then export a printable PDF or CSV spreadsheet.
+  balances, then export a printable PDF or CSV spreadsheet.
 * **Offline bus tickets:** issue a ticket for any route/date, choose from a
-40-seat map, prevent duplicate route/date/seat sales, reprint or cancel tickets,
-and export the register.
-* **Official brand image:** the supplied full company logo appears in the desktop
-sidebar and PDF headers; accent colors use the supplied teal (`#22B4B3`), orange
-(`#F97000` / `#EE8625`) and black (`#000000`). PDF headers show owner **Safayet
-Hossain** and phone **01782250709** at the upper right.
+  40-seat map, prevent duplicate route/date/seat sales, reprint or cancel
+  tickets, and export the register.
+* **Official brand image:** the supplied full company logo appears in the
+  desktop sidebar and PDF headers. Accent colors use the supplied teal
+  (`#22B4B3`), orange (`#F97000` / `#EE8625`) and black (`#000000`). PDF headers
+  show owner **Safayet Hossain** and phone **01782250709** at the upper right.
 * **Overview dashboard:** quick view of tour departures, seats, due amounts and
-bus-ticket activity.
+  bus-ticket activity.
 
 ### Which file should I download?
 
