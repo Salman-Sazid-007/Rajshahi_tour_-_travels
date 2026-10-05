@@ -1764,8 +1764,18 @@ class BookingApp:
         allowed = set(seat_ids(self.db.tour_capacity(str(data.get("tour_name") or ""))))
         if any(seat not in allowed for seat in seats):
             return "One or more seats are not part of this tour's seat layout. Open the seat map and choose again."
-        if not parse_date(str(data.get("tour_date") or "")):
+        tour_date = parse_date(str(data.get("tour_date") or ""))
+        if not tour_date:
             return "Tour date must be valid before a seat can be reserved."
+        if str(data.get("status") or "").casefold() != "cancelled":
+            conflicts = self.db.tour_seat_conflicts(
+                tour_name, tour_date.isoformat(), ", ".join(seats), exclude_id=self.selected_id
+            )
+            if conflicts:
+                return (
+                    f"Seat(s) {', '.join(conflicts)} are already booked for {tour_name} "
+                    f"on {tour_date.isoformat()}. Choose different seats for this trip."
+                )
         if data["total"] < 0 or data["advance"] < 0:
             return "Amounts cannot be negative."
         if data["advance"] > data["total"] and data["total"] > 0:
@@ -1794,10 +1804,25 @@ class BookingApp:
         self.update_due()
 
     def new_booking(self) -> None:
+        # Most counter entries are passengers on the same departure. Keep that
+        # tour/date when starting the next booking so the seat map continues to
+        # show seats already sold for the trip instead of silently switching to
+        # today's date. The operator can still choose another tour/date.
+        previous_tour = str(self.vars["tour_name"].get() or "").strip()
+        previous_date = parse_date(str(self.vars["tour_date"].get() or ""))
+        active_tours = self.db.active_tours()
+        retained_tour = next(
+            (name for name in active_tours if name.casefold() == previous_tour.casefold()), ""
+        )
+
         self.clear_form()
         today = _dt.date.today().isoformat()
+        if retained_tour:
+            self.vars["tour_name"].set(retained_tour)
         self.vars["booking_date"].set(today)
-        self.vars["tour_date"].set(today)
+        self.vars["tour_date"].set(
+            previous_date.isoformat() if retained_tour and previous_date else today
+        )
         self.assign_number()
         self.update_tour_seat_summary()
         self.set_status("New tour booking — fill in the passenger, choose seats, and save.")

@@ -13,20 +13,21 @@ Two editions, one shared tour and transport model:
 
 | Download | For |
 | --- | --- |
-| [`RajshahiTours-Windows-1.1.2.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.2/RajshahiTours-Windows-1.1.2.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
-| [`RajshahiTours-Desktop-1.1.2.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.2/RajshahiTours-Desktop-1.1.2.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
+| [`RajshahiTours-Windows-1.1.3.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.3/RajshahiTours-Windows-1.1.3.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
+| [`RajshahiTours-Desktop-1.1.3.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.3/RajshahiTours-Desktop-1.1.3.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
 
-`desktop/` holds the offline Tkinter counter workspace (version 1.1.2): manage
+`desktop/` holds the offline Tkinter counter workspace (version 1.1.3): manage
 tours and capacity, assign date-specific seats from a map, edit bookings and
 payments, issue route/date-specific bus tickets, and export monthly tour reports
-as PDF or CSV. Data stays in a local SQLite database. This release improves
-receipt alignment and readability, enlarges the app fonts, and provides separate
-tour archive (keep history) and permanent delete (remove all associated bookings)
-actions. The supplied full company logo and exact brand colors appear in the
-desktop sidebar and customer PDFs, with owner **Safayet Hossain** and phone
-**01782250709** at the upper right.
+as PDF or CSV. Data stays in a local SQLite database. This patch keeps the active
+tour/date when starting the next booking and rejects already-booked seats before
+saving, while still allowing seats to be reused on a different departure date.
+It also includes improved receipts, larger app fonts, separate tour archive and
+permanent-delete actions, and the supplied full company logo and exact brand
+colors in the desktop sidebar and customer PDFs. PDF headers show owner
+**Safayet Hossain** and phone **01782250709**.
 
-The download links above are the latest **published** release (1.1.2). To run
+The download links above are the latest **published** release (1.1.3). To run
 the current source:
 
 ```bash

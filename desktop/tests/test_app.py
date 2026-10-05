@@ -378,6 +378,38 @@ class UiTests(unittest.TestCase):
         self.assertEqual(rows[0]["due"], 9000.0)
         self.assertEqual(len(self.app.tree.get_children()), 1)
 
+    def test_new_booking_keeps_trip_and_rejects_seats_already_booked_on_that_date(self) -> None:
+        self.app.new_booking()
+        self.app.vars["tour_name"].set("Sajek Valley Tour")
+        self.app.vars["tour_date"].set("2026-12-11")
+        self.app.vars["name"].set("Sazid")
+        self.app.vars["seat"].set("A1, A2")
+        self.app.save_booking()
+        self.assertEqual(len(self.database.list()), 1)
+
+        self.app.new_booking()
+        self.assertEqual(self.app.vars["tour_name"].get(), "Sajek Valley Tour")
+        self.assertEqual(self.app.vars["tour_date"].get(), "2026-12-11")
+        self.app.vars["name"].set("Second passenger")
+        self.app.vars["seat"].set("A-1, A-2")
+        error = self.app.validate_form(self.app.collect_form())
+        self.assertIsNotNone(error)
+        self.assertIn("A-1, A-2", error)
+        self.assertIn("already booked", error)
+        self.app.save_booking()
+        self.assertEqual(len(self.database.list()), 1)
+        self.assertEqual(ANSWERS.get("showerror"), 1)
+
+        # Seats belong to a departure, not to a tour for all time.
+        self.app.vars["tour_date"].set("2026-12-12")
+        self.assertIsNone(self.app.validate_form(self.app.collect_form()))
+        self.app.save_booking()
+        self.assertEqual(len(self.database.list()), 2)
+        self.assertEqual(
+            sorted(self.database.tour_seat_occupancy("Sajek Valley Tour", "2026-12-12")),
+            ["A-1", "A-2"],
+        )
+
     def test_due_updates_live(self) -> None:
         self.app.vars["total"].set("1000")
         self.app.vars["advance"].set("250")

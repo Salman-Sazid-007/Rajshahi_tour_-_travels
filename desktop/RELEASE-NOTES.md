@@ -1,24 +1,20 @@
-## Rajshahi Tours & Travels — Desktop counter app 1.1.2
+## Rajshahi Tours & Travels — Desktop counter app 1.1.3
 
-This release improves receipt readability and alignment, increases desktop UI
-font sizes, and makes tour deletion an explicit permanent action while keeping
-history-preserving archive as a separate choice. The app remains a local,
-offline workspace for bookings, payments, bus tickets and reports.
+This patch fixes duplicate-seat selection and booking for tour departures. Starting
+another booking retains the active tour and travel date, and validation clearly
+rejects seats already reserved for that same tour/date before anything is saved.
+Seats remain available for reuse on a different travel date; cancelled bookings
+release their seats.
 
 ### What changed
 
-* **Professional receipts:** reduced the company-logo footprint, aligned the
-  receipt sections and payment cards, and increased small type on receipts,
-  bus tickets and PDF reports. Corrected PDF rectangle placement so filled and
-  stroked boxes render at their intended positions.
-* **Larger desktop text:** raised the default app font and improved legibility
-  across forms, tour and booking tables, buttons, the dashboard and seat maps.
-* **Tour data controls:** archive a tour to remove it from new-booking choices
-  while retaining its booking/payment history. The separate **Delete tour +
-  bookings** action permanently removes the tour and all associated booking
-  records from the local database after a clear confirmation warning.
-* **Tour creation:** create tours with a configurable seat capacity, edit their
-  names and capacity, and reactivate archived tours by adding the same name.
+* **Reliable trip context:** creating the next booking keeps the current tour and
+  departure date instead of silently switching the trip date to today.
+* **Clear duplicate-seat validation:** the booking form checks all selected seats
+  against active bookings for the same tour and date, including manually entered
+  or edited seat labels, and tells the operator which seats are already taken.
+* **Date-specific availability is preserved:** seats can be reused on another
+  departure date, and cancelled bookings do not block a seat.
 
 ### Included features
 
@@ -33,12 +29,12 @@ offline workspace for bookings, payments, bus tickets and reports.
 * **Offline bus tickets:** issue a ticket for any route/date, choose from a
   40-seat map, prevent duplicate route/date/seat sales, reprint or cancel
   tickets, and export the register.
-* **Official brand image:** the supplied full company logo appears in the
-  desktop sidebar and PDF headers. Accent colors use the supplied teal
-  (`#22B4B3`), orange (`#F97000` / `#EE8625`) and black (`#000000`). PDF headers
-  show owner **Safayet Hossain** and phone **01782250709** at the upper right.
-* **Overview dashboard:** quick view of tour departures, seats, due amounts and
-  bus-ticket activity.
+* **Tour data controls:** archive a tour to preserve its history, or permanently
+  delete the tour and its associated bookings after a clear warning and
+  confirmation.
+* **Professional receipts and larger UI text:** supplied company artwork and
+  brand colors appear across receipts and reports; receipt typography, spacing
+  and app font sizes are improved.
 
 ### Which file should I download?
 
