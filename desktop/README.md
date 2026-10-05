@@ -2,7 +2,7 @@
 
 ## Download
 
-These are the **latest published** downloads. They are desktop version 1.0.1; the new workflows described below are in the current **1.1.0 source** and have not been published as a new release yet.
+These are the **latest published** downloads. They are desktop version 1.0.1; the new workflows described below are in the current **1.1.1 source** and have not been published as a new release yet.
 
 | Download | For |
 | --- | --- |
@@ -12,7 +12,7 @@ These are the **latest published** downloads. They are desktop version 1.0.1; th
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. New source builds show version 1.1.0 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. New source builds show version 1.1.1 in **Help → About**.
 
 ---
 
@@ -48,14 +48,14 @@ subset of the standard map. Labels such as `A1` are normalized to `A-1`.
 
 ### Receipts and reports
 
-Tour receipts use the agency's current teal/orange theme and vector mark based
-on `backend/public/media/agency-mark.svg`; the desktop sidebar follows the same
-website palette. This is not the full logo JPG attached separately, and the
-palette has not been verified against `Color code.txt` because those files were
-not available in the workspace during this update. The owner **Safayet Hossain**
-and phone **01782250709** appear in the upper-right header; booking details and
-payment balances follow below. Company and owner details can be edited in
-**Tools → Settings**.
+The desktop sidebar, tour receipts, bus tickets, and reports use the supplied
+full company logo. The original JPG is bundled at `assets/agency-logo.jpg`; a
+trimmed, print-resolution copy is embedded in PDFs and a compact PNG is used by
+the Tkinter sidebar, so no image package is required at runtime. Brand accents
+match the supplied palette: teal `#22B4B3`, orange `#F97000` / `#EE8625`, and
+black `#000000`. The owner **Safayet Hossain** and phone **01782250709** appear
+in the upper-right PDF header; booking details and payment balances follow
+below. Company and owner details can be edited in **Tools → Settings**.
 
 * **Receipt PDF / Print** — a branded A4 receipt for one tour booking.
 * **Monthly PDF / CSV** — tour bookings for the selected travel month, with

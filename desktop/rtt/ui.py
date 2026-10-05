@@ -21,15 +21,15 @@ from .config import money, parse_date
 
 SIDEBAR_BG = "#073e4d"
 SIDEBAR_DEEP = "#085366"
-ACCENT = "#087e92"
+ACCENT = "#22b4b3"  # supplied brand teal
 ACCENT_DARK = "#073e4d"
 ACCENT_SOFT = "#d9f3f5"
 PAGE_BG = "#f0fafb"
 WHITE = "#ffffff"
-INK = "#173c48"
+INK = "#000000"  # supplied brand black
 MUTED = "#647b84"
-ORANGE = "#f09224"
-ORANGE_LIGHT = "#ffb044"
+ORANGE = "#f97000"  # supplied primary orange
+ORANGE_LIGHT = "#ee8625"  # supplied secondary orange
 DANGER = "#b3261e"
 OK = "#0f7b52"
 
@@ -408,18 +408,16 @@ class BookingApp:
         self.on_page_changed()
 
     def _build_sidebar(self, parent: ttk.Frame) -> None:
-        brand = ttk.Frame(parent, style="SidebarBrand.TFrame", padding=(15, 18, 14, 18))
+        brand = ttk.Frame(parent, style="SidebarBrand.TFrame", padding=(12, 13, 12, 13))
         brand.pack(fill="x")
-        brand.columnconfigure(1, weight=1)
+        brand.columnconfigure(0, weight=1)
         self._draw_brand_mark(brand)
-        brand_copy = ttk.Frame(brand, style="SidebarBrand.TFrame")
-        brand_copy.grid(row=0, column=1, sticky="w", padx=(8, 0))
         self.header_company_label = ttk.Label(
-            brand_copy, text=str(self.settings.get("company_name") or config.APP_TITLE),
-            style="Sidebar.Brand.TLabel", wraplength=142, justify="left")
-        self.header_company_label.pack(anchor="w")
-        ttk.Label(brand_copy, text="OFFLINE COUNTER DESK", style="Sidebar.Eyebrow.TLabel").pack(
-            anchor="w", pady=(5, 0))
+            brand, text=str(self.settings.get("company_name") or config.APP_TITLE),
+            style="Sidebar.Brand.TLabel", wraplength=214, justify="center", anchor="center")
+        self.header_company_label.pack(fill="x", pady=(8, 0))
+        ttk.Label(brand, text="OFFLINE COUNTER DESK", style="Sidebar.Eyebrow.TLabel").pack(
+            anchor="center", pady=(5, 0))
         ttk.Separator(parent, orient="horizontal").pack(fill="x", padx=14)
 
         nav_section = ttk.Frame(parent, style="Sidebar.TFrame", padding=(12, 15, 12, 0))
@@ -462,29 +460,38 @@ class BookingApp:
             anchor="center")
 
     def _draw_brand_mark(self, parent: ttk.Frame) -> None:
-        """Draw the agency mark on the website-matched deep teal sidebar."""
+        """Show the supplied full company logo, with a vector fallback."""
+        try:
+            self.brand_logo_photo = tk.PhotoImage(
+                master=self.root, file=config.asset_path("agency-logo-sidebar.png"))
+            self.brand_logo_label = ttk.Label(
+                parent, image=self.brand_logo_photo, background=SIDEBAR_BG)
+            self.brand_logo_label.pack(anchor="center")
+            return
+        except (AttributeError, OSError, tk.TclError):
+            pass
+
         try:
             mark = tk.Canvas(parent, width=62, height=62, background=SIDEBAR_BG,
                              highlightthickness=0, borderwidth=0)
-            mark.grid(row=0, column=0, sticky="w")
-            # The curves and airplane mirror the bundled agency-mark.svg.
+            mark.pack(anchor="center")
             mark.create_polygon(5, 49, 1, 37, 6, 23, 18, 12, 37, 8, 51, 10,
                                 35, 14, 20, 21, 11, 34, 8, 47, smooth=True,
-                                splinesteps=18, fill="#20b3b8", outline="")
+                                splinesteps=18, fill="#22b4b3", outline="")
             mark.create_polygon(11, 55, 7, 46, 11, 35, 21, 25, 36, 20, 45, 21,
                                 31, 27, 21, 36, 15, 47, smooth=True,
-                                splinesteps=18, fill="#149ea9", outline="")
+                                splinesteps=18, fill="#22b4b3", outline="")
             mark.create_polygon(16, 58, 11, 51, 13, 43, 19, 37, 26, 34, 22, 44,
                                 24, 51, 31, 55, smooth=True, splinesteps=18,
-                                fill="#f59224", outline="")
+                                fill="#ee8625", outline="")
             mark.create_polygon(26, 13, 45, 14, 45, 7, 50, 11, 52, 22, 60, 27,
                                 59, 31, 47, 28, 43, 42, 39, 40, 40, 26, 25, 22,
-                                fill="#20b3b8", outline="")
+                                fill="#22b4b3", outline="")
             mark.create_polygon(39, 47, 59, 35, 53, 53, 49, 48, 44, 53, 44, 46,
-                                fill="#f59224", outline="")
+                                fill="#f97000", outline="")
         except (AttributeError, tk.TclError):
             ttk.Label(parent, text="RTT", font=(self.ui_font, 12, "bold"),
-                      foreground=ORANGE, background=SIDEBAR_BG).grid(row=0, column=0, sticky="w")
+                      foreground=ORANGE, background=SIDEBAR_BG).pack(anchor="center")
 
     def navigate_to(self, title: str) -> None:
         page = self.page_by_title.get(title)

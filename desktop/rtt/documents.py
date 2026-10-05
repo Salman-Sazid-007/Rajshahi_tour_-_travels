@@ -7,23 +7,25 @@ needed at run time are the standard library and the bundled fonts.
 from __future__ import annotations
 
 import datetime as _dt
+import os
 from typing import Any, Dict, List, Optional, Sequence
 
 from . import pdf
-from .config import amount_to_words, format_date, money
+from .config import amount_to_words, asset_path, format_date, money
 from .text import FontStyle
 
 # ------------------------------------------------------------------ palette
 
-TEAL = (0.05, 0.36, 0.38)
-TEAL_DARK = (0.03, 0.26, 0.29)
+TEAL = (34 / 255, 180 / 255, 179 / 255)  # supplied #22B4B3
+TEAL_DARK = (0, 0, 0)  # supplied #000000
 TEAL_LIGHT = (0.90, 0.96, 0.96)
 TEAL_BAND = (0.94, 0.98, 0.98)
-INK = (0.12, 0.15, 0.17)
+INK = (0, 0, 0)
 MUTED = (0.44, 0.49, 0.52)
 LINE = (0.84, 0.88, 0.89)
 SOFT = (0.96, 0.97, 0.98)
-AMBER = (0.78, 0.44, 0.06)
+AMBER = (249 / 255, 112 / 255, 0)  # supplied #F97000
+AMBER_LIGHT = (238 / 255, 134 / 255, 37 / 255)  # supplied #EE8625
 RED = (0.70, 0.18, 0.16)
 GREEN = (0.08, 0.44, 0.30)
 WHITE = (1, 1, 1)
@@ -91,16 +93,16 @@ def _draw_agency_mark(canvas: pdf.Canvas, x: float, y: float, size: float = 60) 
     scale = size / 120.0
     paths = [
         ([('M', 19, 92), ('C', -6, 56, 35, 17, 89, 23), ('C', 42, 33, 24, 55, 19, 92), ('Z',)],
-         (32 / 255, 179 / 255, 184 / 255)),
+         TEAL),
         ([('M', 28, 103), ('C', 3, 72, 34, 39, 72, 31), ('C', 40, 48, 33, 71, 28, 103), ('Z',)],
-         (20 / 255, 158 / 255, 169 / 255)),
+         TEAL),
         ([('M', 36, 109), ('C', 16, 86, 29, 62, 49, 51), ('C', 36, 72, 37, 85, 54, 98), ('Z',)],
-         (245 / 255, 146 / 255, 36 / 255)),
+         AMBER),
         ([('M', 50, 24), ('L', 86, 25), ('L', 86, 8), ('L', 95, 15), ('L', 99, 35),
           ('L', 115, 44), ('L', 114, 52), ('L', 91, 46), ('L', 84, 74), ('L', 76, 71),
-          ('L', 77, 42), ('L', 48, 36), ('Z',)], (32 / 255, 179 / 255, 184 / 255)),
+          ('L', 77, 42), ('L', 48, 36), ('Z',)], TEAL),
         ([('M', 75, 91), ('L', 114, 67), ('L', 102, 102), ('L', 94, 92), ('L', 85, 100),
-          ('L', 84, 87), ('Z',)], (245 / 255, 146 / 255, 36 / 255)),
+          ('L', 84, 87), ('Z',)], AMBER_LIGHT),
     ]
     for commands, color in paths:
         scaled = []
@@ -115,13 +117,29 @@ def _draw_agency_mark(canvas: pdf.Canvas, x: float, y: float, size: float = 60) 
         canvas.path(scaled, color)
 
 
+def _new_document(page_size=PAGE, title: str = "", author: str = "") -> pdf.PdfDocument:
+    """Create a document and register the bundled company-logo image."""
+    doc = pdf.make_document(_font_paths(), STYLES, page_size=page_size, title=title, author=author)
+    logo_path = asset_path("agency-logo-print.jpg")
+    if os.path.isfile(logo_path):
+        doc.add_jpeg_image("agency-logo", logo_path)
+    return doc
+
+
 def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float) -> float:
     """Logo-led company header with owner and phone at upper right."""
     canvas.rect(0, 0, width, 105, fill=TEAL_BAND)
     canvas.rect(0, 105, width, 2.5, fill=TEAL)
-    _draw_agency_mark(canvas, MARGIN, 19, 64)
+    if "agency-logo" in canvas.doc.images:
+        logo = canvas.doc.images["agency-logo"]
+        logo_width = 126.0
+        logo_height = logo_width * logo.height / logo.width
+        canvas.image("agency-logo", MARGIN, (105.0 - logo_height) / 2, logo_width, logo_height)
+        left = MARGIN + logo_width + 10
+    else:
+        _draw_agency_mark(canvas, MARGIN, 19, 64)
+        left = MARGIN + 76
 
-    left = MARGIN + 76
     right_panel_width = 154
     text_width = width - left - MARGIN - right_panel_width - 16
     canvas.text(left, 36, _settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
@@ -138,7 +156,7 @@ def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float) -> f
 
     panel_x = width - MARGIN - right_panel_width
     canvas.rect(panel_x, 18, right_panel_width, 69, fill=WHITE, stroke=LINE, width=0.6, radius=5)
-    canvas.rect(panel_x, 18, 3, 69, fill=(245 / 255, 146 / 255, 36 / 255))
+    canvas.rect(panel_x, 18, 3, 69, fill=AMBER)
     owner = _settings_value(settings, "owner_name", "Safayet Hossain")
     owner_phone = _settings_value(settings, "owner_phone", _settings_value(settings, "phone"))
     canvas.text(width - MARGIN - 11, 39, owner, style="bold", size=9.5, color=TEAL_DARK,
@@ -173,9 +191,7 @@ def _footer(canvas: pdf.Canvas, settings: Dict[str, Any], width: float, height: 
 def booking_receipt(booking: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
     """A single A4 receipt to hand to the customer."""
     currency = _settings_value(settings, "currency", "Tk.")
-    doc = pdf.make_document(
-        _font_paths(),
-        STYLES,
+    doc = _new_document(
         page_size=PAGE,
         title=f"Booking receipt {booking.get('booking_no', '')}",
         author=_settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
@@ -284,8 +300,8 @@ def bus_ticket_receipt(ticket: Dict[str, Any], settings: Dict[str, Any]) -> byte
     """A clean, branded, offline-issued ticket for a manually assigned bus seat."""
     currency = _settings_value(settings, "currency", "Tk.")
     ticket_no = str(ticket.get("ticket_no") or "")
-    doc = pdf.make_document(
-        _font_paths(), STYLES, page_size=PAGE,
+    doc = _new_document(
+        page_size=PAGE,
         title=f"Bus ticket {ticket_no}",
         author=_settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
     )
@@ -386,8 +402,8 @@ def booking_list_report(
 ) -> bytes:
     """A paginated landscape report of every booking currently listed."""
     currency = _settings_value(settings, "currency", "Tk.")
-    doc = pdf.make_document(
-        _font_paths(), STYLES, page_size=PAGE_LANDSCAPE,
+    doc = _new_document(
+        page_size=PAGE_LANDSCAPE,
         title=title, author=_settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
     )
     rows = list(rows)

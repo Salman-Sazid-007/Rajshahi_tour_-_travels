@@ -60,6 +60,13 @@ class DoubleVar(Variable):
         super().__init__(master, float(value or 0))
 
 
+class PhotoImage:
+    def __init__(self, master=None, **options: Any) -> None:
+        self.master = master
+        self.options = dict(options)
+        self.file = options.get("file", "")
+
+
 class Widget:
     def __init__(self, master=None, **options: Any) -> None:
         self.master = master
@@ -471,6 +478,7 @@ def install(answers: Dict[str, Any] | None = None) -> types.ModuleType:
     tk.BooleanVar = BooleanVar
     tk.DoubleVar = DoubleVar
     tk.Variable = Variable
+    tk.PhotoImage = PhotoImage
     tk.LEFT = "left"
     tk.RIGHT = "right"
 

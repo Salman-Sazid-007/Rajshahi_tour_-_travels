@@ -1,4 +1,4 @@
-## Rajshahi Tours & Travels — Desktop counter app 1.1.0
+## Rajshahi Tours & Travels — Desktop counter app 1.1.1
 
 A locally stored, offline counter workspace for tour bookings and manual bus
 ticket sales. Tour catalogues, bookings, payment balances, bus tickets and seat
@@ -18,9 +18,10 @@ balances, then export a printable PDF or CSV spreadsheet.
 * **Offline bus tickets:** issue a ticket for any route/date, choose from a
 40-seat map, prevent duplicate route/date/seat sales, reprint or cancel tickets,
 and export the register.
-* **Branded receipts:** the agency's teal/orange vector logo mark, owner
-**Safayet Hossain**, and phone **01782250709** appear in the upper-right / header
-area of customer documents.
+* **Official brand image:** the supplied full company logo appears in the desktop
+sidebar and PDF headers; accent colors use the supplied teal (`#22B4B3`), orange
+(`#F97000` / `#EE8625`) and black (`#000000`). PDF headers show owner **Safayet
+Hossain** and phone **01782250709** at the upper right.
 * **Overview dashboard:** quick view of tour departures, seats, due amounts and
 bus-ticket activity.
 

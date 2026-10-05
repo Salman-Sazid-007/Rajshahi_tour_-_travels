@@ -258,7 +258,12 @@ class DocumentTests(unittest.TestCase):
         data = documents.booking_receipt(self.database.list()[0], self.settings)
         self.assertTrue(data.startswith(b"%PDF"))
         self.assertTrue(data.rstrip().endswith(b"%%EOF"))
-        self.assertLess(len(data), 400_000)
+        self.assertLess(len(data), 500_000)
+        self.assertIn(b"/Subtype /Image", data)
+        self.assertIn(b"/XObject << /Im1", data)
+        self.assertIn(b"/DCTDecode", data)
+        with open(config.asset_path("agency-logo-print.jpg"), "rb") as handle:
+            self.assertIn(handle.read(), data)
 
     def test_list_report_pdf(self) -> None:
         data = documents.booking_list_report(self.database.list(), self.settings)
@@ -301,6 +306,12 @@ class UiTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.database.close()
+
+    def test_company_logo_uses_the_bundled_brand_image(self) -> None:
+        logo_path = config.asset_path("agency-logo-sidebar.png")
+        self.assertTrue(os.path.isfile(logo_path))
+        self.assertEqual(self.app.brand_logo_photo.file, logo_path)
+        self.assertEqual(self.app.brand_logo_label.cget("image"), self.app.brand_logo_photo)
 
     def test_sidebar_navigation_updates_the_active_page(self) -> None:
         self.app.open_bus_page()
