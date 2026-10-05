@@ -13,22 +13,22 @@ Two editions, one shared tour and transport model:
 
 | Download | For |
 | --- | --- |
-| [`RajshahiTours-Windows-1.1.4.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.4/RajshahiTours-Windows-1.1.4.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
-| [`RajshahiTours-Desktop-1.1.4.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.4/RajshahiTours-Desktop-1.1.4.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
+| [`RajshahiTours-Windows-1.1.5.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.5/RajshahiTours-Windows-1.1.5.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
+| [`RajshahiTours-Desktop-1.1.5.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.5/RajshahiTours-Desktop-1.1.5.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
 
-`desktop/` holds the offline Tkinter counter workspace (version 1.1.4): manage
+`desktop/` holds the offline Tkinter counter workspace (version 1.1.5): manage
 tours and capacity, assign date-specific seats from a map, edit bookings and
 payments, issue route/date-specific bus tickets, and export monthly tour reports
-as PDF or CSV. Data stays in a local SQLite database. Tour bookings retain the
-active trip/date, show booked seats as unavailable, and block duplicate seats.
-After a new booking saves, the form clears and displays the next unique serial;
-editing happens only after selecting an existing row. Bus tickets remain a
-separate workflow with their own serial numbers and seat inventory. The app also
-includes improved receipts, larger fonts, separate tour archive/permanent-delete
-actions, and the supplied full company logo and exact brand colors. PDF headers
+as PDF or CSV. Tours have unique short codes that prefix new booking serials
+(e.g. `CBT-RTT-2026-0001`); saved bookings reset their inputs and show a fresh
+unique serial. Tour dates are positioned directly after passenger name and
+phone. Tour and bus booking workflows remain separate. Entry forms now have
+larger text and boxes. The app includes a matching window/executable icon,
+improved receipts, separate tour archive/permanent-delete actions, and the
+supplied full company logo and exact brand colors. PDF headers
 show owner **Safayet Hossain** and phone **01782250709**.
 
-The download links above are the latest **published** release (1.1.4). To run
+The download links above are the latest **published** release (1.1.5). To run
 the current source:
 
 ```bash

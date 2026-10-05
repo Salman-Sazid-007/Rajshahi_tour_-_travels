@@ -172,7 +172,7 @@ class Widget:
         return None
 
     def iconphoto(self, *args: Any, **kwargs: Any) -> None:
-        return None
+        self._options["iconphoto"] = (args, kwargs)
 
     def withdraw(self) -> None:
         return None

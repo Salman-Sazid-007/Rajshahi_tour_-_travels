@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.1.4.
+These are the **latest published** downloads: desktop version 1.1.5.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.1.4.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.4/RajshahiTours-Windows-1.1.4.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.1.4.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.4/RajshahiTours-Desktop-1.1.4.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+| [**RajshahiTours-Windows-1.1.5.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.5/RajshahiTours-Windows-1.1.5.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.1.5.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.5/RajshahiTours-Desktop-1.1.5.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.4 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.5 in **Help → About**.
 
 ---
 
@@ -23,16 +23,19 @@ computer. The interface is organized into **Overview**, **Tour bookings**,
 
 ## What it does
 
-* **Manage tours:** create, rename and adjust seat capacity. Archive a tour to
-hide it from new bookings while keeping its history, or permanently delete the
-tour and every associated booking/payment record from the database after an
-explicit warning and confirmation.
+* **Manage tours:** create tours with a unique short tour code and seat capacity;
+  leave the code blank to generate initials from the tour name, or enter your
+  own. The code appears at the front of new booking numbers (for example,
+  `CBT-RTT-2026-0001`). Existing booking numbers are kept unchanged. Archive a
+  tour to keep its history, or permanently delete it and its associated bookings
+  after a clear warning and confirmation.
 * **Book a tour:** choose a tour and travel date, open the seat map, select free
-seats, and save the customer and payment. Occupied seats are locked for that
-same tour/date, and form validation also blocks duplicate seats before saving.
-Starting the next entry keeps the active tour/date; seats can still be reused on
-another departure date. After a new booking saves, the form clears and shows the
-next unique booking number. Existing entries are edited only when selected.
+  seats, and save the customer and payment. Occupied seats are marked booked and
+  locked for that same tour/date; form validation also blocks duplicate seats.
+  After any successful booking save, the passenger and trip inputs reset and a
+  fresh unique serial is shown. Select the tour and departure date for the next
+  booking. Seats can be reused on another departure date; saved rows can still
+  be selected for intentional edits.
 * **Issue offline bus tickets:** a separate workflow with its own ticket numbers,
 route/date and seat inventory; it is not linked to tour bookings. Choose from the
 40-seat map, record passenger and payment information, and print a ticket. The
@@ -41,6 +44,8 @@ same route/date/seat cannot be sold twice. Cancelled tickets release seats.
 the Overview and in the monthly travel report.
 * **Export a monthly sheet:** filter by travel month, review each departure,
 bookings, seats, availability and due, then export a printable PDF or spreadsheet-friendly CSV.
+* **Larger entry forms:** taller input boxes and larger text improve readability
+in tour booking, bus ticketing, and tour setup.
 * **Keep a local record:** search and filter bookings/tickets, reprint a receipt
 or ticket, and back up the SQLite database. No internet connection is used.
 
@@ -61,8 +66,10 @@ match the supplied palette: teal `#22B4B3`, orange `#F97000` / `#EE8625`, and
 black `#000000`. The owner **Safayet Hossain** and phone **01782250709** appear
 in the upper-right PDF header; booking details and payment balances follow
 below in an aligned layout with a compact logo and larger, more legible type.
-The desktop UI and tables also use larger fonts. Company and owner details can
-be edited in **Tools → Settings**.
+The desktop uses a matching company icon in the window/task switcher and the
+Windows executable (`assets/agency-app-icon.png` and `assets/agency-app.ico`).
+The UI and tables also use larger fonts. Company and owner details can be edited
+in **Tools → Settings**.
 
 * **Receipt PDF / Print** — a branded A4 receipt for one tour booking.
 * **Monthly PDF / CSV** — tour bookings for the selected travel month, with

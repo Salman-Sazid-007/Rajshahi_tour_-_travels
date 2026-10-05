@@ -8,6 +8,7 @@ third-party package.
 from __future__ import annotations
 
 import os
+import sqlite3
 import sys
 import tempfile
 import unittest
@@ -58,6 +59,91 @@ class DatabaseTests(unittest.TestCase):
         second = self.database.next_number("RTT")
         self.assertNotEqual(first, second)
         self.assertTrue(second.endswith("0002"), second)
+
+    def test_tour_codes_prefix_booking_serials_and_remain_unique(self) -> None:
+        first_id = self.database.add_tour("Sajek Code Tour", 40, "sjk")
+        second_id = self.database.add_tour("Cox Code Tour", 40, "CXB")
+        tours = {tour["id"]: tour for tour in self.database.tour_catalog()}
+        self.assertEqual(tours[first_id]["tour_code"], "SJK")
+        self.assertEqual(tours[second_id]["tour_code"], "CXB")
+        collision_one = self.database.add_tour("Khulna River Tour")
+        collision_two = self.database.add_tour("Kaptai River Tour")
+        collision_codes = {
+            tour["id"]: tour["tour_code"] for tour in self.database.tour_catalog()
+        }
+        self.assertEqual(collision_codes[collision_one], "KRT")
+        self.assertEqual(collision_codes[collision_two], "KRT-2")
+
+        first = self.database.next_number("RTT", tour_code=tours[first_id]["tour_code"])
+        self.assertTrue(first.startswith("SJK-RTT-"), first)
+        self.database.add({
+            "booking_no": first, "name": "Sajek customer", "tour_name": "Sajek Code Tour",
+            "tour_date": "2026-12-11", "seat": "A1",
+        })
+        second = self.database.next_number("RTT", tour_code=tours[second_id]["tour_code"])
+        self.assertTrue(second.startswith("CXB-RTT-"), second)
+        self.assertTrue(second.endswith("0002"), second)
+        self.assertNotEqual(first, second)
+        automatic_id = self.database.add({
+            "name": "Automatic number passenger", "tour_name": "Automatic code tour",
+            "tour_date": "2026-12-12", "seat": "A2",
+        })
+        automatic = self.database.get(automatic_id)
+        self.assertTrue(automatic["booking_no"].startswith("ACT-RTT-"), automatic)
+        self.assertTrue(automatic["booking_no"].endswith("0002"), automatic)
+        with self.assertRaisesRegex(ValueError, "already assigned"):
+            self.database.add_tour("Duplicate code tour", 40, "SJK")
+
+    def test_legacy_tour_catalog_is_migrated_and_codes_are_backfilled(self) -> None:
+        path = os.path.join(os.environ["RTT_DATA_DIR"], "legacy-catalog.db")
+        connection = sqlite3.connect(path)
+        connection.executescript("""
+            CREATE TABLE bookings (
+                id INTEGER PRIMARY KEY, booking_no TEXT, name TEXT NOT NULL, phone TEXT,
+                seat TEXT, total REAL, advance REAL, due REAL, booking_date TEXT,
+                tour_date TEXT, tour_name TEXT, notes TEXT, status TEXT,
+                created_at TEXT, updated_at TEXT
+            );
+            CREATE TABLE tour_catalog (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                seat_capacity INTEGER NOT NULL DEFAULT 40,
+                active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT ''
+            );
+            INSERT INTO tour_catalog(name, seat_capacity, active, created_at)
+            VALUES ('Legacy Weekend', 40, 1, '');
+            INSERT INTO bookings(booking_no, name, tour_name, booking_date, tour_date)
+            VALUES ('RTT-2026-0777', 'Legacy customer', 'Legacy Weekend', '2026-10-01', '2026-12-11');
+        """)
+        connection.close()
+
+        # Restoring a pre-code backup must run the same migration as opening it.
+        self.database.restore(path)
+        restored = next(
+            tour for tour in self.database.tour_catalog(include_inactive=True)
+            if tour["name"] == "Legacy Weekend"
+        )
+        self.assertEqual(restored["tour_code"], "LW")
+        restored_codes = [tour["tour_code"] for tour in self.database.tour_catalog(include_inactive=True)]
+        self.assertEqual(len(restored_codes), len({code.casefold() for code in restored_codes}))
+        self.assertEqual(
+            self.database.connection.execute("SELECT booking_no FROM bookings WHERE name = 'Legacy customer'").fetchone()[0],
+            "RTT-2026-0777",
+        )
+
+        migrated = db.Database(path)
+        try:
+            legacy = next(
+                tour for tour in migrated.tour_catalog(include_inactive=True)
+                if tour["name"] == "Legacy Weekend"
+            )
+            self.assertEqual(legacy["tour_code"], "LW")
+            columns = {row["name"] for row in migrated.connection.execute("PRAGMA table_info(tour_catalog)")}
+            self.assertIn("tour_code", columns)
+            self.assertEqual(migrated.get(1)["booking_no"], "RTT-2026-0777")
+        finally:
+            migrated.close()
 
     def test_filters(self) -> None:
         self.database.seed_demo(4)
@@ -352,9 +438,15 @@ class UiTests(unittest.TestCase):
 
     def test_company_logo_uses_the_bundled_brand_image(self) -> None:
         logo_path = config.asset_path("agency-logo-sidebar.png")
+        app_icon_png = config.asset_path("agency-app-icon.png")
+        app_icon_ico = config.asset_path("agency-app.ico")
         self.assertTrue(os.path.isfile(logo_path))
+        self.assertTrue(os.path.isfile(app_icon_png))
+        self.assertTrue(os.path.isfile(app_icon_ico))
         self.assertEqual(self.app.brand_logo_photo.file, logo_path)
         self.assertEqual(self.app.brand_logo_label.cget("image"), self.app.brand_logo_photo)
+        self.assertEqual(self.app.window_icon_photo.file, app_icon_png)
+        self.assertEqual(self.app.root.cget("iconphoto")[0], (True, self.app.window_icon_photo))
 
     def test_sidebar_navigation_updates_the_active_page(self) -> None:
         self.app.open_bus_page()
@@ -362,6 +454,12 @@ class UiTests(unittest.TestCase):
         self.assertEqual(self.app.notebook.tab(self.app.notebook.select(), "text"), "Bus tickets")
         self.app.open_reports_page()
         self.assertEqual(self.app.page_title_var.get(), "Tours & monthly reports")
+
+    def test_tour_date_field_follows_name_and_phone(self) -> None:
+        fields = self.app.booking_form_widgets
+        self.assertLess(fields["name"].cget("row"), fields["phone"].cget("row"))
+        self.assertLess(fields["phone"].cget("row"), fields["tour_date"].cget("row"))
+        self.assertEqual(fields["tour_date"].cget("row"), fields["phone"].cget("row") + 2)
 
     def test_new_and_save(self) -> None:
         self.app.new_booking()
@@ -377,23 +475,31 @@ class UiTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["due"], 9000.0)
         self.assertEqual(len(self.app.tree.get_children()), 1)
+        self.assertEqual(self.app.vars["name"].get(), "")
+        self.assertEqual(self.app.vars["phone"].get(), "")
+        self.assertEqual(self.app.vars["tour_name"].get(), "")
+        self.assertEqual(self.app.vars["tour_date"].get(), "")
 
-    def test_new_booking_keeps_trip_and_rejects_seats_already_booked_on_that_date(self) -> None:
+    def test_successful_booking_resets_inputs_and_rejects_seats_already_booked(self) -> None:
         self.app.new_booking()
         first_number = self.app.vars["booking_no"].get()
         self.app.vars["tour_name"].set("Sajek Valley Tour")
         self.app.vars["tour_date"].set("2026-12-11")
         self.app.vars["name"].set("Sazid")
+        self.app.vars["phone"].set("01710000000")
         self.app.vars["seat"].set("A1, A2")
         self.app.save_booking()
         self.assertEqual(len(self.database.list()), 1)
         self.assertIsNone(self.app.selected_id)
-        self.assertEqual(self.app.vars["name"].get(), "")
         self.assertNotEqual(self.app.vars["booking_no"].get(), first_number)
         self.assertEqual(self.app.vars["booking_no"].get(), self.database.next_number("RTT"))
-        self.assertEqual(self.app.vars["tour_name"].get(), "Sajek Valley Tour")
-        self.assertEqual(self.app.vars["tour_date"].get(), "2026-12-11")
+        for key in ("name", "phone", "seat", "tour_name", "tour_date"):
+            self.assertEqual(self.app.vars[key].get(), "", key)
+        self.assertEqual(self.app.vars["total"].get(), "0")
+        self.assertEqual(self.app.vars["advance"].get(), "0")
 
+        self.app.vars["tour_name"].set("Sajek Valley Tour")
+        self.app.vars["tour_date"].set("2026-12-11")
         self.app.vars["name"].set("Second passenger")
         self.app.vars["seat"].set("A-1, A-2")
         error = self.app.validate_form(self.app.collect_form())
@@ -418,6 +524,27 @@ class UiTests(unittest.TestCase):
             sorted(self.database.tour_seat_occupancy("Sajek Valley Tour", "2026-12-12")),
             ["A-1", "A-2"],
         )
+
+    def test_new_booking_number_uses_selected_tour_code(self) -> None:
+        self.database.add_tour("Sajek Code Booking", 40, "SJB")
+        self.app.new_booking()
+        self.app.vars["tour_name"].set("Sajek Code Booking")
+        first_number = self.app.vars["booking_no"].get()
+        self.assertTrue(first_number.startswith("SJB-RTT-"), first_number)
+        self.app.vars["name"].set("Coded passenger")
+        self.app.vars["seat"].set("A1")
+        self.app.vars["tour_date"].set("2026-12-11")
+        self.app.save_booking()
+        booking = self.database.list()[0]
+        self.assertEqual(booking["booking_no"], first_number)
+        self.assertEqual(self.app.vars["tour_name"].get(), "")
+        self.assertEqual(self.app.vars["tour_date"].get(), "")
+        next_number = self.app.vars["booking_no"].get()
+        self.app.vars["tour_name"].set("Sajek Code Booking")
+        self.assertTrue(self.app.vars["booking_no"].get().startswith("SJB-RTT-"))
+        self.assertNotEqual(self.app.vars["booking_no"].get(), first_number)
+        self.assertEqual(self.app.vars["booking_no"].get().rsplit("-", 1)[-1], "0002")
+        self.assertTrue(next_number.endswith("0002"), next_number)
 
     def test_tour_seat_map_disables_seats_booked_for_the_departure(self) -> None:
         self.database.add({
@@ -456,6 +583,8 @@ class UiTests(unittest.TestCase):
     def test_edit_round_trip(self) -> None:
         self.app.new_booking()
         self.app.vars["name"].set("Rina Akter")
+        self.app.vars["tour_name"].set("Sajek Valley Tour")
+        self.app.vars["tour_date"].set("2026-12-11")
         self.app.vars["seat"].set("A-1")
         self.app.vars["total"].set("8000")
         self.app.vars["advance"].set("3000")
@@ -467,6 +596,10 @@ class UiTests(unittest.TestCase):
         self.app.vars["advance"].set("8000")
         self.app.save_booking()
         self.assertEqual(self.database.get(booking_id)["due"], 0.0)
+        self.assertIsNone(self.app.selected_id)
+        self.assertEqual(self.app.vars["name"].get(), "")
+        self.assertEqual(self.app.vars["tour_name"].get(), "")
+        self.assertEqual(self.app.vars["tour_date"].get(), "")
 
     def test_delete_requires_selection(self) -> None:
         self.app.selected_id = None
@@ -476,14 +609,16 @@ class UiTests(unittest.TestCase):
     def test_receipt_pdf_writes_file(self) -> None:
         self.app.new_booking()
         self.app.vars["name"].set("PDF Customer")
+        self.app.vars["tour_name"].set("Sajek Valley Tour")
+        self.app.vars["tour_date"].set("2026-12-11")
         self.app.vars["seat"].set("A-2")
         self.app.vars["total"].set("5000")
         self.app.vars["advance"].set("1000")
         self.app.save_booking()
-        self.app.selected_id = self.database.list()[0]["id"]
+        booking = self.database.list()[0]
+        self.app.selected_id = booking["id"]
         self.app.receipt_pdf()
-        expected = os.path.join(tempfile.gettempdir(), "receipt-RTT-%d-0001.pdf" % __import__(
-            "datetime").date.today().year)
+        expected = os.path.join(tempfile.gettempdir(), f"receipt-{booking['booking_no']}.pdf")
         self.assertTrue(os.path.exists(expected), expected)
 
     def test_list_and_due_reports(self) -> None:
@@ -511,11 +646,21 @@ class UiTests(unittest.TestCase):
         self.assertGreater(ANSWERS.get("showinfo", 0), 0)
 
     def test_tour_catalog_can_add_and_permanently_delete_saved_data(self) -> None:
+        self.assertEqual(self.app.tour_code_entry.cget("style"), "Input.TEntry")
+        self.assertEqual(self.app.tour_name_entry.cget("style"), "Input.TEntry")
         self.app.tour_name_var.set("UI-created day trip")
+        self.app.tour_code_var.set("uid")
         self.app.tour_capacity_var.set("28")
         self.app.save_tour(add_only=True)
+        self.assertEqual(self.app.tour_name_var.get(), "")
+        self.assertEqual(self.app.tour_code_var.get(), "")
+        self.assertEqual(self.app.tour_capacity_var.get(), "40")
         tour = next(item for item in self.database.tour_catalog() if item["name"] == "UI-created day trip")
+        self.assertEqual(tour["tour_code"], "UID")
         self.assertEqual(tour["seat_capacity"], 28)
+        self.assertEqual(
+            self.app.tour_catalog_tree.item(str(tour["id"]))["values"][1], "UID"
+        )
         booking_id = self.database.add({
             "booking_no": self.database.next_number("RTT"), "name": "UI trip customer",
             "tour_name": "UI-created day trip", "tour_date": "2026-12-10", "seat": "A1",

@@ -50,7 +50,7 @@ def _pick_font(*candidates: str) -> str:
 class ScrollableFormPanel(ttk.Frame):
     """A fixed-width form card with its own vertical scrolling viewport."""
 
-    def __init__(self, master, width: int = 390, card_width: int = 370) -> None:
+    def __init__(self, master, width: int = 430, card_width: int = 410) -> None:
         super().__init__(master, width=width, style="Page.TFrame")
         self.grid_propagate(False)
         self.rowconfigure(0, weight=1)
@@ -213,11 +213,13 @@ class DatePicker(tk.Toplevel):
 class BookingApp:
     def __init__(self, root: tk.Tk, database: "db.Database", settings: Dict[str, Any]) -> None:
         self.root = root
+        self._set_window_icon()
         self.db = database
         self.settings = settings
         self.selected_id: Optional[int] = None
         self.selected_tour_catalog_id: Optional[int] = None
         self.bus_selected_id: Optional[int] = None
+        self._auto_booking_number = ""
         self.sort_column = "booking_date"
         self.sort_desc = True
         self.rows: List[Dict[str, Any]] = []
@@ -248,6 +250,19 @@ class BookingApp:
 
     # ---------------------------------------------------------------- setup
 
+    def _set_window_icon(self) -> None:
+        """Apply the supplied company mark to the app window and task switcher."""
+        icon_png = config.asset_path("agency-app-icon.png")
+        try:
+            self.window_icon_photo = tk.PhotoImage(master=self.root, file=icon_png)
+            self.root.iconphoto(True, self.window_icon_photo)
+        except (AttributeError, OSError, tk.TclError):
+            self.window_icon_photo = None
+            try:
+                self.root.iconbitmap(default=config.asset_path("agency-app.ico"))
+            except (AttributeError, OSError, tk.TclError):
+                pass
+
     def _build_style(self) -> None:
         style = ttk.Style()
         for theme in ("clam", "vista", "default"):
@@ -257,6 +272,8 @@ class BookingApp:
             except tk.TclError:
                 continue
         style.configure(".", font=(self.ui_font, 11), foreground=INK)
+        style.configure("Input.TEntry", font=(self.ui_font, 12), padding=(10, 8))
+        style.configure("Input.TCombobox", font=(self.ui_font, 12), padding=(10, 8))
         style.configure("TFrame", background=PAGE_BG)
         style.configure("Page.TFrame", background=PAGE_BG)
         style.configure("Topbar.TFrame", background=WHITE)
@@ -298,7 +315,7 @@ class BookingApp:
         style.map("SidebarSelected.TButton", background=[("active", "#ffcc83")])
         style.configure("Offline.TLabel", font=(self.ui_font, 10, "bold"),
                         foreground="#24745e", background="#e6f4ec", padding=(9, 5))
-        style.configure("Field.TLabel", font=(self.ui_font, 10, "bold"), foreground="#385158",
+        style.configure("Field.TLabel", font=(self.ui_font, 11, "bold"), foreground="#385158",
                         background=WHITE)
         style.configure("Card.TLabel", font=(self.ui_font, 11, "bold"), foreground=ACCENT_DARK,
                         background=WHITE)
@@ -621,11 +638,13 @@ class BookingApp:
         tour_table.rowconfigure(0, weight=1)
         tour_table.columnconfigure(0, weight=1)
         self.tour_catalog_tree = ttk.Treeview(
-            tour_table, columns=("name", "capacity", "bookings", "state"), show="headings", height=11
+            tour_table, columns=("name", "code", "capacity", "bookings", "state"),
+            show="headings", height=11
         )
         for key, heading, width, anchor in (
-            ("name", "Tour name", 210, "w"), ("capacity", "Seats", 72, "center"),
-            ("bookings", "Bookings", 82, "center"), ("state", "State", 80, "center"),
+            ("name", "Tour name", 155, "w"), ("code", "Tour code", 78, "center"),
+            ("capacity", "Seats", 58, "center"), ("bookings", "Bookings", 72, "center"),
+            ("state", "State", 75, "center"),
         ):
             self.tour_catalog_tree.heading(key, text=heading)
             self.tour_catalog_tree.column(key, width=width, anchor=anchor, stretch=True)
@@ -640,16 +659,35 @@ class BookingApp:
 
         tour_form = ttk.Frame(catalogue, style="Card.TFrame")
         tour_form.grid(row=2, column=0, sticky="ew", pady=(12, 0))
-        tour_form.columnconfigure(0, weight=1)
+        tour_form.columnconfigure(0, weight=3)
+        tour_form.columnconfigure(1, weight=2)
+        tour_form.columnconfigure(2, weight=1)
         ttk.Label(tour_form, text="Tour name", style="Field.TLabel").grid(row=0, column=0, sticky="w")
         self.tour_name_var = tk.StringVar()
-        ttk.Entry(tour_form, textvariable=self.tour_name_var).grid(row=1, column=0, sticky="ew", padx=(0, 8))
-        ttk.Label(tour_form, text="Seat capacity (1–46)", style="Field.TLabel").grid(
-            row=0, column=1, sticky="w")
+        self.tour_name_entry = ttk.Entry(
+            tour_form, textvariable=self.tour_name_var, width=18, style="Input.TEntry"
+        )
+        self.tour_name_entry.grid(row=1, column=0, sticky="ew", padx=(0, 8))
+        ttk.Label(tour_form, text="Tour code", style="Field.TLabel").grid(row=0, column=1, sticky="w")
+        self.tour_code_var = tk.StringVar()
+        self.tour_code_entry = ttk.Entry(
+            tour_form, textvariable=self.tour_code_var, width=12, style="Input.TEntry"
+        )
+        self.tour_code_entry.grid(row=1, column=1, sticky="ew", padx=(0, 8))
+        ttk.Label(tour_form, text="Seats (1–46)", style="Field.TLabel").grid(
+            row=0, column=2, sticky="w")
         self.tour_capacity_var = tk.StringVar(value="40")
-        ttk.Entry(tour_form, textvariable=self.tour_capacity_var, width=12).grid(row=1, column=1, sticky="ew")
+        self.tour_capacity_entry = ttk.Entry(
+            tour_form, textvariable=self.tour_capacity_var, width=8, style="Input.TEntry"
+        )
+        self.tour_capacity_entry.grid(row=1, column=2, sticky="ew")
+        ttk.Label(
+            tour_form,
+            text="Code appears before the booking serial (example: CBT-RTT-2026-0001). Leave blank for initials.",
+            style="Muted.TLabel", wraplength=390,
+        ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(5, 0))
         buttons = ttk.Frame(tour_form, style="Card.TFrame")
-        buttons.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(9, 0))
+        buttons.grid(row=3, column=0, columnspan=3, sticky="ew", pady=(9, 0))
         ttk.Button(buttons, text="＋ Add tour", style="Accent.TButton",
                    command=lambda: self.save_tour(add_only=True)).pack(
             side="left", padx=(0, 6))
@@ -658,7 +696,7 @@ class BookingApp:
         ttk.Button(buttons, text="Clear", command=self.clear_tour_editor).pack(side="right")
 
         tour_actions = ttk.Frame(tour_form, style="Card.TFrame")
-        tour_actions.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(7, 0))
+        tour_actions.grid(row=4, column=0, columnspan=3, sticky="ew", pady=(7, 0))
         ttk.Button(tour_actions, text="Archive (keep history)", style="Secondary.TButton",
                    command=self.archive_tour).pack(side="left", padx=(0, 6))
         ttk.Button(tour_actions, text="Delete tour + bookings", style="Danger.TButton",
@@ -766,12 +804,14 @@ class BookingApp:
             row=row + 1, column=0, sticky="w", pady=(1, 0))
         row += 2
         ttk.Label(card, text="Ticket status", style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(7, 0))
-        self.bus_status_combo = ttk.Combobox(card, textvariable=self.bus_vars["status"],
-                                              values=("Booked", "Paid", "Cancelled"), state="readonly")
+        self.bus_status_combo = ttk.Combobox(
+            card, textvariable=self.bus_vars["status"],
+            values=("Booked", "Paid", "Cancelled"), state="readonly", style="Input.TCombobox"
+        )
         self.bus_status_combo.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
         ttk.Label(card, text="Notes", style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(7, 0))
-        self.bus_notes_text = tk.Text(card, height=3, width=30, font=(self.ui_font, 10),
+        self.bus_notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 12),
                                       relief="solid", borderwidth=1, wrap="word")
         self.bus_notes_text.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
@@ -798,9 +838,11 @@ class BookingApp:
                       date: bool = False, extra: str = "") -> int:
         ttk.Label(card, text=label, style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(6, 0))
         if combo:
-            widget = ttk.Combobox(card, textvariable=self.bus_vars[key], values=values or ())
+            widget = ttk.Combobox(
+                card, textvariable=self.bus_vars[key], values=values or (), style="Input.TCombobox"
+            )
         else:
-            widget = ttk.Entry(card, textvariable=self.bus_vars[key])
+            widget = ttk.Entry(card, textvariable=self.bus_vars[key], style="Input.TEntry")
         widget.grid(row=row + 1, column=0, columnspan=2 if date or extra else 3, sticky="ew")
         if date:
             ttk.Button(card, text="…", width=4, command=lambda: self.pick_bus_date()).grid(
@@ -934,28 +976,33 @@ class BookingApp:
                     if int(item["id"]) == self.selected_tour_catalog_id), None)
         if row:
             self.tour_name_var.set(row["name"])
+            self.tour_code_var.set(str(row.get("tour_code") or ""))
             self.tour_capacity_var.set(str(row["seat_capacity"]))
 
     def clear_tour_editor(self) -> None:
         self.selected_tour_catalog_id = None
         self.tour_name_var.set("")
+        self.tour_code_var.set("")
         self.tour_capacity_var.set("40")
         if hasattr(self, "tour_catalog_tree"):
             self.tour_catalog_tree.selection_remove(*self.tour_catalog_tree.selection())
 
     def save_tour(self, add_only: bool = False) -> None:
         name = self.tour_name_var.get().strip()
+        tour_code = self.tour_code_var.get().strip() or None
         editing_id = self.selected_tour_catalog_id if not add_only else None
         previous = next((tour for tour in self.db.tour_catalog(include_inactive=True)
                          if int(tour["id"]) == editing_id), None) if editing_id is not None else None
         old_name = str(previous["name"]) if previous else ""
         try:
             if editing_id is None:
-                self.db.add_tour(name, self.tour_capacity_var.get())
-                message = f"Tour '{name}' added. It is ready for bookings."
+                self.db.add_tour(name, self.tour_capacity_var.get(), tour_code)
+                saved_code = self.db.tour_code(name)
+                message = f"Tour '{name}' ({saved_code}) added. It is ready for bookings."
             else:
-                self.db.update_tour(editing_id, name, self.tour_capacity_var.get())
-                message = f"Tour '{name}' updated."
+                self.db.update_tour(editing_id, name, self.tour_capacity_var.get(), tour_code)
+                saved_code = self.db.tour_code(name)
+                message = f"Tour '{name}' ({saved_code}) updated."
                 if old_name != name:
                     suggestions = []
                     seen = set()
@@ -972,6 +1019,9 @@ class BookingApp:
         self.clear_tour_editor()
         self.refresh_tour_catalog()
         self.apply_tour_choices()
+        if (self.selected_id is None and str(self.vars["tour_name"].get() or "").casefold()
+                == name.casefold()):
+            self.assign_number()
         self.refresh()
         self.set_status(message)
 
@@ -1071,8 +1121,8 @@ class BookingApp:
             active = bool(tour["active"])
             self.tour_catalog_tree.insert(
                 "", "end", iid=str(tour["id"]),
-                values=(tour["name"], tour["seat_capacity"], tour["booking_count"],
-                        "Active" if active else "Archived"),
+                values=(tour["name"], tour["tour_code"], tour["seat_capacity"],
+                        tour["booking_count"], "Active" if active else "Archived"),
                 tags=() if active else ("archived",),
             )
 
@@ -1497,7 +1547,7 @@ class BookingApp:
 
         ttk.Label(card, text="Passenger & payment", style="Header.TLabel").grid(
             row=0, column=0, columnspan=3, sticky="w", pady=(0, 3))
-        ttk.Label(card, text="Select a tour date, then assign the open seat(s).", style="Muted.TLabel").grid(
+        ttk.Label(card, text="Enter passenger details, then choose the trip and open seats.", style="Muted.TLabel").grid(
             row=1, column=0, columnspan=3, sticky="w", pady=(0, 6))
 
         self.vars: Dict[str, tk.Variable] = {
@@ -1515,25 +1565,31 @@ class BookingApp:
         self.due_var = tk.StringVar(value="0.00")
         self.seat_summary_var = tk.StringVar(value="Choose a tour and date to see availability")
 
+        self.booking_form_widgets: Dict[str, Any] = {}
         row = 2
         row = self._form_row(card, row, "Booking No", "booking_no", extra="auto")
         row = self._form_row(card, row, "Name *", "name")
         row = self._form_row(card, row, "Phone Number", "phone")
+        row = self._form_row(card, row, "Tour Date *", "tour_date", date=True)
+        row = self._form_row(card, row, "Tour Name *", "tour_name", combobox=True)
         row = self._form_row(card, row, "Seats · use the seat map", "seat", extra="seatmap")
         ttk.Label(card, textvariable=self.seat_summary_var, style="Muted.TLabel").grid(
             row=row, column=0, columnspan=3, sticky="w", pady=(1, 0))
         row += 1
-        row = self._form_row(card, row, "Tour Name *", "tour_name", combobox=True)
 
         # Money fields with live due calculation.
         ttk.Label(card, text="Total Amount", style="Field.TLabel").grid(row=row, column=0,
                                                                         sticky="w", pady=(8, 0))
-        self.total_entry = ttk.Entry(card, textvariable=self.vars["total"], width=18)
+        self.total_entry = ttk.Entry(
+            card, textvariable=self.vars["total"], width=18, style="Input.TEntry"
+        )
         self.total_entry.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
         ttk.Label(card, text="Advance", style="Field.TLabel").grid(row=row, column=0, sticky="w",
                                                                    pady=(8, 0))
-        self.advance_entry = ttk.Entry(card, textvariable=self.vars["advance"], width=18)
+        self.advance_entry = ttk.Entry(
+            card, textvariable=self.vars["advance"], width=18, style="Input.TEntry"
+        )
         self.advance_entry.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
 
@@ -1544,18 +1600,20 @@ class BookingApp:
         row += 2
 
         row = self._form_row(card, row, "Booking Date", "booking_date", date=True)
-        row = self._form_row(card, row, "Tour Date *", "tour_date", date=True)
         ttk.Label(card, text="Booking status", style="Field.TLabel").grid(
             row=row, column=0, sticky="w", pady=(7, 0))
-        self.status_combo = ttk.Combobox(card, textvariable=self.vars["status"],
-                                         values=("Confirmed", "Pending", "Cancelled"), state="readonly")
+        self.status_combo = ttk.Combobox(
+            card, textvariable=self.vars["status"],
+            values=("Confirmed", "Pending", "Cancelled"), state="readonly",
+            style="Input.TCombobox"
+        )
         self.status_combo.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
 
         ttk.Label(card, text="Notes", style="Field.TLabel").grid(row=row, column=0, sticky="w",
                                                                  pady=(8, 0))
         row += 1
-        self.notes_text = tk.Text(card, height=4, width=30, font=(self.ui_font, 10),
+        self.notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 12),
                                   relief="solid", borderwidth=1, wrap="word")
         self.notes_text.grid(row=row, column=0, columnspan=3, sticky="ew")
         row += 1
@@ -1583,6 +1641,9 @@ class BookingApp:
             self.vars[name].trace_add("write", lambda *_: self.update_due())
         for name in ("tour_name", "tour_date", "seat"):
             self.vars[name].trace_add("write", lambda *_: self.update_tour_seat_summary())
+        self.vars["tour_name"].trace_add(
+            "write", lambda *_: self._update_new_booking_number_for_tour()
+        )
 
     def _form_row(self, card: ttk.Frame, row: int, label: str, key: str,
                   combobox: bool = False, date: bool = False, extra: str = "") -> int:
@@ -1590,10 +1651,14 @@ class BookingApp:
                                                                pady=(8, 0))
         if combobox:
             values = self.db.active_tours()
-            widget = ttk.Combobox(card, textvariable=self.vars[key], values=values, width=28)
+            widget = ttk.Combobox(
+                card, textvariable=self.vars[key], values=values, width=28,
+                style="Input.TCombobox"
+            )
             self.tour_combo = widget
         else:
-            widget = ttk.Entry(card, textvariable=self.vars[key], width=30)
+            widget = ttk.Entry(card, textvariable=self.vars[key], width=30, style="Input.TEntry")
+        self.booking_form_widgets[key] = widget
         widget.grid(row=row + 1, column=0, columnspan=3 if not (date or extra) else 2, sticky="ew")
         if date:
             ttk.Button(card, text="...", width=4,
@@ -1636,7 +1701,7 @@ class BookingApp:
         ttk.Button(filters, text="Refresh", command=self.refresh).pack(side="right")
 
         columns = (
-            ("booking_no", "Booking No", 96),
+            ("booking_no", "Booking No", 175),
             ("name", "Name", 150),
             ("phone", "Phone", 92),
             ("seat", "Seat", 74),
@@ -1713,7 +1778,18 @@ class BookingApp:
 
     def assign_number(self) -> None:
         prefix = str(self.settings.get("receipt_prefix") or "RTT")
-        self.vars["booking_no"].set(self.db.next_number(prefix))
+        tour_name = str(self.vars["tour_name"].get() or "").strip()
+        tour_code = self.db.tour_code(tour_name)
+        number = self.db.next_number(prefix, tour_code=tour_code)
+        self._auto_booking_number = number
+        self.vars["booking_no"].set(number)
+
+    def _update_new_booking_number_for_tour(self) -> None:
+        if self.selected_id is not None:
+            return
+        current = str(self.vars["booking_no"].get() or "").strip()
+        if not current or current == self._auto_booking_number:
+            self.assign_number()
 
     def update_due(self) -> None:
         total = self._amount("total")
@@ -1795,37 +1871,23 @@ class BookingApp:
             elif key == "status":
                 var.set("Confirmed")
             elif key == "tour_name":
-                active_tours = self.db.active_tours()
-                var.set(active_tours[0] if active_tours else "")
+                var.set("")
             else:
                 var.set("")
         self.notes_text.delete("1.0", "end")
         self.selected_id = None
         self.update_due()
+        self.assign_number()
 
     def new_booking(self) -> None:
-        # Most counter entries are passengers on the same departure. Keep that
-        # tour/date when starting the next booking so the seat map continues to
-        # show seats already sold for the trip instead of silently switching to
-        # today's date. The operator can still choose another tour/date.
-        previous_tour = str(self.vars["tour_name"].get() or "").strip()
-        previous_date = parse_date(str(self.vars["tour_date"].get() or ""))
-        active_tours = self.db.active_tours()
-        retained_tour = next(
-            (name for name in active_tours if name.casefold() == previous_tour.casefold()), ""
-        )
-
+        # Reset every passenger/trip input after a save so the next customer
+        # cannot inherit details. The booking date remains today's date; a tour
+        # and departure date must be chosen for each new booking.
         self.clear_form()
-        today = _dt.date.today().isoformat()
-        if retained_tour:
-            self.vars["tour_name"].set(retained_tour)
-        self.vars["booking_date"].set(today)
-        self.vars["tour_date"].set(
-            previous_date.isoformat() if retained_tour and previous_date else today
-        )
+        self.vars["booking_date"].set(_dt.date.today().isoformat())
         self.assign_number()
         self.update_tour_seat_summary()
-        self.set_status("New tour booking — fill in the passenger, choose seats, and save.")
+        self.set_status("New tour booking — enter passenger and trip details, choose seats, and save.")
 
     # ---------------------------------------------------------------- actions
 
@@ -1846,7 +1908,8 @@ class BookingApp:
             messagebox.showerror("Cannot save", error, parent=self.root)
             return
         if not data["booking_no"]:
-            data["booking_no"] = self.db.next_number(str(self.settings.get("receipt_prefix") or "RTT"))
+            self.assign_number()
+            data["booking_no"] = self.vars["booking_no"].get().strip()
         if self.db.number_taken(data["booking_no"], self.selected_id):
             messagebox.showerror(
                 "Duplicate booking number",
@@ -1866,16 +1929,12 @@ class BookingApp:
             messagebox.showerror("Database error", str(exc), parent=self.root)
             return
 
-        if creating_new:
-            # A successful new booking is complete. Clear the editor and prepare
-            # a fresh unique serial so the next passenger cannot overwrite it.
-            self.selected_id = None
-            self.refresh()
-            self.new_booking()
-            self.set_status(f"{message} Ready for next booking: {self.vars['booking_no'].get()}.")
-        else:
-            self.refresh(keep_selection=True)
-            self.set_status(message)
+        # A successful create or update is complete. Reset the inputs and show
+        # a fresh number before another passenger is entered.
+        self.selected_id = None
+        self.refresh()
+        self.new_booking()
+        self.set_status(f"{message} Ready for next booking: {self.vars['booking_no'].get()}.")
 
     def delete_booking(self) -> None:
         if self.selected_id is None:
@@ -2179,11 +2238,11 @@ class BookingApp:
         messagebox.showinfo(
             "How to use",
             "TOUR BOOKINGS\n"
-            "Choose a tour and date, click Map, select open seats, and save. Click a row to edit the passenger or payment; due is Total minus Advance.\n\n"
+            "Enter passenger name and phone, choose the tour date and tour, then use Map to select open seats. Booked seats are locked for that trip. After a successful booking create or update, all trip/passenger inputs clear and a fresh unique number is shown. Click a saved row to edit it; due is Total minus Advance.\n\n"
             "TOURS & MONTHLY REPORTS\n"
-            "Add or edit tours and capacity here. Archive a tour to keep its booking history, or permanently delete the tour and all associated booking/payment records. Confirm the delete carefully because it cannot be undone. Select a travel month to preview trips and export a PDF or CSV sheet.\n\n"
+            "Add or edit tours, a unique tour code, and seat capacity. The code is added before new tour booking serials; leaving it blank generates initials. Archive a tour to keep its booking history, or permanently delete it and its booking/payment records. Select a travel month to preview trips and export PDF or CSV.\n\n"
             "BUS TICKETS\n"
-            "Enter any route/date, use Map to pick a free seat, save, then print the ticket. Seats are checked per route and date.\n\n"
+            "Bus ticketing is separate from tour bookings and uses its own ticket numbers and seat inventory. Enter a route/date, use Map to pick a free seat, save, then print the ticket.\n\n"
             "Use File → Backup database regularly. Everything is stored offline on this computer.\n\n"
             "Shortcuts: Ctrl+N new tour booking, Ctrl+S save, Ctrl+F search, Ctrl+B new bus ticket.",
             parent=self.root,

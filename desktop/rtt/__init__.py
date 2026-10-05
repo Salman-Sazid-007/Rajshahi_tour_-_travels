@@ -10,4 +10,4 @@ Modules:
     ui          the Tkinter application
 """
 
-__version__ = "1.1.4"
+__version__ = "1.1.5"

@@ -1,29 +1,36 @@
-## Rajshahi Tours & Travels — Desktop counter app 1.1.4
+## Rajshahi Tours & Travels — Desktop counter app 1.1.5
 
-This update makes consecutive tour bookings create separate records instead of
-leaving the saved passenger loaded for editing. After a new booking saves, the
-form clears, retains the current tour and departure date, and displays the next
-unique booking number. Bus ticketing remains a separate workflow with its own
-serial numbers and seat inventory.
+Tours can now be identified by a unique short code, shown before the serial in
+new tour-booking numbers. Tour setup and booking inputs are larger and easier to
+read. Bus ticketing remains a separate workflow with its own numbering and seat
+inventory.
 
 ### What changed
 
-* **New entry after each save:** a successfully added tour booking clears the
-  form and assigns the next booking serial automatically. A new save inserts a
-  new record; an existing booking is changed only after the operator selects it.
-* **Booked tour seats stay locked:** the seat map marks seats booked for the same
-  tour/date as unavailable. Form validation and the database also reject a
-  duplicate reservation. Cancelled bookings release their seats, and the same
-  seat can be reused for another departure date.
-* **Independent bus tickets:** bus-ticket records, numbering and route/date seat
-  availability are kept separate from tour bookings.
+* **Tour codes:** add or edit a unique code in the tour catalogue. If left blank,
+  the app suggests initials from the tour name and adds a suffix if needed. New
+  tour booking numbers use the format `CODE-RTT-YYYY-NNNN`, for example
+  `CBT-RTT-2026-0001`. The underlying serial sequence stays unique across tours;
+  existing booking numbers are not changed.
+* **Existing database migration:** previous tour catalogues receive generated
+  codes automatically and keep all bookings and payments unchanged.
+* **Larger input boxes:** increased input font size, padding and form width across
+  tour bookings, bus ticketing and tour setup for easier reading and entry.
+* **Tour booking form:** the departure date is directly after passenger name and
+  phone; successful booking creates or edits clear the inputs and prepare a fresh
+  unique number.
+* **Desktop app logo:** the supplied company mark is used for the app window,
+  task switcher and packaged Windows executable icon.
+* **Separate bus tickets:** bus-ticket records and ticket numbers remain
+  independent from tour bookings.
 
 ### Included features
 
 * **Date-specific tour seat map:** standard 40-seat and extended 46-seat layouts;
-  occupied seats are locked for the selected tour/date.
-* **Editable bookings and payments:** update passenger, seat, status, total or
-  advance after selecting a saved entry; the outstanding due is recalculated.
+  occupied seats are marked booked and locked for the selected tour/date.
+* **Editable bookings and payments:** new bookings get a fresh unique serial;
+  saved entries are edited only after selecting them. Due is recalculated from
+  total minus advance.
 * **Monthly travel report:** review trips, passengers, seats, availability and
   balances, then export a printable PDF or CSV spreadsheet.
 * **Offline bus tickets:** issue a ticket for any route/date, choose from a
@@ -32,9 +39,9 @@ serial numbers and seat inventory.
 * **Tour data controls:** archive a tour to preserve its history, or permanently
   delete the tour and associated bookings after a clear warning and
   confirmation.
-* **Professional receipts and larger UI text:** supplied company artwork and
-  brand colors appear across receipts and reports; receipt typography, spacing
-  and app font sizes are improved.
+* **Professional receipts and branding:** supplied company artwork and exact
+  brand colors appear across receipts and reports; receipt typography and app
+  readability are improved.
 
 ### Which file should I download?
 

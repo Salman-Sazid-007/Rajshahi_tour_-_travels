@@ -1,4 +1,4 @@
-RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.1.4)
+RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.1.5)
 ===================================================================
 This program runs on your own computer. Bookings and ticket records stay in a
 local database; nothing is sent to the website or over the internet.
@@ -18,15 +18,22 @@ If the source app does not open on Linux, install Tkinter with:
 WHAT THE PROGRAM DOES
 ---------------------
 * Overview: see this month's tour bookings, seats, due and upcoming trips.
-* Tour bookings: choose a trip date, pick open seats on the seat map, save the
-  passenger and payment, and edit the booking or payment later.
-* Tours & monthly reports: add or archive tours, set seat capacity, and export
-  a selected travel month as a printable PDF or spreadsheet-friendly CSV.
-  Archive keeps booking history; **Delete tour + bookings** permanently erases
-  the tour and its saved booking/payment records after confirmation.
-* Bus tickets: issue offline tickets for a route and any travel date. The 40-seat
-  map checks occupancy for that route/date and stops duplicate seat sales.
-* Print branded tour receipts and bus tickets; cancelled records release seats.
+* Tour bookings: enter a passenger name and phone, choose the tour date, select
+  a tour and open seats on the map, then save. After a successful new or edited
+  booking, the inputs clear and a fresh unique serial is shown. Select an existing
+  row when you want to edit it.
+* Tours & monthly reports: add tours with a short unique code and seat capacity;
+  blank codes use initials from the tour name. New tour booking numbers include
+  the code (for example, CBT-RTT-2026-0001). Export a selected travel month as PDF
+  or CSV. Archive keeps booking history; **Delete tour + bookings** permanently
+  erases the tour and its saved booking/payment records after confirmation.
+* Bus tickets are separate from tour bookings and use their own ticket numbers.
+  Issue offline tickets for a route and travel date; the 40-seat map checks
+  occupancy for that route/date and stops duplicate seat sales.
+* Booking and tour setup forms use larger, easier-to-read input boxes.
+* The supplied company mark appears in the app window, task switcher and Windows
+  executable icon. Print branded tour receipts and bus tickets; cancelled records
+  release seats.
 * Use File -> Backup database regularly to make a copy of every local record.
 
 Tour receipts use the agency teal/orange mark. Owner Safayet Hossain and phone

@@ -45,6 +45,7 @@ CREATE INDEX IF NOT EXISTS idx_bookings_tdate ON bookings(tour_date);
 CREATE TABLE IF NOT EXISTS tour_catalog (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     name          TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    tour_code     TEXT NOT NULL DEFAULT '',
     seat_capacity INTEGER NOT NULL DEFAULT 40,
     active        INTEGER NOT NULL DEFAULT 1,
     created_at    TEXT NOT NULL DEFAULT ''
@@ -114,6 +115,28 @@ def _normalise_route(value: Any) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip()
     text = re.sub(r"\s*(?:->|→|–>|—>)\s*", " → ", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def normalise_tour_code(value: Any) -> str:
+    """Return a compact, uppercase tour identifier safe to place in serials."""
+    text = str(value or "").strip().upper()
+    text = re.sub(r"(?<=[A-Z0-9])['’](?=[A-Z0-9])", "", text)
+    code = re.sub(r"[^A-Z0-9]+", "-", text).strip("-")
+    if len(code) > 12:
+        raise ValueError("Tour code must be 12 characters or fewer.")
+    return code
+
+
+def _suggest_tour_code(name: Any) -> str:
+    """Suggest initials for a tour (``Cox's Bazar Tour`` → ``CBT``)."""
+    text = str(name or "").strip().upper()
+    text = re.sub(r"(?<=[A-Z0-9])['’](?=[A-Z0-9])", "", text)
+    words = re.findall(r"[A-Z0-9]+", text)
+    if not words:
+        return "TOUR"
+    if len(words) == 1:
+        return words[0][:4]
+    return "".join(word[0] for word in words)[:8] or "TOUR"
 
 
 def normalise_seat(value: Any) -> str:
@@ -188,8 +211,76 @@ class Database:
         self.connection.execute("PRAGMA foreign_keys = ON")
         self.connection.executescript(SCHEMA)
         self.connection.commit()
+        self._ensure_tour_code_column()
         self._normalise_legacy_values()
         self._seed_tour_catalog()
+        self._backfill_tour_codes()
+
+    def _ensure_tour_code_column(self) -> None:
+        columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(tour_catalog)")}
+        if "tour_code" not in columns:
+            self.connection.execute(
+                "ALTER TABLE tour_catalog ADD COLUMN tour_code TEXT NOT NULL DEFAULT ''"
+            )
+            self.connection.commit()
+
+    def _unique_tour_code(
+        self, name: str, exclude_id: Optional[int] = None, reserved_codes: Iterable[str] = ()
+    ) -> str:
+        base = normalise_tour_code(_suggest_tour_code(name)) or "TOUR"
+        occupied = {str(code).casefold() for code in reserved_codes if str(code).strip()}
+        rows = self.connection.execute("SELECT id, tour_code FROM tour_catalog").fetchall()
+        for row in rows:
+            if exclude_id is not None and int(row["id"]) == exclude_id:
+                continue
+            code = str(row["tour_code"] or "").strip()
+            if code:
+                occupied.add(code.casefold())
+        candidate = base
+        suffix = 2
+        while candidate.casefold() in occupied:
+            tail = f"-{suffix}"
+            candidate = f"{base[:12 - len(tail)]}{tail}"
+            suffix += 1
+        return candidate
+
+    def _backfill_tour_codes(self) -> None:
+        rows = self.connection.execute(
+            "SELECT id, name, tour_code FROM tour_catalog ORDER BY id"
+        ).fetchall()
+        reserved = set()
+        for row in rows:
+            raw = str(row["tour_code"] or "").strip()
+            if raw:
+                try:
+                    normalised = normalise_tour_code(raw)
+                except ValueError:
+                    normalised = ""
+                if normalised:
+                    reserved.add(normalised)
+        used = set()
+        for row in rows:
+            raw = str(row["tour_code"] or "").strip()
+            try:
+                code = normalise_tour_code(raw)
+            except ValueError:
+                code = ""
+            if not code or code.casefold() in used:
+                code = self._unique_tour_code(
+                    str(row["name"]), exclude_id=int(row["id"]),
+                    reserved_codes=reserved | used,
+                )
+            used.add(code.casefold())
+            if code != raw:
+                self.connection.execute(
+                    "UPDATE tour_catalog SET tour_code = ? WHERE id = ?", (code, row["id"])
+                )
+        self.connection.commit()
+        self.connection.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_tour_catalog_tour_code "
+            "ON tour_catalog(tour_code COLLATE NOCASE) WHERE tour_code != ''"
+        )
+        self.connection.commit()
 
     def _normalise_legacy_values(self) -> None:
         """Canonicalise dates and route separators from older local entries."""
@@ -351,29 +442,66 @@ class Database:
     def tour_catalog(self, include_inactive: bool = False) -> List[Dict[str, Any]]:
         active_clause = "" if include_inactive else "WHERE t.active = 1"
         rows = self.connection.execute(
-            "SELECT t.id, t.name, t.seat_capacity, t.active, t.created_at, "
+            "SELECT t.id, t.name, t.tour_code, t.seat_capacity, t.active, t.created_at, "
             "COUNT(b.id) AS booking_count "
             "FROM tour_catalog t LEFT JOIN bookings b ON b.tour_name = t.name COLLATE NOCASE "
             f"{active_clause} GROUP BY t.id ORDER BY t.active DESC, t.name COLLATE NOCASE"
         ).fetchall()
         return [dict(row) for row in rows]
 
+    def tour_code(self, name: str) -> str:
+        name = str(name or "").strip()
+        if not name:
+            return ""
+        row = self.connection.execute(
+            "SELECT tour_code FROM tour_catalog WHERE name = ? COLLATE NOCASE", (name,)
+        ).fetchone()
+        if row and str(row[0] or "").strip():
+            return normalise_tour_code(row[0])
+        return self._unique_tour_code(name)
+
+    def _validate_unique_tour_code(self, value: Any, exclude_id: Optional[int] = None) -> str:
+        code = normalise_tour_code(value)
+        if not code:
+            raise ValueError("Enter a tour code using letters or numbers.")
+        if exclude_id is None:
+            duplicate = self.connection.execute(
+                "SELECT name FROM tour_catalog WHERE tour_code = ? COLLATE NOCASE", (code,)
+            ).fetchone()
+        else:
+            duplicate = self.connection.execute(
+                "SELECT name FROM tour_catalog WHERE tour_code = ? COLLATE NOCASE AND id != ?",
+                (code, exclude_id),
+            ).fetchone()
+        if duplicate:
+            raise ValueError(f"Tour code {code} is already assigned to {duplicate['name']}.")
+        return code
+
     def _ensure_tour(self, name: str, capacity: int = 40) -> int:
         name = str(name or "").strip()
         if not name:
             return 0
         row = self.connection.execute(
-            "SELECT id FROM tour_catalog WHERE name = ? COLLATE NOCASE", (name,)
+            "SELECT id, tour_code FROM tour_catalog WHERE name = ? COLLATE NOCASE", (name,)
         ).fetchone()
         if row:
-            return int(row[0])
+            if not str(row["tour_code"] or "").strip():
+                code = self._unique_tour_code(name, exclude_id=int(row["id"]))
+                self.connection.execute(
+                    "UPDATE tour_catalog SET tour_code = ? WHERE id = ?", (code, row["id"])
+                )
+            return int(row["id"])
+        code = self._unique_tour_code(name)
         cur = self.connection.execute(
-            "INSERT INTO tour_catalog(name, seat_capacity, active, created_at) VALUES (?, ?, 1, ?)",
-            (name, max(1, min(46, int(capacity))), _now()),
+            "INSERT INTO tour_catalog(name, tour_code, seat_capacity, active, created_at) "
+            "VALUES (?, ?, ?, 1, ?)",
+            (name, code, max(1, min(46, int(capacity))), _now()),
         )
         return int(cur.lastrowid)
 
-    def add_tour(self, name: str, seat_capacity: int = 40) -> int:
+    def add_tour(
+        self, name: str, seat_capacity: int = 40, tour_code: Optional[str] = None
+    ) -> int:
         name = str(name or "").strip()
         if not name:
             raise ValueError("Enter a tour name.")
@@ -383,26 +511,39 @@ class Database:
             raise ValueError("Seat capacity must be a whole number.")
         if not 1 <= capacity <= 46:
             raise ValueError("Seat capacity must be between 1 and 46.")
+        requested_code = str(tour_code or "").strip()
         existing = self.connection.execute(
-            "SELECT id, active FROM tour_catalog WHERE name = ? COLLATE NOCASE", (name,)
+            "SELECT id, active, tour_code FROM tour_catalog WHERE name = ? COLLATE NOCASE", (name,)
         ).fetchone()
         if existing:
             if bool(existing["active"]):
                 raise ValueError(f"{name} is already in the tour list.")
+            code = str(existing["tour_code"] or "").strip()
+            if requested_code:
+                code = self._validate_unique_tour_code(requested_code, exclude_id=int(existing["id"]))
+            elif not code:
+                code = self._unique_tour_code(name, exclude_id=int(existing["id"]))
             self.connection.execute(
-                "UPDATE tour_catalog SET active = 1, seat_capacity = ? WHERE id = ?",
-                (capacity, existing["id"]),
+                "UPDATE tour_catalog SET active = 1, seat_capacity = ?, tour_code = ? WHERE id = ?",
+                (capacity, code, existing["id"]),
             )
             self.connection.commit()
             return int(existing["id"])
+        code = (
+            self._validate_unique_tour_code(requested_code)
+            if requested_code else self._unique_tour_code(name)
+        )
         cur = self.connection.execute(
-            "INSERT INTO tour_catalog(name, seat_capacity, active, created_at) VALUES (?, ?, 1, ?)",
-            (name, capacity, _now()),
+            "INSERT INTO tour_catalog(name, tour_code, seat_capacity, active, created_at) "
+            "VALUES (?, ?, ?, 1, ?)",
+            (name, code, capacity, _now()),
         )
         self.connection.commit()
         return int(cur.lastrowid)
 
-    def update_tour(self, tour_id: int, name: str, seat_capacity: int) -> None:
+    def update_tour(
+        self, tour_id: int, name: str, seat_capacity: int, tour_code: Optional[str] = None
+    ) -> None:
         name = str(name or "").strip()
         if not name:
             raise ValueError("Enter a tour name.")
@@ -413,7 +554,7 @@ class Database:
         if not 1 <= capacity <= 46:
             raise ValueError("Seat capacity must be between 1 and 46.")
         current = self.connection.execute(
-            "SELECT id, name, seat_capacity FROM tour_catalog WHERE id = ?", (tour_id,)
+            "SELECT id, name, seat_capacity, tour_code FROM tour_catalog WHERE id = ?", (tour_id,)
         ).fetchone()
         if not current:
             raise ValueError("This tour no longer exists.")
@@ -422,6 +563,13 @@ class Database:
         ).fetchone()
         if duplicate:
             raise ValueError(f"{name} is already in the tour list.")
+        requested_code = str(tour_code or "").strip()
+        if requested_code:
+            code = self._validate_unique_tour_code(requested_code, exclude_id=tour_id)
+        else:
+            code = str(current["tour_code"] or "").strip()
+            if not code:
+                code = self._unique_tour_code(name, exclude_id=tour_id)
         old_name = str(current["name"])
         self.connection.execute("BEGIN IMMEDIATE")
         try:
@@ -438,8 +586,8 @@ class Database:
                         "Capacity cannot be reduced; active bookings already use: " + ", ".join(invalid)
                     )
             self.connection.execute(
-                "UPDATE tour_catalog SET name = ?, seat_capacity = ? WHERE id = ?",
-                (name, capacity, tour_id),
+                "UPDATE tour_catalog SET name = ?, tour_code = ?, seat_capacity = ? WHERE id = ?",
+                (name, code, capacity, tour_id),
             )
             if old_name != name:
                 self.connection.execute(
@@ -565,6 +713,9 @@ class Database:
 
     def add(self, data: Dict[str, Any]) -> int:
         row = _clean(data)
+        if not str(row.get("booking_no") or "").strip():
+            code = self.tour_code(str(row.get("tour_name") or ""))
+            row["booking_no"] = self.next_number(tour_code=code)
         row.setdefault("status", "Confirmed")
         row["created_at"] = _now()
         row["updated_at"] = row["created_at"]
@@ -610,21 +761,19 @@ class Database:
         self.connection.execute("DELETE FROM bookings WHERE id = ?", (booking_id,))
         self.connection.commit()
 
-    def next_number(self, prefix: str = "RTT") -> str:
-        """Next receipt number: ``RTT-2026-0007`` (year based, per prefix)."""
+    def next_number(self, prefix: str = "RTT", tour_code: Optional[str] = None) -> str:
+        """Next global booking serial, optionally prefixed by the tour code."""
+        prefix = str(prefix or "RTT").strip()
         year = _dt.date.today().year
-        pattern = f"{prefix}-{year}-%"
-        cur = self.connection.execute(
-            "SELECT booking_no FROM bookings WHERE booking_no LIKE ? ORDER BY booking_no DESC LIMIT 1",
-            (pattern,),
-        )
-        row = cur.fetchone()
+        serial_pattern = re.compile(rf"(?:^|-){re.escape(prefix)}-{year}-(\d+)$", re.IGNORECASE)
         last = 0
-        if row and row[0]:
-            tail = str(row[0]).rsplit("-", 1)[-1]
-            if tail.isdigit():
-                last = int(tail)
-        return f"{prefix}-{year}-{last + 1:04d}"
+        for row in self.connection.execute("SELECT booking_no FROM bookings WHERE booking_no IS NOT NULL"):
+            match = serial_pattern.search(str(row[0] or ""))
+            if match:
+                last = max(last, int(match.group(1)))
+        serial = f"{prefix}-{year}-{last + 1:04d}"
+        code = normalise_tour_code(tour_code) if str(tour_code or "").strip() else ""
+        return f"{code}-{serial}" if code else serial
 
     def number_taken(self, booking_no: str, exclude_id: Optional[int] = None) -> bool:
         if exclude_id:
@@ -872,8 +1021,10 @@ class Database:
         self.connection.row_factory = sqlite3.Row
         self.connection.executescript(SCHEMA)
         self.connection.commit()
+        self._ensure_tour_code_column()
         self._normalise_legacy_values()
         self._seed_tour_catalog()
+        self._backfill_tour_codes()
 
     def seed_demo(self, count: int = 6) -> None:
         """Insert a few sample rows (used by the Settings dialog and tests)."""
@@ -891,7 +1042,7 @@ class Database:
                 continue
             booking_date = (today - _dt.timedelta(days=index * 3)).isoformat()
             self.add({
-                "booking_no": self.next_number("RTT"),
+                "booking_no": self.next_number("RTT", tour_code=self.tour_code(tour)),
                 "name": name,
                 "phone": phone,
                 "seat": seat,
