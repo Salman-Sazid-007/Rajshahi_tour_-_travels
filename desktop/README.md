@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.1.5.
+These are the **latest published** downloads: desktop version 1.1.6.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.1.5.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.5/RajshahiTours-Windows-1.1.5.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.1.5.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.5/RajshahiTours-Desktop-1.1.5.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+| [**RajshahiTours-Windows-1.1.6.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.6/RajshahiTours-Windows-1.1.6.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.1.6.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.6/RajshahiTours-Desktop-1.1.6.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.5 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.6 in **Help → About**.
 
 ---
 
@@ -37,9 +37,11 @@ computer. The interface is organized into **Overview**, **Tour bookings**,
   booking. Seats can be reused on another departure date; saved rows can still
   be selected for intentional edits.
 * **Issue offline bus tickets:** a separate workflow with its own ticket numbers,
-route/date and seat inventory; it is not linked to tour bookings. Choose from the
-40-seat map, record passenger and payment information, and print a ticket. The
-same route/date/seat cannot be sold twice. Cancelled tickets release seats.
+route/date and seat inventory; it is not linked to tour bookings. Select a
+passenger count, then assign exactly that many seats and a Male/Female marker to
+each seat (blue for Male, pink for Female). Fare is per passenger; the ticket
+stores a single group/contact record and the total fare. The same route/date/seat
+cannot be sold twice. Cancelled group tickets release every seat.
 * **Track trips:** see booked/open seats, trip totals and outstanding amounts on
 the Overview and in the monthly travel report.
 * **Export a monthly sheet:** filter by travel month, review each departure,
@@ -76,7 +78,7 @@ in **Tools → Settings**.
 passenger, seat and payment data.
 * **List PDF / Due list PDF** — a landscape report of the filtered tour-booking
 view.
-* **Bus ticket PDF / Print** — a branded ticket for one manually issued bus seat.
+* **Bus ticket PDF / Print** — a branded group ticket listing passenger count, seats and gender assignments.
 * **Export bus list** — CSV for the currently filtered offline ticket register.
 
 ---
@@ -134,9 +136,13 @@ tour to edit it. **Archive (keep history)** removes it from new-booking choices
 while retaining its bookings and reports. **Delete tour + bookings** permanently
 removes that tour and its associated booking/payment records after confirmation.
 Choose a travel month (`YYYY-MM`) and use **Monthly PDF** or **Export CSV**.
-* **Bus tickets** — enter a route, date, departure time, passenger and fare;
-click **Map** to choose an open seat. Save, edit, cancel or delete a ticket, and
-print the branded ticket. Seat occupancy is scoped to route + travel date.
+* **Bus tickets** — enter a route and date, choose the number of passengers,
+then click **Map**. Choose Male or Female before selecting each open seat; Male
+seats are blue and Female seats are pink. Enter fare per passenger and the paid
+amount; the due amount is calculated for the whole group. Save, edit, cancel or
+delete a group ticket, then print a receipt showing its seats and genders. Seat
+occupancy is scoped to route + travel date. Group bus tickets remain completely
+separate from tour bookings and their numbering.
 * **Search and filters** apply to the relevant list. Select a booking or ticket
 row to load it for editing (double-click also works). Cancelled records stay in
 history but do not occupy a seat or add to payment totals.

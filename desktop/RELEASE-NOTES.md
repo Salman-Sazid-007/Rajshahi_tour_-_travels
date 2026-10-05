@@ -1,3 +1,13 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.1.6
+
+* **Group bus tickets:** choose a passenger count and assign exactly that many
+  seats, with per-seat Male/Female selection colors. Fare is multiplied by the
+  passenger count; group seat occupancy, genders, receipts and CSV exports stay
+  within the separate bus-ticket workflow.
+* **Larger app text:** increased general UI, input, table and seat-map fonts.
+* **Database migration:** existing bus records gain a gender map without losing
+  route, seat or payment history.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.1.5
 
 Tours can now be identified by a unique short code, shown before the serial in

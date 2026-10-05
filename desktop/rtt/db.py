@@ -10,6 +10,7 @@ from __future__ import annotations
 import calendar
 import csv
 import datetime as _dt
+import json
 import os
 import re
 import shutil
@@ -62,6 +63,7 @@ CREATE TABLE IF NOT EXISTS bus_tickets (
     name           TEXT NOT NULL,
     phone          TEXT DEFAULT '',
     seat           TEXT NOT NULL,
+    seat_genders    TEXT NOT NULL DEFAULT '[]',
     fare           REAL NOT NULL DEFAULT 0,
     advance        REAL NOT NULL DEFAULT 0,
     due            REAL NOT NULL DEFAULT 0,
@@ -164,6 +166,32 @@ def seat_tokens(value: Any) -> List[str]:
     return result
 
 
+def _parse_seat_genders(value: Any) -> Dict[str, str]:
+    """Decode the per-seat gender map stored with an offline bus booking."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value or "{}")
+        except (TypeError, ValueError):
+            value = {}
+    if isinstance(value, list):
+        entries = {}
+        for item in value:
+            if isinstance(item, dict):
+                seat = item.get("seat") or item.get("id")
+                if seat:
+                    entries[seat] = item.get("gender")
+        value = entries
+    if not isinstance(value, dict):
+        return {}
+    result: Dict[str, str] = {}
+    for raw_seat, raw_gender in value.items():
+        seat = normalise_seat(raw_seat)
+        gender = str(raw_gender or "").strip().casefold()
+        if seat and gender in {"male", "female"}:
+            result[seat] = gender
+    return result
+
+
 def tour_seat_ids(capacity: Any = 40) -> List[str]:
     """Website-style tour map labels for a standard or extended coach."""
     try:
@@ -177,6 +205,8 @@ def tour_seat_ids(capacity: Any = 40) -> List[str]:
 
 
 def _clean_bus_ticket(row: Dict[str, Any]) -> Dict[str, Any]:
+    seats = seat_tokens(row.get("seat"))
+    genders = _parse_seat_genders(row.get("seat_genders"))
     data = {
         "ticket_no": str(row.get("ticket_no") or "").strip(),
         "route": _normalise_route(row.get("route")),
@@ -184,7 +214,9 @@ def _clean_bus_ticket(row: Dict[str, Any]) -> Dict[str, Any]:
         "departure_time": str(row.get("departure_time") or "").strip(),
         "name": str(row.get("name") or "").strip(),
         "phone": str(row.get("phone") or "").strip(),
-        "seat": normalise_seat(row.get("seat")),
+        "seat": ", ".join(seats),
+        "seat_genders": json.dumps({seat: gender for seat, gender in genders.items() if seat in seats},
+                                    ensure_ascii=False),
         "status": str(row.get("status") or "Booked").strip(),
         "notes": str(row.get("notes") or "").strip(),
     }
@@ -212,6 +244,7 @@ class Database:
         self.connection.executescript(SCHEMA)
         self.connection.commit()
         self._ensure_tour_code_column()
+        self._ensure_bus_ticket_columns()
         self._normalise_legacy_values()
         self._seed_tour_catalog()
         self._backfill_tour_codes()
@@ -221,6 +254,14 @@ class Database:
         if "tour_code" not in columns:
             self.connection.execute(
                 "ALTER TABLE tour_catalog ADD COLUMN tour_code TEXT NOT NULL DEFAULT ''"
+            )
+            self.connection.commit()
+
+    def _ensure_bus_ticket_columns(self) -> None:
+        columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(bus_tickets)")}
+        if "seat_genders" not in columns:
+            self.connection.execute(
+                "ALTER TABLE bus_tickets ADD COLUMN seat_genders TEXT NOT NULL DEFAULT '[]'"
             )
             self.connection.commit()
 
@@ -302,7 +343,7 @@ class Database:
                     )
 
             tickets = self.connection.execute(
-                "SELECT id, travel_date, route FROM bus_tickets"
+                "SELECT id, travel_date, route, seat, seat_genders FROM bus_tickets"
             ).fetchall()
             for ticket in tickets:
                 changes = {}
@@ -312,6 +353,12 @@ class Database:
                 route = _normalise_route(ticket["route"])
                 if route != str(ticket["route"] or ""):
                     changes["route"] = route
+                seats = ", ".join(seat_tokens(ticket["seat"]))
+                if seats != str(ticket["seat"] or ""):
+                    changes["seat"] = seats
+                genders = json.dumps(_parse_seat_genders(ticket["seat_genders"]), ensure_ascii=False)
+                if genders != str(ticket["seat_genders"] or ""):
+                    changes["seat_genders"] = genders
                 if changes:
                     self.connection.execute(
                         "UPDATE bus_tickets SET " + ", ".join(f"{field} = ?" for field in changes)
@@ -804,7 +851,13 @@ class Database:
 
     def bus_ticket_get(self, ticket_id: int) -> Optional[Dict[str, Any]]:
         row = self.connection.execute("SELECT * FROM bus_tickets WHERE id = ?", (ticket_id,)).fetchone()
-        return dict(row) if row else None
+        return self._bus_ticket_dict(row) if row else None
+
+    @staticmethod
+    def _bus_ticket_dict(row: sqlite3.Row) -> Dict[str, Any]:
+        data = dict(row)
+        data["seat_genders"] = _parse_seat_genders(data.get("seat_genders"))
+        return data
 
     def bus_routes(self) -> List[str]:
         rows = self.connection.execute(
@@ -844,7 +897,7 @@ class Database:
         rows = self.connection.execute(
             "SELECT * FROM bus_tickets" + where + f" ORDER BY {column} {order}, id DESC", params
         ).fetchall()
-        return [dict(row) for row in rows]
+        return [self._bus_ticket_dict(row) for row in rows]
 
     def bus_seat_occupancy(
         self, route: str, travel_date: str, exclude_id: Optional[int] = None
@@ -864,26 +917,32 @@ class Database:
         ).fetchall()
         occupied: Dict[str, Dict[str, Any]] = {}
         for row in rows:
-            data = dict(row)
-            seat = normalise_seat(data.get("seat"))
-            if seat:
-                occupied.setdefault(seat, data)
+            data = self._bus_ticket_dict(row)
+            for seat in seat_tokens(data.get("seat")):
+                occupied.setdefault(seat, {
+                    **data,
+                    "seat": seat,
+                    "gender": data["seat_genders"].get(seat, ""),
+                })
         return occupied
 
     def bus_seat_conflicts(
         self, route: str, travel_date: str, seat: str, exclude_id: Optional[int] = None
     ) -> List[str]:
-        canonical = normalise_seat(seat)
-        return [canonical] if canonical and canonical in self.bus_seat_occupancy(
-            route, travel_date, exclude_id=exclude_id
-        ) else []
+        requested = seat_tokens(seat)
+        occupied = self.bus_seat_occupancy(route, travel_date, exclude_id=exclude_id)
+        return [item for item in requested if item in occupied]
 
     def add_bus_ticket(self, data: Dict[str, Any]) -> int:
         row = _clean_bus_ticket(data)
         if not row["ticket_no"]:
             row["ticket_no"] = self.next_bus_number()
-        if not row["route"] or not row["travel_date"] or not row["name"] or not row["seat"]:
-            raise ValueError("Route, travel date, passenger name and seat are required.")
+        seats = seat_tokens(row["seat"])
+        if not row["route"] or not row["travel_date"] or not row["name"] or not seats:
+            raise ValueError("Route, travel date, passenger name and at least one seat are required.")
+        invalid = [seat for seat in seats if seat not in tour_seat_ids(40)]
+        if invalid:
+            raise ValueError(f"Invalid bus seat(s): {', '.join(invalid)}.")
         if not parse_date(row["travel_date"]):
             raise ValueError("Travel date must be a valid calendar date.")
         if row["fare"] < 0 or row["advance"] < 0 or row["advance"] > row["fare"]:
@@ -891,14 +950,14 @@ class Database:
         now = _now()
         row["created_at"] = row["updated_at"] = now
         columns = (
-            "ticket_no", "route", "travel_date", "departure_time", "name", "phone", "seat",
+            "ticket_no", "route", "travel_date", "departure_time", "name", "phone", "seat", "seat_genders",
             "fare", "advance", "due", "status", "notes", "created_at", "updated_at",
         )
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             conflict = self.bus_seat_conflicts(row["route"], row["travel_date"], row["seat"])
             if conflict and row["status"].lower() != "cancelled":
-                raise ValueError(f"Seat {row['seat']} is already booked on this route and date.")
+                raise ValueError(f"Seat(s) {', '.join(conflict)} already booked on this route and date.")
             cur = self.connection.execute(
                 f"INSERT INTO bus_tickets ({', '.join(columns)}) VALUES ({', '.join('?' * len(columns))})",
                 [row.get(column, "") for column in columns],
@@ -911,15 +970,19 @@ class Database:
 
     def update_bus_ticket(self, ticket_id: int, data: Dict[str, Any]) -> None:
         row = _clean_bus_ticket(data)
-        if not row["ticket_no"] or not row["route"] or not row["travel_date"] or not row["name"] or not row["seat"]:
-            raise ValueError("Ticket number, route, travel date, passenger name and seat are required.")
+        seats = seat_tokens(row["seat"])
+        if not row["ticket_no"] or not row["route"] or not row["travel_date"] or not row["name"] or not seats:
+            raise ValueError("Ticket number, route, travel date, passenger name and at least one seat are required.")
+        invalid = [seat for seat in seats if seat not in tour_seat_ids(40)]
+        if invalid:
+            raise ValueError(f"Invalid bus seat(s): {', '.join(invalid)}.")
         if not parse_date(row["travel_date"]):
             raise ValueError("Travel date must be a valid calendar date.")
         if row["fare"] < 0 or row["advance"] < 0 or row["advance"] > row["fare"]:
             raise ValueError("Check the fare and amount paid.")
         row["updated_at"] = _now()
         columns = (
-            "ticket_no", "route", "travel_date", "departure_time", "name", "phone", "seat",
+            "ticket_no", "route", "travel_date", "departure_time", "name", "phone", "seat", "seat_genders",
             "fare", "advance", "due", "status", "notes", "updated_at",
         )
         self.connection.execute("BEGIN IMMEDIATE")
@@ -928,7 +991,7 @@ class Database:
                 row["route"], row["travel_date"], row["seat"], exclude_id=ticket_id
             )
             if conflict and row["status"].lower() != "cancelled":
-                raise ValueError(f"Seat {row['seat']} is already booked on this route and date.")
+                raise ValueError(f"Seat(s) {', '.join(conflict)} already booked on this route and date.")
             self.connection.execute(
                 "UPDATE bus_tickets SET " + ", ".join(f"{column} = ?" for column in columns) + " WHERE id = ?",
                 [row.get(column, "") for column in columns] + [ticket_id],
@@ -947,7 +1010,7 @@ class Database:
             rows = self.list_bus_tickets()
         active = [row for row in rows if str(row.get("status") or "").lower() != "cancelled"]
         return {
-            "count": len(active),
+            "count": sum(len(seat_tokens(row.get("seat"))) or 1 for row in active),
             "fare": sum(float(row.get("fare") or 0) for row in active),
             "advance": sum(float(row.get("advance") or 0) for row in active),
             "due": sum(float(row.get("due") or 0) for row in active),
@@ -960,12 +1023,15 @@ class Database:
             os.makedirs(directory, exist_ok=True)
         with open(path, "w", newline="", encoding="utf-8-sig") as handle:
             writer = csv.writer(handle)
-            writer.writerow(["Ticket No", "Passenger", "Phone", "Route", "Date", "Departure", "Seat",
-                             "Fare", "Paid", "Due", "Status", "Notes"])
+            writer.writerow(["Ticket No", "Booking contact", "Phone", "Route", "Date", "Departure", "Passengers",
+                             "Seats", "Seat genders", "Fare", "Paid", "Due", "Status", "Notes"])
             for row in rows:
+                genders = _parse_seat_genders(row.get("seat_genders"))
+                gender_text = "; ".join(f"{seat}: {gender.title()}" for seat, gender in genders.items())
                 writer.writerow([row.get("ticket_no", ""), row.get("name", ""), row.get("phone", ""),
                                  row.get("route", ""), row.get("travel_date", ""),
-                                 row.get("departure_time", ""), row.get("seat", ""),
+                                 row.get("departure_time", ""), len(seat_tokens(row.get("seat"))) or 1,
+                                 row.get("seat", ""), gender_text,
                                  f"{float(row.get('fare') or 0):.2f}",
                                  f"{float(row.get('advance') or 0):.2f}",
                                  f"{float(row.get('due') or 0):.2f}", row.get("status", ""),
@@ -1022,6 +1088,7 @@ class Database:
         self.connection.executescript(SCHEMA)
         self.connection.commit()
         self._ensure_tour_code_column()
+        self._ensure_bus_ticket_columns()
         self._normalise_legacy_values()
         self._seed_tour_catalog()
         self._backfill_tour_codes()

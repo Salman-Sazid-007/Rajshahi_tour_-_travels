@@ -271,9 +271,9 @@ class BookingApp:
                 break
             except tk.TclError:
                 continue
-        style.configure(".", font=(self.ui_font, 11), foreground=INK)
-        style.configure("Input.TEntry", font=(self.ui_font, 12), padding=(10, 8))
-        style.configure("Input.TCombobox", font=(self.ui_font, 12), padding=(10, 8))
+        style.configure(".", font=(self.ui_font, 14), foreground=INK)
+        style.configure("Input.TEntry", font=(self.ui_font, 16), padding=(12, 11))
+        style.configure("Input.TCombobox", font=(self.ui_font, 16), padding=(12, 11))
         style.configure("TFrame", background=PAGE_BG)
         style.configure("Page.TFrame", background=PAGE_BG)
         style.configure("Topbar.TFrame", background=WHITE)
@@ -282,68 +282,88 @@ class BookingApp:
         style.configure("SidebarBrand.TFrame", background=SIDEBAR_BG)
         style.configure("SidebarCard.TFrame", background=SIDEBAR_DEEP)
         style.configure("Card.TFrame", background=WHITE, relief="flat")
-        style.configure("Title.TLabel", font=(self.ui_font, 20, "bold"), foreground=INK,
+        style.configure("Title.TLabel", font=(self.ui_font, 24, "bold"), foreground=INK,
                         background=WHITE)
-        style.configure("PageTitle.TLabel", font=(self.ui_font, 19, "bold"), foreground=INK,
+        style.configure("PageTitle.TLabel", font=(self.ui_font, 24, "bold"), foreground=INK,
                         background=PAGE_BG)
-        style.configure("Sub.TLabel", font=(self.ui_font, 10), foreground=MUTED,
+        style.configure("Sub.TLabel", font=(self.ui_font, 13), foreground=MUTED,
                         background=PAGE_BG)
-        style.configure("Topbar.Sub.TLabel", font=(self.ui_font, 10, "bold"), foreground=ACCENT,
+        style.configure("Topbar.Sub.TLabel", font=(self.ui_font, 13, "bold"), foreground=ACCENT,
                         background=WHITE)
-        style.configure("Topbar.PageTitle.TLabel", font=(self.ui_font, 18, "bold"),
+        style.configure("Topbar.PageTitle.TLabel", font=(self.ui_font, 22, "bold"),
                         foreground=INK, background=WHITE)
-        style.configure("Topbar.Description.TLabel", font=(self.ui_font, 10),
+        style.configure("Topbar.Description.TLabel", font=(self.ui_font, 13),
                         foreground=MUTED, background=WHITE)
-        style.configure("Sidebar.Brand.TLabel", font=(self.ui_font, 11, "bold"),
+        style.configure("Sidebar.Brand.TLabel", font=(self.ui_font, 14, "bold"),
                         foreground=WHITE, background=SIDEBAR_BG)
-        style.configure("Sidebar.Sub.TLabel", font=(self.ui_font, 10, "bold"),
+        style.configure("Sidebar.Sub.TLabel", font=(self.ui_font, 13, "bold"),
                         foreground="#80dce2", background=SIDEBAR_BG)
-        style.configure("Sidebar.Eyebrow.TLabel", font=(self.ui_font, 10, "bold"),
+        style.configure("Sidebar.Eyebrow.TLabel", font=(self.ui_font, 13, "bold"),
                         foreground="#ffcc83", background=SIDEBAR_BG)
-        style.configure("Sidebar.Muted.TLabel", font=(self.ui_font, 10),
+        style.configure("Sidebar.Muted.TLabel", font=(self.ui_font, 13),
                         foreground="#b3e9ed", background=SIDEBAR_BG)
-        style.configure("Sidebar.Section.TLabel", font=(self.ui_font, 10, "bold"),
+        style.configure("Sidebar.Section.TLabel", font=(self.ui_font, 13, "bold"),
                         foreground="#80dce2", background=SIDEBAR_BG)
-        style.configure("SidebarNav.TButton", font=(self.ui_font, 10, "bold"),
+        style.configure("SidebarNav.TButton", font=(self.ui_font, 13, "bold"),
                         padding=(12, 11), anchor="w", foreground="#d9f3f5",
                         background=SIDEBAR_BG, relief="flat", borderwidth=0)
         style.map("SidebarNav.TButton", background=[("active", "#086a7d")],
                   foreground=[("active", WHITE)])
-        style.configure("SidebarSelected.TButton", font=(self.ui_font, 10, "bold"),
+        style.configure("SidebarSelected.TButton", font=(self.ui_font, 13, "bold"),
                         padding=(12, 11), anchor="w", foreground=INK,
                         background=ORANGE_LIGHT, relief="flat", borderwidth=0)
         style.map("SidebarSelected.TButton", background=[("active", "#ffcc83")])
-        style.configure("Offline.TLabel", font=(self.ui_font, 10, "bold"),
+        style.configure("Offline.TLabel", font=(self.ui_font, 13, "bold"),
                         foreground="#24745e", background="#e6f4ec", padding=(9, 5))
-        style.configure("Field.TLabel", font=(self.ui_font, 11, "bold"), foreground="#385158",
+        style.configure("Field.TLabel", font=(self.ui_font, 14, "bold"), foreground="#385158",
                         background=WHITE)
-        style.configure("Card.TLabel", font=(self.ui_font, 11, "bold"), foreground=ACCENT_DARK,
+        style.configure("Card.TLabel", font=(self.ui_font, 14, "bold"), foreground=ACCENT_DARK,
                         background=WHITE)
-        style.configure("Header.TLabel", font=(self.ui_font, 13, "bold"), foreground=ACCENT_DARK,
+        style.configure("Header.TLabel", font=(self.ui_font, 16, "bold"), foreground=ACCENT_DARK,
                         background=WHITE)
-        style.configure("Muted.TLabel", font=(self.ui_font, 10), foreground=MUTED,
+        style.configure("Muted.TLabel", font=(self.ui_font, 13), foreground=MUTED,
                         background=WHITE)
-        style.configure("Accent.TButton", font=(self.ui_font, 10, "bold"), padding=(13, 8),
+        style.configure("Accent.TButton", font=(self.ui_font, 14, "bold"), padding=(14, 10),
                         foreground=WHITE, background=ACCENT)
         style.map("Accent.TButton", background=[("active", ACCENT_DARK), ("disabled", "#9bbfc0")],
                   foreground=[("disabled", "#f5f7f8")])
-        style.configure("Secondary.TButton", font=(self.ui_font, 10, "bold"), padding=(11, 7),
+        style.configure("Secondary.TButton", font=(self.ui_font, 14, "bold"), padding=(13, 9),
                         foreground=ACCENT_DARK, background=ACCENT_SOFT)
         style.map("Secondary.TButton", background=[("active", ACCENT_SOFT)])
-        style.configure("Danger.TButton", font=(self.ui_font, 10, "bold"), padding=(11, 7),
+        style.configure("Danger.TButton", font=(self.ui_font, 14, "bold"), padding=(13, 9),
                         foreground=WHITE, background=DANGER)
-        style.configure("Treeview", font=(self.ui_font, 10), rowheight=36,
+        style.configure("Treeview", font=(self.ui_font, 13), rowheight=46,
                         background=WHITE, fieldbackground=WHITE, foreground=INK, borderwidth=0)
-        style.configure("Treeview.Heading", font=(self.ui_font, 10, "bold"),
-                        background=PAGE_BG, foreground=ACCENT_DARK, relief="flat", padding=(10, 9))
+        style.configure("Treeview.Heading", font=(self.ui_font, 13, "bold"),
+                        background=PAGE_BG, foreground=ACCENT_DARK, relief="flat", padding=(12, 10))
         style.map("Treeview", background=[("selected", ACCENT_SOFT)],
                   foreground=[("selected", ACCENT_DARK)])
-        style.configure("Seat.TButton", font=(self.ui_font, 10, "bold"), padding=(6, 6),
+        style.configure("Seat.TButton", font=(self.ui_font, 13, "bold"), padding=(7, 7),
                         foreground=ACCENT_DARK, background=WHITE)
-        style.configure("SelectedSeat.TButton", font=(self.ui_font, 10, "bold"), padding=(6, 6),
+        style.configure("SelectedSeat.TButton", font=(self.ui_font, 13, "bold"), padding=(7, 7),
                         foreground=WHITE, background=ACCENT)
-        style.configure("BookedSeat.TButton", font=(self.ui_font, 10, "bold"), padding=(6, 6),
+        style.configure("BookedSeat.TButton", font=(self.ui_font, 13, "bold"), padding=(7, 7),
                         foreground="#6a777a", background="#e4e9e9")
+        style.configure("SelectedMaleSeat.TButton", font=(self.ui_font, 13, "bold"), padding=(7, 7),
+                        foreground=WHITE, background="#2876c7")
+        style.configure("SelectedFemaleSeat.TButton", font=(self.ui_font, 13, "bold"), padding=(7, 7),
+                        foreground=WHITE, background="#d04e91")
+        style.configure("BookedMaleSeat.TButton", font=(self.ui_font, 13, "bold"), padding=(7, 7),
+                        foreground="#24518a", background="#dceafb")
+        style.map("BookedMaleSeat.TButton", foreground=[("disabled", "#24518a")],
+                  background=[("disabled", "#dceafb")])
+        style.configure("BookedFemaleSeat.TButton", font=(self.ui_font, 13, "bold"), padding=(7, 7),
+                        foreground="#87355f", background="#fae0ed")
+        style.map("BookedFemaleSeat.TButton", foreground=[("disabled", "#87355f")],
+                  background=[("disabled", "#fae0ed")])
+        style.configure("GenderMale.TButton", font=(self.ui_font, 14, "bold"), padding=(12, 9),
+                        foreground="#24518a", background="#dceafb")
+        style.configure("ActiveGenderMale.TButton", font=(self.ui_font, 14, "bold"), padding=(12, 9),
+                        foreground=WHITE, background="#2876c7")
+        style.configure("GenderFemale.TButton", font=(self.ui_font, 14, "bold"), padding=(12, 9),
+                        foreground="#87355f", background="#fae0ed")
+        style.configure("ActiveGenderFemale.TButton", font=(self.ui_font, 14, "bold"), padding=(12, 9),
+                        foreground=WHITE, background="#d04e91")
         self.root.configure(background=PAGE_BG)
 
     def _build_layout(self) -> None:
@@ -465,11 +485,11 @@ class BookingApp:
             anchor="w")
         self.header_owner_label = ttk.Label(
             owner_card, text=str(self.settings.get("owner_name") or "Safayet Hossain"),
-            font=(self.ui_font, 10, "bold"), foreground=WHITE, background=SIDEBAR_DEEP)
+            font=(self.ui_font, 13, "bold"), foreground=WHITE, background=SIDEBAR_DEEP)
         self.header_owner_label.pack(anchor="w", pady=(4, 1))
         self.header_owner_phone_label = ttk.Label(
             owner_card, text=str(self.settings.get("owner_phone") or self.settings.get("phone", "")),
-            font=(self.ui_font, 10), foreground="#b3e9ed", background=SIDEBAR_DEEP)
+            font=(self.ui_font, 13), foreground="#b3e9ed", background=SIDEBAR_DEEP)
         self.header_owner_phone_label.pack(anchor="w")
         ttk.Label(footer, text="●  LOCAL DATABASE  ·  NO SYNC", style="Sidebar.Muted.TLabel").pack(
             anchor="center", pady=(12, 4))
@@ -507,7 +527,7 @@ class BookingApp:
             mark.create_polygon(39, 47, 59, 35, 53, 53, 49, 48, 44, 53, 44, 46,
                                 fill="#f97000", outline="")
         except (AttributeError, tk.TclError):
-            ttk.Label(parent, text="RTT", font=(self.ui_font, 12, "bold"),
+            ttk.Label(parent, text="RTT", font=(self.ui_font, 16, "bold"),
                       foreground=ORANGE, background=SIDEBAR_BG).pack(anchor="center")
 
     def navigate_to(self, title: str) -> None:
@@ -558,15 +578,15 @@ class BookingApp:
             ("Tour bookings this month", "month_bookings", ACCENT, "Customer reservations"),
             ("Tour seats assigned", "seats_sold", "#27845e", "Across this month's trips"),
             ("Outstanding tour due", "due", DANGER, "Amount to collect"),
-            ("Bus tickets this month", "bus_tickets", ORANGE, "Offline counter sales"),
+            ("Bus passengers this month", "bus_tickets", ORANGE, "Offline counter sales"),
         ]
         for column, (title, key, color, caption) in enumerate(cards):
             card = ttk.Frame(metrics, style="Card.TFrame", padding=(16, 12))
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 7, 0))
-            ttk.Label(card, text=title.upper(), font=(self.ui_font, 10, "bold"),
+            ttk.Label(card, text=title.upper(), font=(self.ui_font, 13, "bold"),
                       foreground=MUTED, background=WHITE).pack(anchor="w")
             ttk.Label(card, textvariable=self.dashboard_values[key],
-                      font=(self.ui_font, 22, "bold"), foreground=color,
+                      font=(self.ui_font, 26, "bold"), foreground=color,
                       background=WHITE).pack(anchor="w", pady=(6, 1))
             ttk.Label(card, text=caption, style="Muted.TLabel").pack(anchor="w")
 
@@ -611,7 +631,7 @@ class BookingApp:
             item = ttk.Frame(note_card, style="Card.TFrame")
             item.grid(row=row, column=0, sticky="ew", pady=(0, 10))
             item.columnconfigure(0, weight=1)
-            ttk.Label(item, text=title, font=(self.ui_font, 11, "bold"), foreground=ACCENT_DARK,
+            ttk.Label(item, text=title, font=(self.ui_font, 14, "bold"), foreground=ACCENT_DARK,
                       background=WHITE).grid(row=0, column=0, sticky="w")
             ttk.Label(item, text=detail, style="Muted.TLabel", wraplength=360,
                       justify="left").grid(row=1, column=0, sticky="w", pady=(3, 5))
@@ -775,8 +795,9 @@ class BookingApp:
         card.columnconfigure(0, weight=1)
         ttk.Label(card, text="Issue / edit ticket", style="Header.TLabel").grid(
             row=0, column=0, columnspan=3, sticky="w", pady=(0, 4))
-        ttk.Label(card, text="One passenger per seat. Cancelled tickets release their seat.",
-                  style="Muted.TLabel", wraplength=320).grid(row=1, column=0, columnspan=3, sticky="w", pady=(0, 6))
+        ttk.Label(card, text="Select passenger count, then assign one seat and gender per passenger. Name and phone are the group contact.",
+                  style="Muted.TLabel", wraplength=350, justify="left").grid(
+            row=1, column=0, columnspan=3, sticky="w", pady=(0, 8))
         self.bus_vars: Dict[str, tk.Variable] = {
             "ticket_no": tk.StringVar(), "name": tk.StringVar(), "phone": tk.StringVar(),
             "route": tk.StringVar(value="Rajshahi → Dhaka"), "travel_date": tk.StringVar(),
@@ -785,19 +806,32 @@ class BookingApp:
             "status": tk.StringVar(value="Booked"),
         }
         self.bus_due_var = tk.StringVar(value="0.00")
+        self.bus_passenger_count_var = tk.StringVar(value="1")
+        self.bus_seat_genders: Dict[str, str] = {}
+        self.bus_legacy_gender_missing = False
         row = 2
         row = self._bus_form_row(card, row, "Ticket number", "ticket_no", extra="auto")
-        row = self._bus_form_row(card, row, "Passenger name *", "name")
+        row = self._bus_form_row(card, row, "Passenger / contact name *", "name")
         row = self._bus_form_row(card, row, "Phone / WhatsApp", "phone")
         row = self._bus_form_row(card, row, "Route *", "route", combo=True, values=self.db.bus_routes())
         row = self._bus_form_row(card, row, "Travel date *", "travel_date", date=True)
         row = self._bus_form_row(card, row, "Departure time", "departure_time")
-        row = self._bus_form_row(card, row, "Seat *", "seat", extra="seatmap")
+        ttk.Label(card, text="Number of passengers *", style="Field.TLabel").grid(
+            row=row, column=0, sticky="w", pady=(7, 0))
+        self.bus_passenger_count_combo = ttk.Combobox(
+            card, textvariable=self.bus_passenger_count_var,
+            values=tuple(str(count) for count in range(1, 41)),
+            state="readonly", style="Input.TCombobox",
+        )
+        self.bus_passenger_count_combo.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
+        self.bus_passenger_count_var.trace_add("write", lambda *_: self.on_bus_passenger_count_change())
+        row += 2
+        row = self._bus_form_row(card, row, "Seat(s) *", "seat", extra="seatmap")
         self.bus_seat_summary_var = tk.StringVar(value="Pick a route and date to see the seat count")
         ttk.Label(card, textvariable=self.bus_seat_summary_var, style="Muted.TLabel").grid(
             row=row, column=0, columnspan=3, sticky="w", pady=(1, 0))
         row += 1
-        row = self._bus_form_row(card, row, "Fare", "fare")
+        row = self._bus_form_row(card, row, "Fare per passenger", "fare")
         row = self._bus_form_row(card, row, "Paid now", "advance")
         ttk.Label(card, text="Balance due", style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(8, 0))
         ttk.Label(card, textvariable=self.bus_due_var, style="Due.TLabel").grid(
@@ -811,7 +845,7 @@ class BookingApp:
         self.bus_status_combo.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
         ttk.Label(card, text="Notes", style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(7, 0))
-        self.bus_notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 12),
+        self.bus_notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 16),
                                       relief="solid", borderwidth=1, wrap="word")
         self.bus_notes_text.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
@@ -832,6 +866,7 @@ class BookingApp:
             self.bus_vars[key].trace_add("write", lambda *_: self.update_bus_due())
         self.bus_vars["route"].trace_add("write", lambda *_: self.update_bus_seat_summary())
         self.bus_vars["travel_date"].trace_add("write", lambda *_: self.update_bus_seat_summary())
+        self.bus_vars["seat"].trace_add("write", lambda *_: self.update_bus_seat_summary())
 
     def _bus_form_row(self, card: ttk.Frame, row: int, label: str, key: str,
                       combo: bool = False, values: Optional[List[str]] = None,
@@ -882,10 +917,10 @@ class BookingApp:
         ttk.Button(filters, text="Clear", command=self.clear_bus_filters).pack(side="right")
 
         columns = (
-            ("ticket_no", "Ticket", 112), ("name", "Passenger", 135), ("phone", "Phone", 105),
+            ("ticket_no", "Ticket", 112), ("name", "Contact / lead", 135), ("phone", "Phone", 105),
             ("route", "Route", 148), ("travel_date", "Travel date", 95),
-            ("departure_time", "Time", 78), ("seat", "Seat", 54),
-            ("fare", "Fare", 82), ("advance", "Paid", 82), ("due", "Due", 82), ("status", "Status", 78),
+            ("departure_time", "Time", 78), ("passengers", "Pax", 58), ("seat", "Seat(s)", 125),
+            ("fare", "Total fare", 92), ("advance", "Paid", 82), ("due", "Due", 82), ("status", "Status", 78),
         )
         table = ttk.Frame(panel, style="Card.TFrame")
         table.grid(row=1, column=0, sticky="nsew")
@@ -906,7 +941,7 @@ class BookingApp:
         self.bus_tree.grid(row=0, column=0, sticky="nsew")
         bus_scroll_y.grid(row=0, column=1, sticky="ns")
         bus_scroll_x.grid(row=1, column=0, sticky="ew")
-        self.bus_totals_var = tk.StringVar(value="0 tickets")
+        self.bus_totals_var = tk.StringVar(value="0 passengers")
         ttk.Label(panel, textvariable=self.bus_totals_var, style="Card.TLabel").grid(
             row=2, column=0, sticky="e", pady=(7, 0))
 
@@ -947,7 +982,7 @@ class BookingApp:
         self.dashboard_values["month_bookings"].set(str(len(month_rows)))
         self.dashboard_values["seats_sold"].set(str(seat_count))
         self.dashboard_values["due"].set(money(due, self.currency))
-        self.dashboard_values["bus_tickets"].set(str(len(bus_rows)))
+        self.dashboard_values["bus_tickets"].set(str(sum(len(db.seat_tokens(row.get("seat"))) or 1 for row in bus_rows)))
         for item in self.upcoming_tree.get_children():
             self.upcoming_tree.delete(item)
         for index, trip in enumerate(self.db.upcoming_tours(12)):
@@ -1261,6 +1296,25 @@ class BookingApp:
     def assign_bus_number(self) -> None:
         self.bus_vars["ticket_no"].set(self.db.next_bus_number())
 
+    def _bus_passenger_count(self) -> int:
+        try:
+            count = int(str(self.bus_passenger_count_var.get() or "1"))
+        except (AttributeError, TypeError, ValueError):
+            count = 1
+        return max(1, min(40, count))
+
+    def on_bus_passenger_count_change(self) -> None:
+        count = self._bus_passenger_count()
+        seats = db.seat_tokens(self.bus_vars["seat"].get())
+        if len(seats) > count:
+            seats = seats[:count]
+            self.bus_vars["seat"].set(", ".join(seats))
+        self.bus_seat_genders = {
+            seat: gender for seat, gender in self.bus_seat_genders.items() if seat in seats
+        }
+        self.update_bus_due()
+        self.update_bus_seat_summary()
+
     def update_bus_due(self) -> None:
         def amount(key: str) -> float:
             raw = str(self.bus_vars[key].get() or "")
@@ -1269,34 +1323,55 @@ class BookingApp:
                 return float(cleaned or 0)
             except ValueError:
                 return 0.0
-        self.bus_due_var.set(money(amount("fare") - amount("advance"), self.currency))
+        total_fare = amount("fare") * self._bus_passenger_count()
+        self.bus_due_var.set(money(total_fare - amount("advance"), self.currency))
 
     def update_bus_seat_summary(self) -> None:
         if not hasattr(self, "bus_seat_summary_var"):
             return
+        if hasattr(self, "bus_passenger_count_combo"):
+            self.bus_passenger_count_combo.configure(
+                values=tuple(str(count) for count in range(1, 41)), state="readonly"
+            )
         route = str(self.bus_vars["route"].get() or "").strip()
         travel_date = parse_date(str(self.bus_vars["travel_date"].get() or ""))
+        selected_count = len(db.seat_tokens(self.bus_vars["seat"].get()))
+        target_count = self._bus_passenger_count()
         if not route or not travel_date:
-            self.bus_seat_summary_var.set("Pick a route and date to see the seat count")
+            self.bus_seat_summary_var.set(
+                f"Select {target_count} seat{'s' if target_count != 1 else ''} for the passengers"
+            )
             return
         occupied = self.db.bus_seat_occupancy(
             route, travel_date.isoformat(), exclude_id=self.bus_selected_id
         )
+        available = max(0, 40 - len(occupied))
+        if hasattr(self, "bus_passenger_count_combo"):
+            options = tuple(str(count) for count in range(1, max(1, available) + 1))
+            self.bus_passenger_count_combo.configure(values=options, state="readonly" if available else "disabled")
+        if target_count > available:
+            detail = f"Only {available} seat{'s' if available != 1 else ''} left — reduce passenger count"
+        else:
+            detail = f"{selected_count}/{target_count} passenger seats selected"
         self.bus_seat_summary_var.set(
-            f"{len(occupied)} / 40 seats filled  ·  {max(0, 40 - len(occupied))} open"
+            f"{len(occupied)} / 40 seats filled  ·  {available} open  ·  {detail}"
         )
 
     def new_bus_ticket(self) -> None:
+        self.bus_selected_id = None
+        self.bus_legacy_gender_missing = False
+        self.bus_seat_genders = {}
+        self.bus_passenger_count_var.set("1")
         for key, variable in self.bus_vars.items():
             defaults = {"fare": "0", "advance": "0", "status": "Booked",
                         "route": "Rajshahi → Dhaka", "departure_time": "09:00 AM"}
             variable.set(defaults.get(key, ""))
         self.bus_notes_text.delete("1.0", "end")
-        self.bus_selected_id = None
         self.bus_vars["travel_date"].set(_dt.date.today().isoformat())
         self.assign_bus_number()
         self.update_bus_due()
-        self.set_status("New bus ticket — choose the route, date and available seat.")
+        self.update_bus_seat_summary()
+        self.set_status("New bus booking — choose passenger count, seats and each passenger's gender.")
 
     def pick_bus_date(self) -> None:
         current = parse_date(self.bus_vars["travel_date"].get())
@@ -1318,11 +1393,26 @@ class BookingApp:
         occupied = self.db.bus_seat_occupancy(
             route, date_value.isoformat(), exclude_id=self.bus_selected_id
         )
+        passenger_count = self._bus_passenger_count()
+        available = 40 - len(occupied)
+        if passenger_count > available:
+            messagebox.showwarning(
+                "Not enough seats", f"Only {available} seat(s) are available for this route and date.",
+                parent=self.root,
+            )
+            return
         current = db.seat_tokens(self.bus_vars["seat"].get())
         SeatMapDialog(
             self.root, f"{route} · {date_value.strftime('%d %b %Y')}", 40, occupied, current,
-            max_select=1, on_save=lambda seats: self.bus_vars["seat"].set(seats[0] if seats else ""),
+            max_select=passenger_count, gendered=True, selected_genders=self.bus_seat_genders,
+            on_save=self.apply_bus_seat_selection,
         )
+
+    def apply_bus_seat_selection(self, seats: List[str], genders: Dict[str, str]) -> None:
+        self.bus_vars["seat"].set(", ".join(seats))
+        self.bus_seat_genders = {seat: gender for seat, gender in genders.items() if seat in seats}
+        self.bus_legacy_gender_missing = False
+        self.update_bus_seat_summary()
 
     def collect_bus_ticket(self) -> Dict[str, Any]:
         def amount(key: str) -> float:
@@ -1336,26 +1426,51 @@ class BookingApp:
         parsed_date = parse_date(str(data.get("travel_date") or ""))
         if parsed_date:
             data["travel_date"] = parsed_date.isoformat()
-        data["fare"] = amount("fare")
+        count = self._bus_passenger_count()
+        seats = db.seat_tokens(data.get("seat"))
+        data["seat"] = ", ".join(seats)
+        data["passenger_count"] = count
+        data["fare_per_passenger"] = amount("fare")
+        data["fare"] = round(data["fare_per_passenger"] * count, 2)
         data["advance"] = amount("advance")
         data["due"] = round(data["fare"] - data["advance"], 2)
+        data["seat_genders"] = {
+            seat: gender for seat, gender in self.bus_seat_genders.items() if seat in seats
+        }
         data["notes"] = self.bus_notes_text.get("1.0", "end").strip()
         return data
 
     def validate_bus_ticket(self, data: Dict[str, Any]) -> Optional[str]:
         if not str(data.get("name") or "").strip():
-            return "Passenger name is required."
+            return "Passenger or booking-contact name is required."
         if not str(data.get("route") or "").strip():
             return "Route is required."
         if not parse_date(str(data.get("travel_date") or "")):
             return "Travel date must be a valid date, for example 2026-11-15."
-        seat = db.normalise_seat(data.get("seat"))
-        if seat not in seat_ids(40):
-            return "Choose a valid seat from the bus seat map."
+        try:
+            passenger_count = int(data.get("passenger_count") or 0)
+        except (TypeError, ValueError):
+            passenger_count = 0
+        if passenger_count < 1 or passenger_count > 40:
+            return "Choose a passenger count from 1 to 40."
+        seats = db.seat_tokens(data.get("seat"))
+        if len(seats) != passenger_count:
+            return f"Choose exactly {passenger_count} seat(s) for the passengers; {len(seats)} selected."
+        invalid = [seat for seat in seats if seat not in seat_ids(40)]
+        if invalid:
+            return "Choose valid seats from the bus seat map."
+        genders = data.get("seat_genders") if isinstance(data.get("seat_genders"), dict) else {}
+        missing_gender = [seat for seat in seats if genders.get(seat) not in {"male", "female"}]
+        legacy_unchanged = (
+            self.bus_selected_id is not None and self.bus_legacy_gender_missing
+            and set(seats) == getattr(self, "_bus_legacy_seats", set())
+        )
+        if missing_gender and not legacy_unchanged:
+            return "Choose Male or Female before assigning each seat in the seat map."
         if data["fare"] < 0 or data["advance"] < 0:
             return "Fare and paid amount cannot be negative."
         if data["advance"] > data["fare"]:
-            return "Paid amount cannot be larger than the fare."
+            return "Paid amount cannot be larger than the total fare."
         return None
 
     def save_bus_ticket(self) -> None:
@@ -1397,15 +1512,25 @@ class BookingApp:
         row = self.db.bus_ticket_get(self.bus_selected_id)
         if not row:
             return
+        seats = db.seat_tokens(row.get("seat"))
+        passenger_count = max(1, len(seats))
+        self.bus_seat_genders = dict(row.get("seat_genders") or {})
+        self.bus_legacy_gender_missing = not bool(self.bus_seat_genders)
+        self._bus_legacy_seats = set(seats)
         for key, variable in self.bus_vars.items():
             value = row.get(key, "")
-            if key in ("fare", "advance"):
+            if key == "fare":
+                value = float(row.get("fare") or 0) / passenger_count
+                value = f"{value:g}"
+            elif key == "advance":
                 value = f"{float(value or 0):g}"
             variable.set(value if value is not None else "")
+        self.bus_passenger_count_var.set(str(passenger_count))
         self.bus_notes_text.delete("1.0", "end")
         self.bus_notes_text.insert("1.0", str(row.get("notes") or ""))
         self.update_bus_due()
-        self.set_status(f"Editing bus ticket {row.get('ticket_no')} · seat {row.get('seat')}")
+        self.update_bus_seat_summary()
+        self.set_status(f"Editing bus ticket {row.get('ticket_no')} · seats {row.get('seat')}")
 
     def delete_bus_ticket(self) -> None:
         if self.bus_selected_id is None:
@@ -1421,7 +1546,7 @@ class BookingApp:
         self.new_bus_ticket()
         self.refresh_bus_tickets()
         self.refresh_dashboard()
-        self.set_status("Bus ticket deleted; its seat is available again.")
+        self.set_status("Bus ticket deleted; its seats are available again.")
 
     def clear_bus_filters(self) -> None:
         self.bus_search_var.set("")
@@ -1444,11 +1569,19 @@ class BookingApp:
             tags = ("cancelled",) if status.lower() == "cancelled" else (
                 ("due",) if float(row.get("due") or 0) > 0 else ()
             )
+            seats = db.seat_tokens(row.get("seat"))
+            genders = row.get("seat_genders") if isinstance(row.get("seat_genders"), dict) else {}
+            gender_markers = {"male": "M", "female": "F"}
+            seat_display = ", ".join(
+                f"{seat} {gender_markers[genders[seat]]}" if genders.get(seat) in gender_markers else seat
+                for seat in seats
+            )
             self.bus_tree.insert(
                 "", "end", iid=str(row["id"]),
                 values=(row.get("ticket_no", ""), row.get("name", ""), row.get("phone", ""),
                         row.get("route", ""), row.get("travel_date", ""), row.get("departure_time", ""),
-                        row.get("seat", ""), money(row.get("fare"), self.currency),
+                        len(seats) or 1, seat_display,
+                        money(row.get("fare"), self.currency),
                         money(row.get("advance"), self.currency), money(row.get("due"), self.currency), status),
                 tags=tags,
             )
@@ -1458,7 +1591,7 @@ class BookingApp:
             self.bus_route_filter_var.set("All routes")
         totals = self.db.bus_totals(rows)
         self.bus_totals_var.set(
-            f"{totals['count']} active tickets  ·  Fare {money(totals['fare'], self.currency)}  ·  "
+            f"{totals['count']} active passengers  ·  Fare {money(totals['fare'], self.currency)}  ·  "
             f"Paid {money(totals['advance'], self.currency)}  ·  Due {money(totals['due'], self.currency)}"
         )
         if keep_selection and self.bus_selected_id is not None:
@@ -1613,7 +1746,7 @@ class BookingApp:
         ttk.Label(card, text="Notes", style="Field.TLabel").grid(row=row, column=0, sticky="w",
                                                                  pady=(8, 0))
         row += 1
-        self.notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 12),
+        self.notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 16),
                                   relief="solid", borderwidth=1, wrap="word")
         self.notes_text.grid(row=row, column=0, columnspan=3, sticky="ew")
         row += 1
@@ -1750,7 +1883,7 @@ class BookingApp:
                   background=WHITE).pack(side="left")
         self.totals_var = tk.StringVar()
         ttk.Label(bar, textvariable=self.totals_var,
-                  font=(self.ui_font, 10, "bold"), foreground=ACCENT_DARK,
+                  font=(self.ui_font, 13, "bold"), foreground=ACCENT_DARK,
                   background=WHITE).pack(side="right")
 
     def _bind_keys(self) -> None:
@@ -2242,7 +2375,7 @@ class BookingApp:
             "TOURS & MONTHLY REPORTS\n"
             "Add or edit tours, a unique tour code, and seat capacity. The code is added before new tour booking serials; leaving it blank generates initials. Archive a tour to keep its booking history, or permanently delete it and its booking/payment records. Select a travel month to preview trips and export PDF or CSV.\n\n"
             "BUS TICKETS\n"
-            "Bus ticketing is separate from tour bookings and uses its own ticket numbers and seat inventory. Enter a route/date, use Map to pick a free seat, save, then print the ticket.\n\n"
+            "Bus ticketing is separate from tour bookings and uses its own ticket numbers and seat inventory. Choose the passenger count, then use Map to select exactly that many free seats. Assign Male or Female before each seat; selected seats are blue for Male and pink for Female. Fare is per passenger, and the name/phone are the group contact.\n\n"
             "Use File → Backup database regularly. Everything is stored offline on this computer.\n\n"
             "Shortcuts: Ctrl+N new tour booking, Ctrl+S save, Ctrl+F search, Ctrl+B new bus ticket.",
             parent=self.root,
@@ -2349,38 +2482,71 @@ def seat_ids(capacity: int = 40) -> List[str]:
 
 
 class SeatMapDialog(tk.Toplevel):
-    """Admin seat picker using the same four-seat rows as the public website."""
+    """Seat picker with per-passenger gender colors for offline bus bookings."""
 
     def __init__(self, master, title: str, capacity: int,
                  occupied: Dict[str, Dict[str, Any]], selected: List[str],
-                 max_select: int = 40, on_save=None) -> None:
+                 max_select: int = 40, on_save=None, gendered: bool = False,
+                 selected_genders: Optional[Dict[str, str]] = None) -> None:
         super().__init__(master)
         self.capacity = max(1, min(46, int(capacity or 40)))
         self.seats = seat_ids(self.capacity)
         self.occupied = {db.normalise_seat(key): value for key, value in occupied.items()}
-        self.selected = {db.normalise_seat(item) for item in selected if db.normalise_seat(item) in self.seats}
+        selected_set = {db.normalise_seat(item) for item in selected
+                        if db.normalise_seat(item) in self.seats}
         self.max_select = max(1, min(int(max_select or self.capacity), self.capacity))
+        selected_order = [seat for seat in self.seats if seat in selected_set and seat not in self.occupied]
+        self.selected = set(selected_order[:self.max_select])
+        self.gendered = bool(gendered)
+        self.gender_by_seat = {
+            db.normalise_seat(seat): str(gender).strip().casefold()
+            for seat, gender in (selected_genders or {}).items()
+            if db.normalise_seat(seat) in self.selected and str(gender).strip().casefold() in {"male", "female"}
+        }
+        self.active_gender = ""
         self.on_save = on_save
         self.title("Seat plan")
         self.transient(master)
-        self.resizable(False, False)
+        self.resizable(False, True)
         self.configure(padx=16, pady=14, background=PAGE_BG)
         self.grab_set()
 
-        ttk.Label(self, text=title, font=("Segoe UI", 14, "bold"),
+        ttk.Label(self, text=title, font=("Segoe UI", 18, "bold"),
                   foreground=ACCENT_DARK, background=PAGE_BG).grid(row=0, column=0, sticky="w")
-        ttk.Label(self, text="Click open seats to assign or release them. Booked seats are locked.",
-                  font=("Segoe UI", 10), foreground=MUTED, background=PAGE_BG).grid(
+        instruction = (
+            f"Choose Male or Female, then click exactly {self.max_select} open seat(s)."
+            if self.gendered else "Click open seats to assign or release them. Booked seats are locked."
+        )
+        ttk.Label(self, text=instruction, font=("Segoe UI", 13), foreground=MUTED,
+                  background=PAGE_BG, wraplength=500).grid(
             row=1, column=0, sticky="w", pady=(3, 10))
 
+        row = 2
+        if self.gendered:
+            gender_frame = ttk.Frame(self, style="Page.TFrame")
+            gender_frame.grid(row=row, column=0, sticky="w", pady=(0, 10))
+            ttk.Label(gender_frame, text="Passenger gender:", style="Field.TLabel").pack(side="left", padx=(0, 8))
+            self.gender_buttons: Dict[str, ttk.Button] = {}
+            self.gender_buttons["male"] = ttk.Button(
+                gender_frame, text="Male", style="GenderMale.TButton",
+                command=lambda: self.set_active_gender("male"),
+            )
+            self.gender_buttons["male"].pack(side="left", padx=(0, 7))
+            self.gender_buttons["female"] = ttk.Button(
+                gender_frame, text="Female", style="GenderFemale.TButton",
+                command=lambda: self.set_active_gender("female"),
+            )
+            self.gender_buttons["female"].pack(side="left")
+            row += 1
+
         plan = ttk.Frame(self, style="Card.TFrame", padding=12)
-        plan.grid(row=2, column=0, sticky="ew")
+        plan.grid(row=row, column=0, sticky="ew")
         plan.columnconfigure(0, weight=1)
         top = ttk.Frame(plan, style="Card.TFrame")
         top.grid(row=0, column=0, sticky="ew", pady=(0, 9))
-        ttk.Label(top, text="FRONT OF BUS", font=("Segoe UI", 10, "bold"),
+        ttk.Label(top, text="FRONT OF BUS", font=("Segoe UI", 13, "bold"),
                   foreground=MUTED, background=WHITE).pack(side="left")
-        ttk.Label(top, text="DRIVER  ◉", font=("Segoe UI", 10, "bold"),
+        ttk.Label(top, text="DRIVER  ◉", font=("Segoe UI", 13, "bold"),
                   foreground=ACCENT_DARK, background=WHITE).pack(side="right")
 
         self.map_frame = ttk.Frame(plan, style="Card.TFrame")
@@ -2399,7 +2565,7 @@ class SeatMapDialog(tk.Toplevel):
                 break
             grid_row = first_row + index
             ttk.Label(self.map_frame, text=letter, width=3, anchor="center",
-                      font=("Segoe UI", 10, "bold"), foreground=MUTED,
+                      font=("Segoe UI", 13, "bold"), foreground=MUTED,
                       background=WHITE).grid(row=grid_row, column=2, padx=5, pady=2)
             self._make_seat_button(row_seats[0], grid_row, 0)
             self._make_seat_button(row_seats[1], grid_row, 1)
@@ -2412,20 +2578,30 @@ class SeatMapDialog(tk.Toplevel):
                 self._make_seat_button(seat, back_row, index - 1)
 
         legend = ttk.Frame(self, style="Page.TFrame")
-        legend.grid(row=3, column=0, sticky="w", pady=(10, 4))
-        for text, color in (("Available", ACCENT_SOFT), ("Selected", ACCENT), ("Booked", "#e4e9e9")):
+        legend.grid(row=row + 1, column=0, sticky="w", pady=(10, 4))
+        if self.gendered:
+            legend_items = (("Available", ACCENT_SOFT, ACCENT_DARK),
+                            ("Male", "#2876c7", WHITE),
+                            ("Female", "#d04e91", WHITE),
+                            ("Booked", "#e4e9e9", ACCENT_DARK))
+        else:
+            legend_items = (("Available", ACCENT_SOFT, ACCENT_DARK),
+                            ("Selected", ACCENT, WHITE), ("Booked", "#e4e9e9", ACCENT_DARK))
+        for text, color, foreground in legend_items:
             key = ttk.Label(legend, text=f"  {text}  ", background=color,
-                            foreground=ACCENT_DARK if text != "Selected" else WHITE,
-                            font=("Segoe UI", 10, "bold"), padding=(4, 3))
+                            foreground=foreground, font=("Segoe UI", 13, "bold"), padding=(5, 4))
             key.pack(side="left", padx=(0, 7))
         self.summary_var = tk.StringVar()
-        ttk.Label(self, textvariable=self.summary_var, font=("Segoe UI", 10, "bold"),
-                  foreground=ACCENT_DARK, background=PAGE_BG).grid(row=4, column=0, sticky="w", pady=(5, 10))
+        self.summary_label = ttk.Label(self, textvariable=self.summary_var,
+                                       font=("Segoe UI", 13, "bold"),
+                                       foreground=ACCENT_DARK, background=PAGE_BG, wraplength=500)
+        self.summary_label.grid(row=row + 2, column=0, sticky="w", pady=(5, 10))
         buttons = ttk.Frame(self, style="Page.TFrame")
-        buttons.grid(row=5, column=0, sticky="e")
+        buttons.grid(row=row + 3, column=0, sticky="e")
         ttk.Button(buttons, text="Cancel", command=self.cancel).pack(side="right", padx=(8, 0))
-        ttk.Button(buttons, text="Use selected seats", style="Accent.TButton",
-                   command=self.save).pack(side="right")
+        self.save_button = ttk.Button(buttons, text="Use selected seats", style="Accent.TButton",
+                                      command=self.save)
+        self.save_button.pack(side="right")
         self._render()
 
     def _make_seat_button(self, seat: str, row: int, column: int) -> None:
@@ -2436,29 +2612,77 @@ class SeatMapDialog(tk.Toplevel):
         button.grid(row=row, column=column, padx=3, pady=2, sticky="ew")
         self.buttons[seat] = button
 
+    def set_active_gender(self, gender: str) -> None:
+        if gender not in {"male", "female"}:
+            return
+        self.active_gender = gender
+        self._render()
+
     def _render(self) -> None:
         for seat, button in self.buttons.items():
             if seat in self.occupied:
-                button.configure(style="BookedSeat.TButton", state="disabled")
+                gender = str(self.occupied[seat].get("gender") or "").casefold()
+                style = "BookedMaleSeat.TButton" if gender == "male" else (
+                    "BookedFemaleSeat.TButton" if gender == "female" else "BookedSeat.TButton"
+                )
+                marker = " M" if gender == "male" else (" F" if gender == "female" else "")
+                button.configure(text=f"{seat}{marker}", style=style, state="disabled")
             elif seat in self.selected:
-                button.configure(style="SelectedSeat.TButton", state="normal")
+                gender = self.gender_by_seat.get(seat, "")
+                style = "SelectedMaleSeat.TButton" if gender == "male" else (
+                    "SelectedFemaleSeat.TButton" if gender == "female" else "SelectedSeat.TButton"
+                )
+                marker = " M" if gender == "male" else (" F" if gender == "female" else "")
+                button.configure(text=f"{seat}{marker}", style=style, state="normal")
             else:
-                button.configure(style="Seat.TButton", state="normal")
+                button.configure(text=seat, style="Seat.TButton", state="normal")
+        if self.gendered:
+            for gender, button in self.gender_buttons.items():
+                base = "GenderMale.TButton" if gender == "male" else "GenderFemale.TButton"
+                active = "ActiveGenderMale.TButton" if gender == "male" else "ActiveGenderFemale.TButton"
+                button.configure(style=active if self.active_gender == gender else base)
         open_count = max(0, len(self.seats) - len(set(self.seats).intersection(self.occupied)))
-        self.summary_var.set(
-            f"{len(self.selected)} selected  ·  {open_count} open of {len(self.seats)} seats"
-        )
+        if self.gendered:
+            assigned = sum(1 for seat in self.selected if self.gender_by_seat.get(seat) in {"male", "female"})
+            if len(self.selected) == self.max_select and assigned == self.max_select:
+                detail = "All passengers have a colored seat assignment."
+            elif not self.active_gender:
+                detail = "Choose Male or Female, then select seats."
+            elif len(self.selected) < self.max_select:
+                detail = f"Select {self.max_select - len(self.selected)} more seat(s)."
+            else:
+                detail = "Assign a gender to each selected seat."
+            self.summary_var.set(
+                f"{len(self.selected)} / {self.max_select} passengers selected  ·  "
+                f"{open_count} open seats  ·  {detail}"
+            )
+            can_save = len(self.selected) == self.max_select and assigned == self.max_select
+            self.save_button.configure(state="normal" if can_save else "disabled")
+        else:
+            self.summary_var.set(
+                f"{len(self.selected)} selected  ·  {open_count} open of {len(self.seats)} seats"
+            )
 
     def toggle(self, seat: str) -> None:
         if seat in self.occupied:
             return
         if seat in self.selected:
-            self.selected.remove(seat)
+            if (self.gendered and self.active_gender in {"male", "female"}
+                    and self.gender_by_seat.get(seat) != self.active_gender):
+                self.gender_by_seat[seat] = self.active_gender
+            else:
+                self.selected.remove(seat)
+                self.gender_by_seat.pop(seat, None)
         elif len(self.selected) >= self.max_select:
-            self.summary_var.set(f"Select up to {self.max_select} seat{'s' if self.max_select != 1 else ''}.")
+            self.summary_var.set(f"Select exactly {self.max_select} passenger seat(s).")
             return
         else:
+            if self.gendered and self.active_gender not in {"male", "female"}:
+                self.summary_var.set("Choose Male or Female before selecting a passenger seat.")
+                return
             self.selected.add(seat)
+            if self.gendered:
+                self.gender_by_seat[seat] = self.active_gender
         self._render()
 
     def cancel(self) -> None:
@@ -2470,9 +2694,16 @@ class SeatMapDialog(tk.Toplevel):
 
     def save(self) -> None:
         result = [seat for seat in self.seats if seat in self.selected]
+        if self.gendered:
+            genders = {seat: self.gender_by_seat[seat] for seat in result if seat in self.gender_by_seat}
+            if len(result) != self.max_select or len(genders) != self.max_select:
+                return
         self.cancel()
         if self.on_save:
-            self.on_save(result)
+            if self.gendered:
+                self.on_save(result, genders)
+            else:
+                self.on_save(result)
 
 
 

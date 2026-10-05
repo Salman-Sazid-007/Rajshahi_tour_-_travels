@@ -315,6 +315,65 @@ class DatabaseTests(unittest.TestCase):
         self.database.add_bus_ticket(duplicate)
         self.assertEqual(len(self.database.list_bus_tickets(route=ticket["route"], travel_date=ticket["travel_date"])), 2)
 
+    def test_bus_group_ticket_locks_each_seat_and_keeps_gender(self) -> None:
+        ticket = {
+            "ticket_no": self.database.next_bus_number(), "route": "Rajshahi → Dhaka",
+            "travel_date": "2026-12-20", "name": "Group contact", "phone": "01700000000",
+            "seat": "A1, A2", "seat_genders": {"A-1": "male", "A-2": "female"},
+            "fare": 2400, "advance": 400,
+        }
+        ticket_id = self.database.add_bus_ticket(ticket)
+        saved = self.database.bus_ticket_get(ticket_id)
+        self.assertEqual(saved["seat"], "A-1, A-2")
+        self.assertEqual(saved["seat_genders"], {"A-1": "male", "A-2": "female"})
+        occupancy = self.database.bus_seat_occupancy(ticket["route"], ticket["travel_date"])
+        self.assertEqual(occupancy["A-1"]["gender"], "male")
+        self.assertEqual(occupancy["A-2"]["gender"], "female")
+        self.assertEqual(self.database.bus_totals()["count"], 2)
+
+        duplicate = dict(ticket, ticket_no=self.database.next_bus_number(), seat="A-2, A-3")
+        with self.assertRaisesRegex(ValueError, "A-2.*already booked"):
+            self.database.add_bus_ticket(duplicate)
+        ticket["status"] = "Cancelled"
+        self.database.update_bus_ticket(ticket_id, ticket)
+        self.assertEqual(self.database.bus_seat_occupancy(ticket["route"], ticket["travel_date"]), {})
+
+    def test_legacy_bus_database_adds_gender_column_and_normalises_seat(self) -> None:
+        path = os.path.join(os.environ["RTT_DATA_DIR"], "legacy-bus.db")
+        connection = sqlite3.connect(path)
+        connection.executescript("""
+            CREATE TABLE bus_tickets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticket_no TEXT NOT NULL UNIQUE,
+                route TEXT NOT NULL,
+                travel_date TEXT NOT NULL,
+                departure_time TEXT DEFAULT '',
+                name TEXT NOT NULL,
+                phone TEXT DEFAULT '',
+                seat TEXT NOT NULL,
+                fare REAL NOT NULL DEFAULT 0,
+                advance REAL NOT NULL DEFAULT 0,
+                due REAL NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'Booked',
+                notes TEXT DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT '',
+                updated_at TEXT NOT NULL DEFAULT ''
+            );
+            INSERT INTO bus_tickets (ticket_no, route, travel_date, name, seat)
+            VALUES ('RTT-BUS-2026-0001', 'Rajshahi->Dhaka', '20/12/2026', 'Legacy', 'A1');
+        """)
+        connection.commit()
+        connection.close()
+        migrated = db.Database(path)
+        try:
+            ticket = migrated.bus_ticket_get(1)
+            self.assertEqual(ticket["seat"], "A-1")
+            self.assertEqual(ticket["seat_genders"], {})
+            columns = {row["name"] for row in migrated.connection.execute("PRAGMA table_info(bus_tickets)")}
+            self.assertIn("seat_genders", columns)
+        finally:
+            migrated.close()
+
     def test_bus_csv_export(self) -> None:
         ticket_id = self.database.add_bus_ticket({
             "ticket_no": self.database.next_bus_number(), "route": "Rajshahi → Dhaka",
@@ -408,6 +467,17 @@ class DocumentTests(unittest.TestCase):
             "travel_date": "2026-12-20", "departure_time": "09:00 AM", "name": "Bus customer",
             "phone": "01700000000", "seat": "A-1", "fare": 1000, "advance": 400,
             "due": 600, "status": "Booked",
+        }
+        data = documents.bus_ticket_receipt(ticket, self.settings)
+        self.assertTrue(data.startswith(b"%PDF"))
+        self.assertTrue(data.rstrip().endswith(b"%%EOF"))
+
+    def test_group_bus_receipt_renders_seats_and_gender_assignments(self) -> None:
+        ticket = {
+            "ticket_no": "RTT-BUS-2026-0002", "route": "Rajshahi → Dhaka",
+            "travel_date": "2026-12-23", "name": "Group contact", "phone": "01700000000",
+            "seat": "A-1, A-2", "seat_genders": {"A-1": "male", "A-2": "female"},
+            "fare": 2400, "advance": 400, "due": 2000, "status": "Booked",
         }
         data = documents.bus_ticket_receipt(ticket, self.settings)
         self.assertTrue(data.startswith(b"%PDF"))
@@ -737,6 +807,7 @@ class UiTests(unittest.TestCase):
         self.app.bus_vars["name"].set("Counter passenger")
         self.app.bus_vars["travel_date"].set("2026-12-22")
         self.app.bus_vars["seat"].set("A1")
+        self.app.bus_seat_genders = {"A-1": "male"}
         self.app.bus_vars["fare"].set("1200")
         self.app.bus_vars["advance"].set("400")
         self.app.save_bus_ticket()
@@ -746,6 +817,74 @@ class UiTests(unittest.TestCase):
         self.app.bus_vars["advance"].set("1200")
         self.app.save_bus_ticket()
         self.assertEqual(self.database.bus_ticket_get(ticket_id)["due"], 0.0)
+
+    def test_bus_group_booking_uses_passenger_count_for_seats_and_fare(self) -> None:
+        self.app.new_bus_ticket()
+        self.app.bus_vars["name"].set("Group contact")
+        self.app.bus_vars["travel_date"].set("2026-12-23")
+        self.app.bus_passenger_count_var.set("2")
+        self.app.bus_vars["seat"].set("A1, A2")
+        self.app.bus_seat_genders = {"A-1": "male", "A-2": "female"}
+        self.app.bus_vars["fare"].set("1200")
+        self.app.bus_vars["advance"].set("400")
+        self.app.save_bus_ticket()
+
+        ticket = self.database.bus_ticket_get(self.app.bus_selected_id)
+        self.assertEqual(ticket["seat"], "A-1, A-2")
+        self.assertEqual(ticket["seat_genders"], {"A-1": "male", "A-2": "female"})
+        self.assertEqual(ticket["fare"], 2400)
+        self.assertEqual(ticket["due"], 2000)
+        occupied = self.database.bus_seat_occupancy(ticket["route"], ticket["travel_date"])
+        self.assertEqual(occupied["A-1"]["gender"], "male")
+        self.assertEqual(occupied["A-2"]["gender"], "female")
+        self.assertEqual(self.database.bus_totals()["count"], 2)
+
+    def test_bus_passenger_count_adjusts_selected_seats_and_total_due(self) -> None:
+        self.app.new_bus_ticket()
+        self.app.bus_vars["fare"].set("1000")
+        self.app.bus_vars["advance"].set("500")
+        self.app.bus_passenger_count_var.set("2")
+        self.assertEqual(self.app.bus_due_var.get(), "1,500.00")
+        self.app.bus_vars["seat"].set("A1, A2")
+        self.app.bus_seat_genders = {"A-1": "male", "A-2": "female"}
+        self.app.bus_passenger_count_var.set("1")
+        self.assertEqual(self.app.bus_vars["seat"].get(), "A-1")
+        self.assertEqual(self.app.bus_seat_genders, {"A-1": "male"})
+        self.assertEqual(self.app.bus_due_var.get(), "500.00")
+
+    def test_bus_ticket_requires_exactly_one_seat_and_gender_per_passenger(self) -> None:
+        self.app.new_bus_ticket()
+        self.app.bus_vars["name"].set("Group contact")
+        self.app.bus_vars["travel_date"].set("2026-12-24")
+        self.app.bus_passenger_count_var.set("2")
+        self.app.bus_vars["seat"].set("A1")
+        error = self.app.validate_bus_ticket(self.app.collect_bus_ticket())
+        self.assertIn("exactly 2", error)
+        self.app.bus_vars["seat"].set("A1, A2")
+        error = self.app.validate_bus_ticket(self.app.collect_bus_ticket())
+        self.assertIn("Male or Female", error)
+
+    def test_bus_seat_map_selects_exact_count_and_colours_gender(self) -> None:
+        selected = []
+        dialog = ui.SeatMapDialog(
+            self.root, "Counter bus · 23 Dec 2026", 40,
+            {"A-3": {"gender": "female"}}, [], max_select=2, gendered=True,
+            on_save=lambda seats, genders: selected.append((seats, genders)),
+        )
+        dialog.toggle("A-1")
+        self.assertNotIn("A-1", dialog.selected)
+        dialog.set_active_gender("male")
+        dialog.toggle("A-1")
+        self.assertEqual(dialog.buttons["A-1"].cget("style"), "SelectedMaleSeat.TButton")
+        self.assertEqual(dialog.buttons["A-1"].cget("text"), "A-1 M")
+        dialog.set_active_gender("female")
+        dialog.toggle("A-2")
+        self.assertEqual(dialog.buttons["A-2"].cget("style"), "SelectedFemaleSeat.TButton")
+        self.assertEqual(dialog.buttons["A-2"].cget("text"), "A-2 F")
+        self.assertEqual(dialog.buttons["A-3"].cget("style"), "BookedFemaleSeat.TButton")
+        self.assertEqual(dialog.save_button.cget("state"), "normal")
+        dialog.save()
+        self.assertEqual(selected, [(["A-1", "A-2"], {"A-1": "male", "A-2": "female"})])
 
     def test_settings_round_trip(self) -> None:
         dialog = ui.SettingsDialog(self.root, self.settings, on_save=self.app.apply_settings)

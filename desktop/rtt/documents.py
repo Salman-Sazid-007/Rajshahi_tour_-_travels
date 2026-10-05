@@ -7,6 +7,7 @@ needed at run time are the standard library and the bundled fonts.
 from __future__ import annotations
 
 import datetime as _dt
+import json
 import os
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -299,12 +300,26 @@ def bus_ticket_receipt(ticket: Dict[str, Any], settings: Dict[str, Any]) -> byte
 
         y = _section_title(canvas, MARGIN, y, "Passenger & departure", content_width)
         col = (content_width - 20) / 2
+        seats = [part.strip() for part in str(ticket.get("seat") or "").split(",") if part.strip()]
+        genders = ticket.get("seat_genders") or {}
+        if isinstance(genders, str):
+            try:
+                genders = json.loads(genders)
+            except (TypeError, ValueError):
+                genders = {}
+        if not isinstance(genders, dict):
+            genders = {}
+        seat_summary = ", ".join(
+            f"{seat} ({str(genders.get(seat) or '').title()})" if genders.get(seat) else seat
+            for seat in seats
+        )
+        passenger_count = len(seats) or 1
         values = [
-            ("Passenger name", str(ticket.get("name", ""))),
+            ("Booking contact", str(ticket.get("name", ""))),
             ("Phone number", str(ticket.get("phone", ""))),
             ("Travel date", format_date(ticket.get("travel_date", ""))),
             ("Departure time", str(ticket.get("departure_time", ""))),
-            ("Seat number", str(ticket.get("seat", ""))),
+            ("Passenger count", str(passenger_count)),
             ("Ticket status", str(ticket.get("status", "Booked"))),
         ]
         for index in range(0, len(values), 2):
@@ -314,6 +329,11 @@ def bus_ticket_receipt(ticket: Dict[str, Any], settings: Dict[str, Any]) -> byte
             _field(canvas, MARGIN + col + 20, y, col, right_label, right_value)
             y += 42
 
+        if seat_summary:
+            y += 2
+            y = _section_title(canvas, MARGIN, y, "Seat and gender assignments", content_width)
+            y = canvas.paragraph(MARGIN, y + 5, seat_summary, content_width,
+                                 leading=14, size=10.5, color=INK)
         y += 2
         y = _section_title(canvas, MARGIN, y, "Fare & payment", content_width)
         box_width = (content_width - 20) / 3
