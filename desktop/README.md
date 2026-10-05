@@ -1,46 +1,69 @@
-# Rajshahi Tours & Travels — Booking & Receipt Manager (Desktop)
+# Rajshahi Tours & Travels — Offline Tour & Bus Manager (Desktop)
 
-## Download the zip
+## Download
 
-Both zips are on the Releases page — no build step, no GitHub account needed:
+These are the **latest published** downloads. They are desktop version 1.0.1; the new workflows described below are in the current **1.1.0 source** and have not been published as a new release yet.
 
 | Download | For |
 | --- | --- |
 | [**RajshahiTours-Windows-1.0.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Windows-1.0.1.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.0.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Desktop-1.0.1.zip) | Run from source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+| [**RajshahiTours-Desktop-1.0.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Desktop-1.0.1.zip) | Run the published source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
 
-All versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
-Open `START-HERE.txt` inside the zip first if you just want to start using it.
+All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
+Open `START-HERE.txt` inside a release zip first if you just want to start using it.
+
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. New source builds show version 1.1.0 in **Help → About**.
 
 ---
 
-A small Windows/Mac/Linux program for the office counter. It collects the nine
-booking details, stores them in a local database, and prints a PDF you can hand
-to the customer, email, or send over WhatsApp.
+The desktop app is a local, offline counter workspace. It stores tour bookings,
+tour details, bus tickets, seat occupancy and payment balances in SQLite on this
+computer. The interface is organized into **Overview**, **Tour bookings**,
+**Bus tickets**, and **Tours & monthly reports**.
 
-| Field | Notes |
-| --- | --- |
-| Name | Required |
-| Phone Number | Free text, any format |
-| Seat | e.g. `A1, A2` |
-| Total Amount | Auto-formatted, e.g. `12,500.00` |
-| Advance | Paid now |
-| Due | Calculated automatically (Total − Advance) |
-| Booking Date | Date picker (`...` button) or type `YYYY-MM-DD` |
-| Tour Date | Date picker (`...` button) or type `YYYY-MM-DD` |
-| Tour Name | Dropdown with your own suggestions |
+## What it does
 
-Two PDFs are produced:
+* **Manage tours:** create, rename, adjust seat capacity, and remove tours. A
+tour with booking history is archived instead of erased; its reports and old
+bookings remain available.
+* **Book a tour:** choose a tour and travel date, open the seat map, select free
+seats, and save the customer and payment. Occupied seats are locked for that
+same tour/date. Edit bookings or payments later; the remaining due is recalculated.
+* **Issue offline bus tickets:** enter a route and any travel date, choose from
+the 40-seat map, record passenger and payment information, and print a ticket.
+The same route/date/seat cannot be sold twice. Cancelled tickets release seats.
+* **Track trips:** see booked/open seats, trip totals and outstanding amounts on
+the Overview and in the monthly travel report.
+* **Export a monthly sheet:** filter by travel month, review each departure,
+bookings, seats, availability and due, then export a printable PDF or spreadsheet-friendly CSV.
+* **Keep a local record:** search and filter bookings/tickets, reprint a receipt
+or ticket, and back up the SQLite database. No internet connection is used.
 
-* **Receipt PDF** — one booking on an A4 page: letterhead, passenger and tour
-  details, payment amounts (due highlighted in red), amount in words, notes,
-  terms and two signature lines.
-* **List PDF** — a landscape table of the bookings currently on screen with
-  summary cards and a totals row, paginated automatically.
+### Tour seat layouts
 
-Both are ready-made samples you can open right now:
-[`samples/sample-receipt.pdf`](samples/sample-receipt.pdf) ·
-[`samples/sample-booking-list.pdf`](samples/sample-booking-list.pdf)
+The standard tour map has 40 seats (`A-1` through `J-4`), with four seats per
+row and an aisle. A 46-seat tour can use the extended layout: front seat `1`,
+rows A–J, and `K-1` through `K-5`. Smaller capacities use the corresponding
+subset of the standard map. Labels such as `A1` are normalized to `A-1`.
+
+### Receipts and reports
+
+Tour receipts use the agency's current teal/orange theme and vector mark based
+on `backend/public/media/agency-mark.svg`; the desktop sidebar follows the same
+website palette. This is not the full logo JPG attached separately, and the
+palette has not been verified against `Color code.txt` because those files were
+not available in the workspace during this update. The owner **Safayet Hossain**
+and phone **01782250709** appear in the upper-right header; booking details and
+payment balances follow below. Company and owner details can be edited in
+**Tools → Settings**.
+
+* **Receipt PDF / Print** — a branded A4 receipt for one tour booking.
+* **Monthly PDF / CSV** — tour bookings for the selected travel month, with
+passenger, seat and payment data.
+* **List PDF / Due list PDF** — a landscape report of the filtered tour-booking
+view.
+* **Bus ticket PDF / Print** — a branded ticket for one manually issued bus seat.
+* **Export bus list** — CSV for the currently filtered offline ticket register.
 
 ---
 
@@ -63,9 +86,8 @@ Bangla names are spaced inside the PDF. English output is identical either way.)
 ## 2. Build a double-clickable program
 
 **Windows** — double-click `build_windows.bat`. It installs PyInstaller and
-creates `dist\RajshahiTours\RajshahiTours.exe`. Copy the whole
-`RajshahiTours` folder to the office computer and send a shortcut to the
-desktop.
+creates `dist\\RajshahiTours\\RajshahiTours.exe`. Copy the whole
+`RajshahiTours` folder to the office computer and create a shortcut on the desktop.
 
 **macOS / Linux** — run `./build_linux_mac.sh`, which produces
 `dist/RajshahiTours/RajshahiTours`.
@@ -74,36 +96,42 @@ desktop.
 
 | Item | Location |
 | --- | --- |
-| Database | `Documents\Rajshahi Tours & Travels\bookings.db` |
-| Settings | `Documents\Rajshahi Tours & Travels\settings.json` |
-| Backups | `Documents\Rajshahi Tours & Travels\Backups\` |
-| PDF/CSV exports | wherever you choose (defaults to `...\Exports\`) |
+| Database (bookings, tour catalogue, bus tickets) | `Documents\\Rajshahi Tours & Travels\\bookings.db` |
+| Settings | `Documents\\Rajshahi Tours & Travels\\settings.json` |
+| Backups | `Documents\\Rajshahi Tours & Travels\\Backups\\` |
+| PDF/CSV exports | wherever you choose (defaults to `...\\Exports\\`) |
 
-*Help → About* shows the exact folder. The database is a normal SQLite file, so
-copying that one file copies every booking.
+*Help → About* shows the exact folder. Back up `bookings.db` regularly; it
+contains the tour catalogue, booking history, and offline bus tickets.
 
 **Portable mode:** put an empty file named `portable.txt` next to the program and
 it keeps the data in a `data` folder beside itself — handy for a USB stick.
 
 ## 4. Using it
 
-* **New** (or `Ctrl+N`) clears the form and assigns the next receipt number.
-* **Save** (or `Ctrl+S`) stores the booking; **Due** updates as you type.
-* Click a row to select it, double-click to load it into the form for editing.
-* **Search** matches name, phone, seat, tour name or booking number. Combine it
-  with *Only with due* and the *Tour* filter; every PDF/CSV you export then
-  follows that same view.
-* **Receipt PDF / Print** — `Print` sends the receipt straight to the default
-  printer and keeps a copy in the Exports folder; `Receipt PDF` asks where to
-  save it (that is the file you send to the customer).
-* **List PDF / Due list PDF** — print or share a report of what is on screen.
-* **File → Backup database** copies the database into `Backups` with a
-  timestamp. Do it regularly, and keep a copy on Google Drive too.
-* **Tools → Settings** changes the company name, address, phone, email, receipt
-  prefix, currency symbol, the terms printed on the receipt, and the tour names
-  offered in the dropdown.
+* **Overview** shows this month's tour bookings, seats sold, outstanding tour
+due, bus-ticket count and upcoming departures.
+* **Tour bookings** — choose a tour/date, click **Map**, select available seats,
+then save. Select a row and edit it to change customer details, seats, status,
+or payment; due is recalculated as Total − Advance. The seat map excludes the
+currently edited booking from its occupied-seat list.
+* **Tours & monthly reports** — add a tour, set its seat capacity, select a tour
+to edit it, or remove/archive it. Choose a travel month (`YYYY-MM`) and use
+**Monthly PDF** or **Export CSV**. Archived tours are not offered for new
+bookings, but their booking history remains in reports.
+* **Bus tickets** — enter a route, date, departure time, passenger and fare;
+click **Map** to choose an open seat. Save, edit, cancel or delete a ticket, and
+print the branded ticket. Seat occupancy is scoped to route + travel date.
+* **Search and filters** apply to the relevant list. Select a booking or ticket
+row to load it for editing (double-click also works). Cancelled records stay in
+history but do not occupy a seat or add to payment totals.
+* **File → Backup database** copies all local data into `Backups` with a
+timestamp. Keep a second copy somewhere safe.
+* **Tools → Settings** changes the company and owner names, phone numbers,
+address, email, receipt prefix, currency symbol, and printed terms.
 
-Keyboard shortcuts: `Ctrl+N` new · `Ctrl+S` save · `Ctrl+F` jump to search.
+Keyboard shortcuts for the tour-booking page: `Ctrl+N` new · `Ctrl+S` save ·
+`Ctrl+F` jump to search.
 
 ## 5. Project layout
 
@@ -117,11 +145,11 @@ desktop/
   assets/fonts/          Hind Siliguri (SIL Open Font License) for the PDFs
   rtt/
     config.py            settings, paths, money/date formatting
-    db.py                SQLite storage, CSV export, backup/restore
+    db.py                SQLite booking, tour and bus-ticket storage; CSV/backup
     ttf.py               TrueType parser + subsetter
     pdf.py               PDF writer with embedded subset fonts
     text.py              text shaping and measuring
-    documents.py         receipt and booking-list layouts
+    documents.py         branded receipt, ticket and monthly-report layouts
     ui.py                the Tkinter application
   samples/               example PDFs
   tests/                 headless tests (python tests/test_app.py)
@@ -135,20 +163,22 @@ python tests/test_pdf_render.py   # rendering checks (needs pymupdf, pillow,
                                   # fonttools, uharfbuzz - skipped if absent)
 ```
 
-`test_pdf_render.py` rasterises a page and compares the ink against the
-font outlines, so a regression in glyph placement fails the suite immediately.
+The headless tests use a small Tkinter stand-in and need no third-party package.
+The optional render tests rasterize PDFs and verify glyph placement.
 
 ## 7. If something goes wrong
 
 * *"Python was not found"* — reinstall Python and tick *Add Python to PATH*.
 * The window does not open on Linux — `sudo apt install python3-tk`.
 * Want a fresh start — close the program and delete
-  `Documents\Rajshahi Tours & Travels\bookings.db` (or restore a backup first).
+  `Documents\\Rajshahi Tours & Travels\\bookings.db` (or restore a backup first).
 
 ## 8. Notes
 
-* Amounts are stored as numbers and printed with two decimals; the receipt also
-  spells the amount out in words (`Taka Twelve Thousand Five Hundred Only`).
-* Printing a PDF and *sending* it are the same file — after saving, the program
+* Amounts are stored as numbers and printed with two decimals; receipts also
+  spell the amount out in words (`Taka Twelve Thousand Five Hundred Only`).
+* Printing a PDF and *sending* it use the same file — after saving, the program
   asks whether to open it, and you can attach it to WhatsApp or email.
-* The program never sends anything anywhere: no internet connection is used.
+* The desktop app never sends anything anywhere and does not sync with the
+  website or another computer. All bookings and seat locks are local to this
+  database. Back it up before moving the program or computer.

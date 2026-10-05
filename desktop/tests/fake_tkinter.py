@@ -179,6 +179,9 @@ class Widget:
     def lower(self, *args: Any) -> None:
         return None
 
+    def tkraise(self, *args: Any) -> None:
+        return None
+
     def columnconfigure(self, index: Any, **kwargs: Any) -> None:
         return None
 
@@ -210,6 +213,68 @@ class Tk(Widget):
 
 class Toplevel(Widget):
     pass
+
+
+class Canvas(Widget):
+    def __init__(self, master=None, **options: Any) -> None:
+        super().__init__(master, **options)
+        self._items: Dict[int, Any] = {}
+        self._next_item = 1
+
+    def _add_item(self, item: Any) -> int:
+        ident = self._next_item
+        self._next_item += 1
+        self._items[ident] = item
+        return ident
+
+    def create_window(self, coords, **options: Any) -> int:
+        return self._add_item((coords, options))
+
+    def create_polygon(self, *coords: Any, **options: Any) -> int:
+        return self._add_item((coords, options))
+
+    def itemconfigure(self, item: int, **options: Any) -> None:
+        self._items[item] = (self._items.get(item), options)
+
+    itemconfig = itemconfigure
+
+    def bbox(self, item: Any = "all") -> Tuple[int, int, int, int]:
+        return (0, 0, 1, 1)
+
+    def yview(self, *args: Any) -> None:
+        return None
+
+    def yview_scroll(self, number: int, what: str) -> None:
+        return None
+
+
+class Notebook(Widget):
+    def __init__(self, master=None, **options: Any) -> None:
+        super().__init__(master, **options)
+        self._tabs: List[Tuple[Widget, Dict[str, Any]]] = []
+        self._selected = ""
+
+    def add(self, child: Widget, **options: Any) -> None:
+        self._tabs.append((child, dict(options)))
+        if not self._selected:
+            self._selected = str(len(self._tabs) - 1)
+
+    def select(self, item: Any = None) -> str:
+        if item is not None:
+            for index, (child, _options) in enumerate(self._tabs):
+                if item is child:
+                    self._selected = str(index)
+                    break
+            return self._selected
+        return self._selected
+
+    def tab(self, item: Any, option: str = "") -> Any:
+        try:
+            index = int(item)
+            options = self._tabs[index][1]
+        except (ValueError, TypeError, IndexError):
+            return ""
+        return options.get(option) if option else options
 
 
 class Frame(Widget):
@@ -311,6 +376,10 @@ class Treeview(Widget):
     def selection_set(self, *keys: str) -> None:
         self._selection = tuple(str(k) for k in keys)
 
+    def selection_remove(self, *keys: str) -> None:
+        removed = {str(key) for key in keys}
+        self._selection = tuple(key for key in self._selection if key not in removed)
+
     def focus(self, key: str = "") -> str:
         if key:
             self._focus = str(key)
@@ -326,6 +395,9 @@ class Treeview(Widget):
         return None
 
     def yview(self, *args: Any) -> None:
+        return None
+
+    def xview(self, *args: Any) -> None:
         return None
 
 
@@ -388,6 +460,7 @@ def install(answers: Dict[str, Any] | None = None) -> types.ModuleType:
     tk.Tk = Tk
     tk.Toplevel = Toplevel
     tk.Frame = Frame
+    tk.Canvas = Canvas
     tk.Label = Label
     tk.Button = Button
     tk.Entry = Entry

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rajshahi Tours & Travels - Booking & Receipt Manager.
+"""Rajshahi Tours & Travels - Offline Tour & Bus Manager.
 
 Run from source with::
 

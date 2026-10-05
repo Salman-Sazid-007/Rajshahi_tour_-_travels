@@ -7,7 +7,7 @@ Two editions, one shared tour and transport model:
 - Both editions have a persistent **বাংলা / EN** switch, teal/sky-blue/orange branding, and local Bangla/English fonts.
 - Public hotline, WhatsApp and manual bKash contact: **01782250709**; WhatsApp link uses **8801782250709**.
 
-## Desktop counter app (bookings and PDF receipts)
+## Offline desktop counter (tour bookings and bus tickets)
 
 **Download the app as a zip:** [latest desktop release](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop)
 
@@ -16,11 +16,16 @@ Two editions, one shared tour and transport model:
 | [`RajshahiTours-Windows-1.0.1.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Windows-1.0.1.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
 | [`RajshahiTours-Desktop-1.0.1.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.1/RajshahiTours-Desktop-1.0.1.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
 
-`desktop/` holds a separate Tkinter program for the office counter: it collects
-Name, Phone Number, Seat, Total Amount, Advance, Due, Booking Date, Tour Date and
-Tour Name, stores them in a local SQLite file, and prints a PDF receipt for the
-customer plus a booking-list report. It needs nothing but Python and builds into
-a double-clickable `RajshahiTours.exe` with PyInstaller.
+`desktop/` holds an offline Tkinter counter workspace (current source version
+1.1.0): manage tours and capacity, assign date-specific seats from a map, edit
+bookings and payments, issue route/date-specific bus tickets, and export monthly
+tour reports as PDF or CSV. Data stays in a local SQLite database. Receipts use
+the agency teal/orange mark and list owner **Safayet Hossain** with phone
+**01782250709** at the upper right.
+
+The download links above are the latest **published** release (1.0.1); the new
+1.1.0 source workflows have not yet been published as a release. To run the
+current source:
 
 ```bash
 cd desktop
@@ -118,7 +123,7 @@ The store uses temporary-file + rename writes and in-process conflict checking. 
 
 ## Logo status and fonts
 
-The exact attached logo file was not mounted in the workspace. `AgencyLogo.jsx` therefore uses a clearly documented **reference-inspired vector mark**, not the original uploaded artwork. Teal, sky-blue and orange match the supplied reference palette. Replace the import with the original asset when it is reattached; the component is shared by both headers, footers and the staff dashboard.
+The full logo JPG and `Color code.txt` were not available as workspace files during this update. `AgencyLogo.jsx` therefore continues to use the repository's **reference-inspired vector mark**, not the original full logo. The current teal, sky-blue and orange values come from the website styles and have **not** been checked against the missing color-code file. Re-upload both files into the workspace to apply and verify the exact artwork and colors across the website and desktop app.
 
 Self-hosted DM Sans, Inter, Cormorant Garamond and Hind Siliguri are redistributed under their OFL licenses. Source licenses are in `frontend/font-licenses/` and included in the publishing output. Existing destination photos are reused from `backend/public/media/`.
 

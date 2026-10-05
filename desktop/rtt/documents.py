@@ -86,34 +86,68 @@ def _signature_block(canvas: pdf.Canvas, x: float, y: float, width: float,
     canvas.text(right, y + 12, right_label, size=8, color=MUTED)
 
 
+def _draw_agency_mark(canvas: pdf.Canvas, x: float, y: float, size: float = 60) -> None:
+    """Draw the agency's existing vector mark in the invoice's brand colours."""
+    scale = size / 120.0
+    paths = [
+        ([('M', 19, 92), ('C', -6, 56, 35, 17, 89, 23), ('C', 42, 33, 24, 55, 19, 92), ('Z',)],
+         (32 / 255, 179 / 255, 184 / 255)),
+        ([('M', 28, 103), ('C', 3, 72, 34, 39, 72, 31), ('C', 40, 48, 33, 71, 28, 103), ('Z',)],
+         (20 / 255, 158 / 255, 169 / 255)),
+        ([('M', 36, 109), ('C', 16, 86, 29, 62, 49, 51), ('C', 36, 72, 37, 85, 54, 98), ('Z',)],
+         (245 / 255, 146 / 255, 36 / 255)),
+        ([('M', 50, 24), ('L', 86, 25), ('L', 86, 8), ('L', 95, 15), ('L', 99, 35),
+          ('L', 115, 44), ('L', 114, 52), ('L', 91, 46), ('L', 84, 74), ('L', 76, 71),
+          ('L', 77, 42), ('L', 48, 36), ('Z',)], (32 / 255, 179 / 255, 184 / 255)),
+        ([('M', 75, 91), ('L', 114, 67), ('L', 102, 102), ('L', 94, 92), ('L', 85, 100),
+          ('L', 84, 87), ('Z',)], (245 / 255, 146 / 255, 36 / 255)),
+    ]
+    for commands, color in paths:
+        scaled = []
+        for command in commands:
+            op = command[0]
+            if op == "Z":
+                scaled.append((op,))
+            else:
+                scaled.append((op, *(x + float(value) * scale if index % 2 == 0
+                                     else y + float(value) * scale
+                                     for index, value in enumerate(command[1:]))))
+        canvas.path(scaled, color)
+
+
 def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float) -> float:
-    """Company header. Returns the y coordinate where the body can start."""
-    canvas.rect(0, 0, width, 96, fill=TEAL_BAND)
-    canvas.rect(0, 96, width, 2.5, fill=TEAL)
+    """Logo-led company header with owner and phone at upper right."""
+    canvas.rect(0, 0, width, 105, fill=TEAL_BAND)
+    canvas.rect(0, 105, width, 2.5, fill=TEAL)
+    _draw_agency_mark(canvas, MARGIN, 19, 64)
 
-    # Mark: a rounded tile with the company initials.
-    canvas.rect(MARGIN, 24, 46, 46, fill=TEAL, radius=9)
-    initials = "".join(
-        part[0] for part in _settings_value(settings, "company_name", "RTT").split() if part[:1].isalpha()
-    )[:2].upper() or "RT"
-    canvas.text(MARGIN + 23, 46 + 11, initials, style="bold", size=19, color=WHITE, align="center")
+    left = MARGIN + 76
+    right_panel_width = 154
+    text_width = width - left - MARGIN - right_panel_width - 16
+    canvas.text(left, 36, _settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
+                style="bold", size=16, color=TEAL_DARK, max_width=text_width)
+    canvas.text(left, 53, _settings_value(settings, "company_tagline", ""), size=8.5,
+                color=MUTED, max_width=text_width)
+    canvas.text(left, 72, _settings_value(settings, "address", ""), size=8.2, color=INK,
+                max_width=text_width)
+    contacts = "  |  ".join(part for part in (
+        _settings_value(settings, "phone"), _settings_value(settings, "whatsapp"),
+        _settings_value(settings, "email"),
+    ) if part)
+    canvas.text(left, 89, contacts, size=7.8, color=MUTED, max_width=text_width)
 
-    left = MARGIN + 60
-    canvas.text(left, 38, _settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
-                style="bold", size=17, color=TEAL_DARK, max_width=width - left - MARGIN)
-    canvas.text(left, 55, _settings_value(settings, "company_tagline", ""), size=8.6,
-                color=MUTED, max_width=width - left - MARGIN)
-    canvas.text(left, 70, _settings_value(settings, "address", ""), size=8.6, color=INK,
-                max_width=width - left - MARGIN)
-    contacts = "  |  ".join(
-        part for part in (
-            f"Phone: {_settings_value(settings, 'phone')}" if _settings_value(settings, "phone") else "",
-            f"WhatsApp: {_settings_value(settings, 'whatsapp')}" if _settings_value(settings, "whatsapp") else "",
-            _settings_value(settings, "email"),
-        ) if part
-    )
-    canvas.text(left, 83, contacts, size=8.6, color=MUTED, max_width=width - left - MARGIN)
-    return 116
+    panel_x = width - MARGIN - right_panel_width
+    canvas.rect(panel_x, 18, right_panel_width, 69, fill=WHITE, stroke=LINE, width=0.6, radius=5)
+    canvas.rect(panel_x, 18, 3, 69, fill=(245 / 255, 146 / 255, 36 / 255))
+    owner = _settings_value(settings, "owner_name", "Safayet Hossain")
+    owner_phone = _settings_value(settings, "owner_phone", _settings_value(settings, "phone"))
+    canvas.text(width - MARGIN - 11, 39, owner, style="bold", size=9.5, color=TEAL_DARK,
+                align="right", max_width=right_panel_width - 20)
+    canvas.text(width - MARGIN - 11, 55, "OWNER / PROPRIETOR", size=6.8, color=MUTED,
+                align="right", max_width=right_panel_width - 20)
+    canvas.text(width - MARGIN - 11, 74, f"Phone  {owner_phone}", style="bold", size=8.1,
+                color=TEAL, align="right", max_width=right_panel_width - 20)
+    return 124
 
 
 def _footer(canvas: pdf.Canvas, settings: Dict[str, Any], width: float, height: float,
@@ -246,6 +280,86 @@ def booking_receipt(booking: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
     return doc.render(draw)
 
 
+def bus_ticket_receipt(ticket: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
+    """A clean, branded, offline-issued ticket for a manually assigned bus seat."""
+    currency = _settings_value(settings, "currency", "Tk.")
+    ticket_no = str(ticket.get("ticket_no") or "")
+    doc = pdf.make_document(
+        _font_paths(), STYLES, page_size=PAGE,
+        title=f"Bus ticket {ticket_no}",
+        author=_settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
+    )
+
+    def draw(doc: pdf.PdfDocument) -> None:
+        canvas = doc.new_page()
+        width, height = canvas.width, canvas.height
+        content_width = width - 2 * MARGIN
+        y = _letterhead(canvas, settings, width)
+        canvas.rect(MARGIN, y, content_width, 42, fill=TEAL_LIGHT, stroke=LINE, width=0.6, radius=3)
+        canvas.text(MARGIN + 14, y + 18, "BUS TRAVEL TICKET", style="bold", size=12, color=TEAL_DARK)
+        canvas.text(MARGIN + content_width - 14, y + 18, ticket_no, style="bold", size=10,
+                    color=TEAL, align="right")
+        canvas.text(MARGIN + 14, y + 33, "OFFLINE COUNTER ISSUE", size=7.2, color=MUTED)
+        y += 62
+
+        route = str(ticket.get("route") or "")
+        canvas.rect(MARGIN, y, content_width, 67, fill=WHITE, stroke=LINE, width=0.8, radius=5)
+        canvas.rect(MARGIN, y, 4, 67, fill=TEAL)
+        canvas.text(MARGIN + 18, y + 18, "JOURNEY ROUTE", size=7.4, color=MUTED)
+        canvas.text(MARGIN + 18, y + 42, route, style="bold", size=18, color=TEAL_DARK,
+                    max_width=content_width - 36)
+        y += 85
+
+        y = _section_title(canvas, MARGIN, y, "Passenger & departure", content_width)
+        col = (content_width - 20) / 2
+        values = [
+            ("Passenger name", str(ticket.get("name", ""))),
+            ("Phone number", str(ticket.get("phone", ""))),
+            ("Travel date", format_date(ticket.get("travel_date", ""))),
+            ("Departure time", str(ticket.get("departure_time", ""))),
+            ("Seat number", str(ticket.get("seat", ""))),
+            ("Ticket status", str(ticket.get("status", "Booked"))),
+        ]
+        for index in range(0, len(values), 2):
+            left_label, left_value = values[index]
+            right_label, right_value = values[index + 1]
+            _field(canvas, MARGIN, y, col, left_label, left_value)
+            _field(canvas, MARGIN + col + 20, y, col, right_label, right_value)
+            y += 42
+
+        y += 2
+        y = _section_title(canvas, MARGIN, y, "Fare & payment", content_width)
+        box_width = (content_width - 20) / 3
+        amounts = [
+            ("Fare", money(ticket.get("fare"), currency), INK),
+            ("Paid", money(ticket.get("advance"), currency), GREEN),
+            ("Balance due", money(ticket.get("due"), currency),
+             RED if float(ticket.get("due") or 0) > 0 else GREEN),
+        ]
+        for index, (label, amount, color) in enumerate(amounts):
+            x = MARGIN + index * (box_width + 10)
+            canvas.rect(x, y, box_width, 58, fill=TEAL_BAND if index == 2 else WHITE,
+                        stroke=LINE, width=0.6, radius=4)
+            canvas.text(x + box_width / 2, y + 17, label.upper(), size=7.2, color=MUTED, align="center")
+            canvas.text(x + box_width / 2, y + 39, amount, style="bold", size=13,
+                        color=color, align="center", max_width=box_width - 10)
+        y += 76
+
+        notes = str(ticket.get("notes") or "").strip()
+        if notes:
+            y = _section_title(canvas, MARGIN, y, "Notes", content_width)
+            canvas.paragraph(MARGIN, y + 6, notes, content_width, leading=13, size=9)
+        signature_y = min(height - 100, max(y + 42, 600))
+        _signature_block(canvas, MARGIN, signature_y, content_width,
+                         "Ticket checked by", "Passenger signature")
+        canvas.text(width - MARGIN, signature_y - 14,
+                    f"Issued {_dt.datetime.now().strftime('%d %b %Y, %I:%M %p')}",
+                    size=7.6, color=MUTED, align="right")
+        _footer(canvas, settings, width, height)
+
+    return doc.render(draw)
+
+
 # -------------------------------------------------------------------- report
 
 REPORT_COLUMNS = (
@@ -256,6 +370,7 @@ REPORT_COLUMNS = (
     ("Tour Name", 104, "left"),
     ("Seat", 54, "left"),
     ("Tour Date", 58, "center"),
+    ("Status", 50, "center"),
     ("Booked On", 58, "center"),
     ("Total", 58, "right"),
     ("Advance", 56, "right"),
@@ -364,6 +479,7 @@ def booking_list_report(
                 str(row.get("tour_name") or ""),
                 str(row.get("seat") or ""),
                 format_date(row.get("tour_date", ""), "%d %b %y"),
+                str(row.get("status") or "Confirmed"),
                 format_date(row.get("booking_date", ""), "%d %b %y"),
                 money(row.get("total"), currency),
                 money(row.get("advance"), currency),
@@ -420,6 +536,17 @@ def booking_list_report(
         _footer(page, settings, width, height, f"Page {page_number}" if rows else "")
 
     return doc.render(draw)
+
+
+def monthly_tour_report(rows: Sequence[Dict[str, Any]], settings: Dict[str, Any], year_month: str) -> bytes:
+    """A print-ready, month-filtered sheet of every tour passenger and payment."""
+    try:
+        month = _dt.datetime.strptime(str(year_month), "%Y-%m").strftime("%B %Y")
+    except ValueError:
+        month = str(year_month)
+    return booking_list_report(
+        rows, settings, subtitle=f"Tour bookings · {month}", title=f"Monthly Tour Report · {month}"
+    )
 
 
 def _font_paths() -> Dict[str, str]:

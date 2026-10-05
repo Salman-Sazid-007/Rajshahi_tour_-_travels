@@ -184,6 +184,29 @@ class Canvas:
             ops.append("[] 0 d")
         self.ops.append(" ".join(ops))
 
+    def path(self, commands: Sequence[Tuple], fill: Sequence[float]) -> None:
+        """Fill an absolute M/L/C/Z vector path in top-left page coordinates."""
+        if not self._emitting:
+            return
+        operators: List[str] = []
+        for command in commands:
+            name = str(command[0]).upper()
+            values = command[1:]
+            if name == "M" and len(values) == 2:
+                operators.append(f"{_fmt(float(values[0]))} {_fmt(self._y(float(values[1])))} m")
+            elif name == "L" and len(values) == 2:
+                operators.append(f"{_fmt(float(values[0]))} {_fmt(self._y(float(values[1])))} l")
+            elif name == "C" and len(values) == 6:
+                operators.append(
+                    f"{_fmt(float(values[0]))} {_fmt(self._y(float(values[1])))} "
+                    f"{_fmt(float(values[2]))} {_fmt(self._y(float(values[3])))} "
+                    f"{_fmt(float(values[4]))} {_fmt(self._y(float(values[5])))} c"
+                )
+            elif name == "Z":
+                operators.append("h")
+        if operators:
+            self.ops.append(f"{_pdf_color(fill)} rg {' '.join(operators)} f")
+
     def _path(self, x: float, y_bottom: float, w: float, h: float, radius: float) -> str:
         """Rounded-rectangle path built from lines and cubic beziers."""
         if radius <= 0:
@@ -447,7 +470,7 @@ class PdfDocument:
         replacements = {
             "‘": "'", "’": "'", "“": '"', "”": '"',
             "–": "-", "—": "-", "…": "...", " ": " ",
-            "|": "-", "%": " percent", "#": " no ",
+            "→": "->", "·": "-", "|": "-", "%": " percent", "#": " no ",
         }
         out = []
         for ch in text:

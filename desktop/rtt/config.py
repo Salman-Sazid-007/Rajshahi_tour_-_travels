@@ -15,8 +15,8 @@ import threading
 from typing import Any, Dict, List
 
 APP_TITLE = "Rajshahi Tours & Travels"
-APP_SUBTITLE = "Booking & Receipt Manager"
-APP_VERSION = "1.0.1"
+APP_SUBTITLE = "Offline Tour & Bus Manager"
+APP_VERSION = "1.1.0"
 
 BOOKING_FIELDS = (
     "booking_no",
@@ -38,6 +38,8 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "phone": "01782250709",
     "whatsapp": "8801782250709",
     "email": "info@rajshahitours.com",
+    "owner_name": "Safayet Hossain",
+    "owner_phone": "01782250709",
     "receipt_prefix": "RTT",
     "next_receipt_no": 1,
     "currency": "Tk.",
