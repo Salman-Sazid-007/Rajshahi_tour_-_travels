@@ -7,6 +7,8 @@ third-party package.
 
 from __future__ import annotations
 
+import datetime as _dt
+import json
 import os
 import sqlite3
 import sys
@@ -408,6 +410,42 @@ class FormatTests(unittest.TestCase):
         self.assertEqual(config.format_date("2026-11-15"), "15 Nov 2026")
         self.assertIsNone(config.parse_date("not a date"))
 
+    def test_bangla_memo_format_helpers(self) -> None:
+        self.assertEqual(documents._bangla_date("2026-10-06"), "৬ অক্টোবর ২০২৬")
+        self.assertEqual(documents._bangla_number_words(12500), "বারো হাজার পাঁচশ")
+        self.assertEqual(documents._bangla_amount_words(12500), "বারো হাজার পাঁচশ টাকা মাত্র")
+        self.assertEqual(
+            documents._bangla_printed_at(_dt.datetime(2026, 10, 6, 13, 5)),
+            "৬ অক্টোবর ২০২৬, দুপুর ০১:০৫",
+        )
+
+    def test_new_receipt_defaults_and_legacy_migration(self) -> None:
+        temp_dir()
+        old_terms = [
+            "Advance payment is non-refundable within 7 days of the tour date.",
+            "Please carry this receipt on the day of departure.",
+            "Seat numbers are confirmed only after full payment unless stated otherwise.",
+        ]
+        with open(config.settings_path(), "w", encoding="utf-8") as handle:
+            json.dump({
+                "company_tagline": "Tour operator, bus service & ticketing",
+                "address": "Sopura Mor, near Shaheb Bazar Zero Point, Boalia, Rajshahi 6100",
+                "footer_note": "Thank you for travelling with Rajshahi Tours & Travels.",
+                "terms": old_terms,
+            }, handle)
+        settings = config.load_settings()
+        self.assertEqual(settings["address"], "Vodra Mor, Rajshahi")
+        self.assertEqual(settings["terms"], config.DEFAULT_TERMS_BN)
+        self.assertEqual(settings["company_tagline"], config.DEFAULT_SETTINGS["company_tagline"])
+        self.assertEqual(settings["footer_note"], config.DEFAULT_SETTINGS["footer_note"])
+        self.assertEqual(len(settings["terms"]), 6)
+
+        with open(config.settings_path(), "w", encoding="utf-8") as handle:
+            json.dump({"address": "My office", "terms": ["Custom office policy"]}, handle)
+        custom = config.load_settings()
+        self.assertEqual(custom["address"], "My office")
+        self.assertEqual(custom["terms"], ["Custom office policy"])
+
 
 class FontEngineTests(unittest.TestCase):
     def test_fonts_exist(self) -> None:
@@ -505,6 +543,13 @@ class UiTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.database.close()
+
+    def test_booking_form_inputs_use_large_readable_type(self) -> None:
+        self.assertEqual(self.app.style.configured["Input.TEntry"]["font"][1], 20)
+        self.assertEqual(self.app.style.configured["Input.TCombobox"]["font"][1], 20)
+        self.assertEqual(self.app.booking_form_widgets["name"].cget("style"), "Input.TEntry")
+        self.assertEqual(self.app.booking_form_widgets["tour_name"].cget("style"), "Input.TCombobox")
+        self.assertEqual(self.app.notes_text.cget("font"), (self.app.ui_font, 18))
 
     def test_company_logo_uses_the_bundled_brand_image(self) -> None:
         logo_path = config.asset_path("agency-logo-sidebar.png")

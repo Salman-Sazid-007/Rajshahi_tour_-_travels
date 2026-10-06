@@ -265,6 +265,7 @@ class BookingApp:
 
     def _build_style(self) -> None:
         style = ttk.Style()
+        self.style = style
         for theme in ("clam", "vista", "default"):
             try:
                 style.theme_use(theme)
@@ -272,8 +273,13 @@ class BookingApp:
             except tk.TclError:
                 continue
         style.configure(".", font=(self.ui_font, 14), foreground=INK)
-        style.configure("Input.TEntry", font=(self.ui_font, 16), padding=(12, 11))
-        style.configure("Input.TCombobox", font=(self.ui_font, 16), padding=(12, 11))
+        # Give every editable control a legible baseline; the booking forms use
+        # the larger named styles below. Explicit styles are used so Windows'
+        # native theme cannot silently fall back to its tiny default font.
+        style.configure("TEntry", font=(self.ui_font, 17), padding=(8, 7))
+        style.configure("TCombobox", font=(self.ui_font, 17), padding=(8, 7))
+        style.configure("Input.TEntry", font=(self.ui_font, 20), padding=(10, 8))
+        style.configure("Input.TCombobox", font=(self.ui_font, 20), padding=(10, 8))
         style.configure("TFrame", background=PAGE_BG)
         style.configure("Page.TFrame", background=PAGE_BG)
         style.configure("Topbar.TFrame", background=WHITE)
@@ -845,7 +851,7 @@ class BookingApp:
         self.bus_status_combo.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
         ttk.Label(card, text="Notes", style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(7, 0))
-        self.bus_notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 16),
+        self.bus_notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 18),
                                       relief="solid", borderwidth=1, wrap="word")
         self.bus_notes_text.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
         row += 2
@@ -1746,7 +1752,7 @@ class BookingApp:
         ttk.Label(card, text="Notes", style="Field.TLabel").grid(row=row, column=0, sticky="w",
                                                                  pady=(8, 0))
         row += 1
-        self.notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 16),
+        self.notes_text = tk.Text(card, height=5, width=30, font=(self.ui_font, 18),
                                   relief="solid", borderwidth=1, wrap="word")
         self.notes_text.grid(row=row, column=0, columnspan=3, sticky="ew")
         row += 1
@@ -2407,6 +2413,7 @@ class SettingsDialog(tk.Toplevel):
         super().__init__(master)
         self.settings = settings
         self.on_save = on_save
+        self.ui_font = _pick_font("Segoe UI", "Helvetica Neue", "DejaVu Sans", "TkDefaultFont")
         self.title("Settings")
         self.transient(master)
         self.geometry("570x690")
@@ -2438,15 +2445,16 @@ class SettingsDialog(tk.Toplevel):
         for key, label in fields:
             ttk.Label(content, text=label).grid(row=row, column=0, sticky="w", pady=(6, 0))
             var = tk.StringVar(value=str(settings.get(key, "")))
-            ttk.Entry(content, textvariable=var, width=52).grid(row=row + 1, column=0, columnspan=2,
-                                                                sticky="ew")
+            ttk.Entry(content, textvariable=var, width=52, style="Input.TEntry").grid(
+                row=row + 1, column=0, columnspan=2, sticky="ew")
             self.vars[key] = var
             row += 2
 
         ttk.Label(content, text="Terms (one per line)").grid(row=row, column=0, sticky="w",
                                                              pady=(8, 0))
         row += 1
-        self.terms = tk.Text(content, height=4, width=52, wrap="word", relief="solid", borderwidth=1)
+        self.terms = tk.Text(content, height=9, width=52, wrap="word", relief="solid", borderwidth=1,
+                             font=(self.ui_font, 16))
         self.terms.insert("1.0", "\n".join(str(t) for t in (settings.get("terms") or [])))
         self.terms.grid(row=row, column=0, columnspan=2, sticky="ew")
         row += 1

@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.1.6.
+These are the **latest published** downloads: desktop version 1.1.7.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.1.6.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.6/RajshahiTours-Windows-1.1.6.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.1.6.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.6/RajshahiTours-Desktop-1.1.6.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+| [**RajshahiTours-Windows-1.1.7.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.7/RajshahiTours-Windows-1.1.7.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.1.7.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.7/RajshahiTours-Desktop-1.1.7.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.6 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.7 in **Help → About**.
 
 ---
 
@@ -48,6 +48,10 @@ the Overview and in the monthly travel report.
 bookings, seats, availability and due, then export a printable PDF or spreadsheet-friendly CSV.
 * **Larger entry forms:** taller input boxes and larger text improve readability
 in tour booking, bus ticketing, and tour setup.
+* **Bangla tour booking memo:** the printed booking receipt uses Bengali labels,
+  dates, amounts, status and signatures; it includes the six booking and safety
+  terms and shows the office address as **Vodra Mor, Rajshahi**. Existing default
+  receipt settings update automatically; custom office settings are preserved.
 * **Keep a local record:** search and filter bookings/tickets, reprint a receipt
 or ticket, and back up the SQLite database. No internet connection is used.
 

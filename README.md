@@ -13,22 +13,23 @@ Two editions, one shared tour and transport model:
 
 | Download | For |
 | --- | --- |
-| [`RajshahiTours-Windows-1.1.6.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.6/RajshahiTours-Windows-1.1.6.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
-| [`RajshahiTours-Desktop-1.1.6.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.6/RajshahiTours-Desktop-1.1.6.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
+| [`RajshahiTours-Windows-1.1.7.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.7/RajshahiTours-Windows-1.1.7.zip) | Windows — unzip and double-click `RajshahiTours.exe`, Python not needed |
+| [`RajshahiTours-Desktop-1.1.7.zip`](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.7/RajshahiTours-Desktop-1.1.7.zip) | Python 3.10+, macOS or Linux — unzip and double-click `app.py` |
 
-`desktop/` holds the offline Tkinter counter workspace (version 1.1.6): manage
+`desktop/` holds the offline Tkinter counter workspace (version 1.1.7): manage
 tours and capacity, assign date-specific seats from a map, edit bookings and
 payments, issue route/date-specific bus tickets, and export monthly tour reports
 as PDF or CSV. Tours have unique short codes that prefix new booking serials
 (e.g. `CBT-RTT-2026-0001`); saved bookings reset their inputs and show a fresh
 unique serial. Tour dates are positioned directly after passenger name and
 phone. Tour and bus booking workflows remain separate. Entry forms now have
-larger text and boxes. The app includes a matching window/executable icon,
-improved receipts, separate tour archive/permanent-delete actions, and the
-supplied full company logo and exact brand colors. PDF headers
+larger text and boxes. Tour booking memos are in Bangla, include the six booking
+policies, and show the office address **Vodra Mor, Rajshahi**. The app includes
+a matching window/executable icon, separate tour archive/permanent-delete
+actions, and the supplied full company logo and exact brand colors. PDF headers
 show owner **Safayet Hossain** and phone **01782250709**.
 
-The download links above are the latest **published** release (1.1.6). To run
+The download links above are the latest **published** release (1.1.7). To run
 the current source:
 
 ```bash

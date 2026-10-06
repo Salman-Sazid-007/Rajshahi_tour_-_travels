@@ -1,3 +1,12 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.1.7
+
+* **বাংলা ট্যুর বুকিং মেমো:** receipt headings, dates, amount labels, status,
+  signatures, footer and the six requested booking terms are printed in Bangla.
+* **Office address:** the memo address is now Vodra Mor, Rajshahi. Existing
+  default settings migrate automatically; owner-customized settings are retained.
+* **Larger input text:** tour, bus and tour-setup entry fields use larger fonts,
+  with readable base styles for the remaining inputs and notes.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.1.6
 
 * **Group bus tickets:** choose a passenger count and assign exactly that many

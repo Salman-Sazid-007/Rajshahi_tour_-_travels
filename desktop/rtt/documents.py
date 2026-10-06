@@ -12,7 +12,7 @@ import os
 from typing import Any, Dict, List, Optional, Sequence
 
 from . import pdf
-from .config import amount_to_words, asset_path, format_date, money
+from .config import asset_path, format_date, money, parse_date
 from .text import FontStyle
 
 # ------------------------------------------------------------------ palette
@@ -48,6 +48,99 @@ def _styles() -> Dict[str, FontStyle]:
 def _settings_value(settings: Dict[str, Any], key: str, default: str = "") -> str:
     value = settings.get(key, default)
     return str(value) if value is not None else ""
+
+
+_BANGLA_DIGITS = str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯")
+_BANGLA_MONTHS = (
+    "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
+    "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর",
+)
+_BANGLA_NUMBERS = (
+    "শূন্য", "এক", "দুই", "তিন", "চার", "পাঁচ", "ছয়", "সাত", "আট", "নয়",
+    "দশ", "এগারো", "বারো", "তেরো", "চৌদ্দ", "পনেরো", "ষোলো", "সতেরো", "আঠারো", "উনিশ",
+    "বিশ", "একুশ", "বাইশ", "তেইশ", "চব্বিশ", "পঁচিশ", "ছাব্বিশ", "সাতাশ", "আটাশ", "ঊনত্রিশ",
+    "ত্রিশ", "একত্রিশ", "বত্রিশ", "তেত্রিশ", "চৌত্রিশ", "পঁয়ত্রিশ", "ছত্রিশ", "সাঁইত্রিশ", "আটত্রিশ", "ঊনচল্লিশ",
+    "চল্লিশ", "একচল্লিশ", "বিয়াল্লিশ", "তেতাল্লিশ", "চুয়াল্লিশ", "পঁয়তাল্লিশ", "ছেচল্লিশ", "সাতচল্লিশ", "আটচল্লিশ", "ঊনপঞ্চাশ",
+    "পঞ্চাশ", "একান্ন", "বাহান্ন", "তিপ্পান্ন", "চুয়ান্ন", "পঞ্চান্ন", "ছাপ্পান্ন", "সাতান্ন", "আটান্ন", "ঊনষাট",
+    "ষাট", "একষট্টি", "বাষট্টি", "তেষট্টি", "চৌষট্টি", "পঁয়ষট্টি", "ছেষট্টি", "সাতষট্টি", "আটষট্টি", "ঊনসত্তর",
+    "সত্তর", "একাত্তর", "বাহাত্তর", "তিয়াত্তর", "চুয়াত্তর", "পঁচাত্তর", "ছিয়াত্তর", "সাতাত্তর", "আটাত্তর", "ঊনআশি",
+    "আশি", "একাশি", "বিরাশি", "তিরাশি", "চুরাশি", "পঁচাশি", "ছিয়াশি", "সাতাশি", "আটাশি", "ঊননব্বই",
+    "নব্বই", "একানব্বই", "বিরানব্বই", "তিরানব্বই", "চুরানব্বই", "পঁচানব্বই", "ছিয়ানব্বই", "সাতানব্বই", "আটানব্বই", "নিরানব্বই",
+)
+
+
+def _bangla_digits(value: Any) -> str:
+    return str(value).translate(_BANGLA_DIGITS)
+
+
+def _bangla_date(value: Any) -> str:
+    date = parse_date(str(value or ""))
+    if not date:
+        return _bangla_digits(value or "")
+    return f"{_bangla_digits(date.day)} {_BANGLA_MONTHS[date.month - 1]} {_bangla_digits(date.year)}"
+
+
+def _bangla_two_digit_words(number: int) -> str:
+    return _BANGLA_NUMBERS[max(0, min(99, int(number)))]
+
+
+def _bangla_under_thousand(number: int) -> str:
+    number = max(0, int(number))
+    if number < 100:
+        return _bangla_two_digit_words(number)
+    hundreds, remainder = divmod(number, 100)
+    parts = [f"{_bangla_two_digit_words(hundreds)}শ"]
+    if remainder:
+        parts.append(_bangla_two_digit_words(remainder))
+    return " ".join(parts)
+
+
+def _bangla_number_words(number: int) -> str:
+    number = abs(int(number))
+    if number < 1000:
+        return _bangla_under_thousand(number)
+    crore, remainder = divmod(number, 10_000_000)
+    lakh, remainder = divmod(remainder, 100_000)
+    thousand, remainder = divmod(remainder, 1000)
+    parts = []
+    for value, unit in ((crore, "কোটি"), (lakh, "লাখ"), (thousand, "হাজার")):
+        if value:
+            parts.append(f"{_bangla_under_thousand(value)} {unit}")
+    if remainder:
+        parts.append(_bangla_under_thousand(remainder))
+    return " ".join(parts) or "শূন্য"
+
+
+def _bangla_amount_words(value: Any) -> str:
+    try:
+        amount = float(value or 0)
+    except (TypeError, ValueError):
+        amount = 0.0
+    negative = amount < 0
+    amount = abs(amount)
+    taka = int(amount)
+    paisa = int(round((amount - taka) * 100))
+    if paisa == 100:
+        taka, paisa = taka + 1, 0
+    text = f"{_bangla_number_words(taka)} টাকা"
+    if paisa:
+        text += f" {_bangla_number_words(paisa)} পয়সা"
+    return ("ঋণাত্মক " if negative else "") + text + " মাত্র"
+
+
+def _bangla_printed_at(value: _dt.datetime) -> str:
+    hour = value.hour % 12 or 12
+    if value.hour < 5:
+        period = "রাত"
+    elif value.hour < 12:
+        period = "সকাল"
+    elif value.hour < 15:
+        period = "দুপুর"
+    elif value.hour < 18:
+        period = "বিকেল"
+    else:
+        period = "রাত"
+    return f"{_bangla_date(value.date().isoformat())}, {period} {_bangla_digits(f'{hour:02d}:{value.minute:02d}')}"
 
 
 # ------------------------------------------------------------------ helpers
@@ -100,7 +193,8 @@ def _new_document(page_size=PAGE, title: str = "", author: str = "") -> pdf.PdfD
     return doc
 
 
-def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float) -> float:
+def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float,
+                bangla: bool = False) -> float:
     """Logo-led company header with owner and phone at upper right."""
     canvas.rect(0, 0, width, 105, fill=TEAL_BAND)
     canvas.rect(0, 105, width, 2.5, fill=TEAL)
@@ -116,8 +210,11 @@ def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float) -> f
 
     right_panel_width = 154
     text_width = width - left - MARGIN - right_panel_width - 16
-    canvas.text(left, 36, _settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
-                style="bold", size=16, color=TEAL_DARK, max_width=text_width)
+    company_name = _settings_value(settings, "company_name", "Rajshahi Tours & Travels")
+    if bangla and company_name == "Rajshahi Tours & Travels":
+        company_name = "রাজশাহী ট্যুরস অ্যান্ড ট্রাভেলস"
+    canvas.text(left, 36, company_name, style="bold", size=16, color=TEAL_DARK,
+                max_width=text_width)
     canvas.text(left, 53, _settings_value(settings, "company_tagline", ""), size=9,
                 color=MUTED, max_width=text_width)
     canvas.text(left, 72, _settings_value(settings, "address", ""), size=8.8, color=INK,
@@ -135,9 +232,11 @@ def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float) -> f
     owner_phone = _settings_value(settings, "owner_phone", _settings_value(settings, "phone"))
     canvas.text(width - MARGIN - 11, 39, owner, style="bold", size=9.5, color=TEAL_DARK,
                 align="right", max_width=right_panel_width - 20)
-    canvas.text(width - MARGIN - 11, 55, "OWNER / PROPRIETOR", size=8.5, color=MUTED,
+    owner_label = "মালিক / স্বত্বাধিকারী" if bangla else "OWNER / PROPRIETOR"
+    phone_label = "ফোন" if bangla else "Phone"
+    canvas.text(width - MARGIN - 11, 55, owner_label, size=8.5, color=MUTED,
                 align="right", max_width=right_panel_width - 20)
-    canvas.text(width - MARGIN - 11, 74, f"Phone  {owner_phone}", style="bold", size=8.8,
+    canvas.text(width - MARGIN - 11, 74, f"{phone_label}  {owner_phone}", style="bold", size=8.8,
                 color=TEAL, align="right", max_width=right_panel_width - 20)
     return 124
 
@@ -167,7 +266,7 @@ def booking_receipt(booking: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
     currency = _settings_value(settings, "currency", "Tk.")
     doc = _new_document(
         page_size=PAGE,
-        title=f"Booking receipt {booking.get('booking_no', '')}",
+        title=f"Tour booking memo {booking.get('booking_no', '')}",
         author=_settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
     )
 
@@ -175,46 +274,46 @@ def booking_receipt(booking: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
         canvas = doc.new_page()
         width, height = canvas.width, canvas.height
         content_width = width - 2 * MARGIN
-        y = _letterhead(canvas, settings, width)
+        y = _letterhead(canvas, settings, width, bangla=True)
 
         # Title band -------------------------------------------------------
         band_height = 26.0
         canvas.rect(MARGIN, y, content_width, band_height, fill=TEAL_LIGHT, stroke=LINE, width=0.6)
-        canvas.text(MARGIN + 10, y + 18, "BOOKING MONEY RECEIPT", style="bold", size=12.5,
+        canvas.text(MARGIN + 10, y + 18, "ট্যুর বুকিংয়ের মেমো", style="bold", size=13,
                     color=TEAL_DARK)
         number = str(booking.get("booking_no") or "")
-        canvas.text(MARGIN + content_width - 10, y + 18, f"Receipt No: {number}",
+        canvas.text(MARGIN + content_width - 10, y + 18, f"মেমো নং: {number}",
                     style="bold", size=11, color=TEAL_DARK, align="right")
         y += band_height + 18
 
         # Passenger + tour details -----------------------------------------
-        y = _section_title(canvas, MARGIN, y, "Passenger & tour details", content_width)
+        y = _section_title(canvas, MARGIN, y, "যাত্রী ও ট্যুরের বিবরণ", content_width)
         col = (content_width - 16) / 2
         row_y = y
-        left_y = _field(canvas, MARGIN, row_y, col, "Customer name", str(booking.get("name", "")))
-        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "Phone number",
+        left_y = _field(canvas, MARGIN, row_y, col, "যাত্রীর নাম", str(booking.get("name", "")))
+        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "মোবাইল নম্বর",
                          str(booking.get("phone", "")))
         y = max(left_y, right_y)
 
         row_y = y
-        left_y = _field(canvas, MARGIN, row_y, col, "Tour name", str(booking.get("tour_name", "")))
-        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "Seat", str(booking.get("seat", "")))
+        left_y = _field(canvas, MARGIN, row_y, col, "ট্যুরের নাম", str(booking.get("tour_name", "")))
+        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "সিট নম্বর", str(booking.get("seat", "")))
         y = max(left_y, right_y)
 
         row_y = y
-        left_y = _field(canvas, MARGIN, row_y, col, "Tour date",
-                        format_date(booking.get("tour_date", "")))
-        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "Booking date",
-                         format_date(booking.get("booking_date", "")))
+        left_y = _field(canvas, MARGIN, row_y, col, "যাত্রার তারিখ",
+                        _bangla_date(booking.get("tour_date", "")))
+        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "বুকিংয়ের তারিখ",
+                         _bangla_date(booking.get("booking_date", "")))
         y = max(left_y, right_y) + 4
 
         # Payment ----------------------------------------------------------
-        y = _section_title(canvas, MARGIN, y, "Payment details", content_width)
+        y = _section_title(canvas, MARGIN, y, "পেমেন্টের বিবরণ", content_width)
         box_width = (content_width - 2 * 10) / 3
         boxes = [
-            ("Total amount", money(booking.get("total"), currency), INK),
-            ("Advance paid", money(booking.get("advance"), currency), GREEN),
-            ("Due amount", money(booking.get("due"), currency),
+            ("মোট টাকা", f"{_bangla_digits(money(booking.get('total'), currency))} টাকা", INK),
+            ("অগ্রিম জমা", f"{_bangla_digits(money(booking.get('advance'), currency))} টাকা", GREEN),
+            ("বাকি টাকা", f"{_bangla_digits(money(booking.get('due'), currency))} টাকা",
              RED if float(booking.get("due") or 0) > 0 else GREEN),
         ]
         for index, (label, value, color) in enumerate(boxes):
@@ -230,37 +329,45 @@ def booking_receipt(booking: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
 
         # Amount in words ---------------------------------------------------
         canvas.rect(MARGIN, y, content_width, 30, fill=TEAL_BAND, stroke=LINE, width=0.5)
-        canvas.text(MARGIN + 10, y + 19.5, "Amount in words", size=8.8, color=MUTED)
-        canvas.text(MARGIN + 88, y + 19.5, amount_to_words(booking.get("total"), currency),
-                    style="bold", size=11, max_width=content_width - 100)
+        canvas.text(MARGIN + 10, y + 19.5, "টাকার পরিমাণ কথায়", size=8.8, color=MUTED)
+        canvas.text(MARGIN + 116, y + 19.5, _bangla_amount_words(booking.get("total")),
+                    style="bold", size=11, max_width=content_width - 128)
         y += 42
 
         # Notes -------------------------------------------------------------
         notes = str(booking.get("notes") or "").strip()
         if notes:
-            y = _section_title(canvas, MARGIN, y, "Notes", content_width)
-            y = canvas.paragraph(MARGIN, y + 10, notes, content_width, leading=14, size=9.5) + 6
+            y = _section_title(canvas, MARGIN, y, "অতিরিক্ত তথ্য", content_width)
+            y = canvas.paragraph(MARGIN, y + 10, notes, content_width, leading=14, size=10,
+                                 color=MUTED) + 6
 
         # Terms -------------------------------------------------------------
-        terms = settings.get("terms") or []
+        raw_terms = settings.get("terms") or []
+        if isinstance(raw_terms, str):
+            raw_terms = raw_terms.splitlines()
+        terms = [str(term).strip() for term in raw_terms if str(term).strip()]
         if terms:
-            terms = [t for t in terms if str(t).strip()]
-        if terms:
-            y = _section_title(canvas, MARGIN, y, "Terms", content_width)
+            y = _section_title(canvas, MARGIN, y, "শর্তাবলি", content_width)
             for term in terms:
-                canvas.text(MARGIN + 2, y + 10, "-", size=10, color=AMBER)
-                y = canvas.paragraph(MARGIN + 12, y + 10, str(term), content_width - 12,
-                                     leading=14, size=9.3, color=MUTED)
+                canvas.text(MARGIN + 2, y + 10, "•", size=10, color=AMBER)
+                y = canvas.paragraph(MARGIN + 12, y + 10, term, content_width - 12,
+                                     leading=14, size=9.5, color=MUTED)
             y += 4
 
         # Signatures --------------------------------------------------------
         signature_y = min(height - 92, y + 26)
         _signature_block(canvas, MARGIN, signature_y, content_width,
-                         "Received by (office)", "Customer signature")
+                         "অফিস প্রতিনিধির স্বাক্ষর", "গ্রাহকের স্বাক্ষর")
 
-        status = str(booking.get("status") or "Confirmed")
+        status_codes = {
+            "confirmed": "নিশ্চিত", "pending": "অপেক্ষমাণ", "cancelled": "বাতিল",
+            "booked": "বুকিং সম্পন্ন", "paid": "পরিশোধিত",
+        }
+        status_value = str(booking.get("status") or "Confirmed").strip()
+        status = status_codes.get(status_value.casefold(), status_value)
+        printed_at = _bangla_printed_at(_dt.datetime.now())
         canvas.text(MARGIN + content_width / 2, signature_y - 14,
-                    f"Status: {status}   |   Printed: {_dt.datetime.now().strftime('%d %b %Y, %I:%M %p')}",
+                    f"বুকিংয়ের অবস্থা: {status}   |   প্রিন্ট: {printed_at}",
                     size=8.8, color=MUTED, align="center")
 
         _footer(canvas, settings, width, height)

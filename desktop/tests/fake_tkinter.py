@@ -409,13 +409,18 @@ class Treeview(Widget):
 
 
 class Style(Widget):
+    def __init__(self, master=None, **options: Any) -> None:
+        super().__init__(master, **options)
+        self.configured: Dict[str, Dict[str, Any]] = {}
+
     def theme_use(self, name: str) -> None:
         if name == "__raise__":
             raise TclError(name)
         self._options["theme"] = name
 
     def configure(self, *args: Any, **kwargs: Any) -> None:
-        return None
+        if args and kwargs:
+            self.configured[str(args[0])] = dict(kwargs)
 
     def map(self, *args: Any, **kwargs: Any) -> None:
         return None
