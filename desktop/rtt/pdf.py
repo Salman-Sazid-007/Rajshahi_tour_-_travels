@@ -6,8 +6,9 @@ reph glyph that has no direct Unicode code point. This writer therefore embeds
 CIDFontType2 subsets (Identity-H) and prints the glyph ids HarfBuzz produced,
 with ``TJ`` adjustments for the positions HarfBuzz calculated.
 
-Only the standard library is required; ``uharfbuzz`` is used for shaping when
-it is installed (see :mod:`rtt.text`).
+``uharfbuzz`` is required for correct Bangla conjuncts and vowel placement
+(see :mod:`rtt.text`); the desktop requirements and packaged Windows build
+include it.
 """
 
 from __future__ import annotations

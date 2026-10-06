@@ -20,7 +20,7 @@ a = Analysis(
     binaries=[],
     datas=datas,
     hiddenimports=["rtt.ui", "rtt.db", "rtt.documents", "rtt.pdf", "rtt.text", "rtt.ttf",
-                   "rtt.config"],
+                   "rtt.config", "uharfbuzz"],
     hookspath=[],
     runtime_hooks=[],
     excludes=["tkinter.test", "pytest", "PIL", "numpy"],

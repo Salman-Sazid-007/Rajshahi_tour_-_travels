@@ -2,24 +2,26 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.1.7.
+These are the **latest published** downloads: desktop version 1.1.8.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.1.7.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.7/RajshahiTours-Windows-1.1.7.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.1.7.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.7/RajshahiTours-Desktop-1.1.7.zip) | Run the source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+| [**RajshahiTours-Windows-1.1.8.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.8/RajshahiTours-Windows-1.1.8.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.1.8.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.8/RajshahiTours-Desktop-1.1.8.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.7 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.8 in **Help → About**.
 
 ---
 
 The desktop app is a local, offline counter workspace. It stores tour bookings,
 tour details, bus tickets, seat occupancy and payment balances in SQLite on this
-computer. The interface is organized into **Overview**, **Tour bookings**,
-**Bus tickets**, and **Tours & monthly reports**.
+computer. Bangla memos use the supplied Li Abu J M Akkas Unicode font with
+HarfBuzz shaping so conjuncts and vowel marks are positioned correctly. The
+interface is organized into **Overview**, **Tour bookings**, **Bus tickets**,
+and **Tours & monthly reports**.
 
 ## What it does
 
@@ -92,16 +94,16 @@ view.
 1. Install **Python 3.10 or newer** from <https://www.python.org/downloads/>
    (tick *Add Python to PATH* during setup).
 2. Download or clone this repository.
-3. Double-click `app.py`, or from a terminal:
+3. From a terminal in the `desktop` folder, install the PDF shaping dependency and start the app:
 
 ```bash
-cd desktop
+python -m pip install -r requirements.txt
 python app.py
 ```
 
-Nothing else has to be installed — the PDF engine is written in pure Python and
-the fonts are bundled. (`pip install uharfbuzz` is optional; it only improves how
-Bangla names are spaced inside the PDF. English output is identical either way.)
+The bundled Unicode Bangla font is shaped with HarfBuzz so conjuncts and vowel
+marks do not break. The Windows executable includes this dependency; the source
+version needs it installed once before creating Bangla memos.
 
 ## 2. Build a double-clickable program
 
@@ -166,8 +168,8 @@ desktop/
   rajshahi_tours.spec    PyInstaller build recipe
   build_windows.bat      one-click Windows build
   build_linux_mac.sh     Linux/macOS build
-  requirements.txt       nothing required; uharfbuzz optional
-  assets/fonts/          Hind Siliguri (SIL Open Font License) for the PDFs
+  requirements.txt       HarfBuzz dependency for correct Bangla shaping
+  assets/fonts/          Li Abu J M Akkas Unicode (Bangla) + Hind Siliguri (Latin)
   rtt/
     config.py            settings, paths, money/date formatting
     db.py                SQLite booking, tour and bus-ticket storage; CSV/backup
@@ -183,13 +185,15 @@ desktop/
 ## 6. Tests
 
 ```bash
-python tests/test_app.py          # database, formatting, UI logic (no deps)
-python tests/test_pdf_render.py   # rendering checks (needs pymupdf, pillow,
-                                  # fonttools, uharfbuzz - skipped if absent)
+python -m pip install -r requirements.txt
+python tests/test_app.py          # database, formatting, UI logic
+python -m pip install PyMuPDF Pillow fonttools
+python tests/test_pdf_render.py   # rasterized glyph-position checks
 ```
 
-The headless tests use a small Tkinter stand-in and need no third-party package.
-The optional render tests rasterize PDFs and verify glyph placement.
+The headless tests use a small Tkinter stand-in; they need the required
+`uharfbuzz` dependency listed above. The optional render tests also install
+PyMuPDF, Pillow and fontTools to rasterize PDFs and verify glyph placement.
 
 ## 7. If something goes wrong
 

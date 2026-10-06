@@ -1,8 +1,8 @@
 """Headless checks for the booking manager.
 
-Run with ``python tests/test_app.py`` (or ``python -m unittest discover tests``).
-They use the small Tkinter stand-in in ``tests/fake_tkinter.py`` and need no
-third-party package.
+Run with ``python tests/test_app.py`` (or ``python -m unittest discover tests``)
+after installing ``requirements.txt``. The tests use the small Tkinter stand-in
+in ``tests/fake_tkinter.py`` and require the app's HarfBuzz dependency.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ ANSWERS: dict = {}
 fake_tkinter.install(ANSWERS)
 
 from rtt import config, db, documents, pdf, ui  # noqa: E402
-from rtt.text import FontStyle, split_runs  # noqa: E402
+from rtt.text import FontStyle, HARFBUZZ_AVAILABLE, split_runs  # noqa: E402
 
 
 def temp_dir() -> str:
@@ -419,6 +419,30 @@ class FormatTests(unittest.TestCase):
             "৬ অক্টোবর ২০২৬, দুপুর ০১:০৫",
         )
 
+    def test_lipighor_unicode_font_and_harfbuzz_shape_memo_text(self) -> None:
+        paths = config.font_paths()
+        self.assertTrue(paths["bangla"].endswith("Li Abu J M Akkas Unicode.ttf"))
+        self.assertEqual(paths["bangla"], paths["bangla-bold"])
+        self.assertTrue(os.path.isfile(paths["bangla"]))
+        self.assertTrue(HARFBUZZ_AVAILABLE, "desktop requirements must include uharfbuzz")
+        face = pdf.get_face(paths["bangla"])
+        for char in "শর্তাবলি":
+            self.assertNotEqual(face.char_to_gid(ord(char)), 0, f"missing glyph for {char}")
+        document = pdf.make_document(paths, documents.STYLES)
+        shaped = document.shaper.shape("শর্তাবলি", "bangla")
+        self.assertLess(len(shaped), len("শর্তাবলি"), "HarfBuzz should form Bengali clusters")
+
+        # If the dependency is missing, fail clearly rather than printing broken
+        # one-glyph-per-codepoint Bengali text.
+        import rtt.text as textmod
+        original = textmod._hb
+        textmod._hb = None
+        try:
+            with self.assertRaisesRegex(RuntimeError, "requires HarfBuzz"):
+                pdf.make_document(paths, documents.STYLES).shaper.shape("শর্তাবলি", "bangla")
+        finally:
+            textmod._hb = original
+
     def test_new_receipt_defaults_and_legacy_migration(self) -> None:
         temp_dir()
         old_terms = [
@@ -720,6 +744,21 @@ class UiTests(unittest.TestCase):
         self.app.selected_id = None
         self.app.delete_booking()
         self.assertGreater(ANSWERS.get("showinfo", 0), 0)
+
+    def test_print_receipt_shows_harfbuzz_error_if_dependency_is_missing(self) -> None:
+        booking_id = self.database.add({
+            "booking_no": "RTT-TEST-0001", "name": "Test passenger",
+            "tour_name": "Test tour", "tour_date": "2026-12-11", "seat": "A-1",
+        })
+        self.app.selected_id = booking_id
+        import rtt.text as textmod
+        original = textmod._hb
+        textmod._hb = None
+        try:
+            self.app.print_receipt()
+        finally:
+            textmod._hb = original
+        self.assertEqual(ANSWERS.get("showerror"), 1)
 
     def test_receipt_pdf_writes_file(self) -> None:
         self.app.new_booking()

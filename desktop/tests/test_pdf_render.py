@@ -33,7 +33,7 @@ except Exception:  # pragma: no cover - optional dev dependencies
 from rtt import config, documents, pdf  # noqa: E402
 from rtt.text import FontStyle, split_runs  # noqa: E402
 
-TEXT = "Rajshahi Tours - Cox's Bazar 12,500.00"
+TEXT = "Tours - ট্যুর বুকিংয়ের মেমো: শর্তাবলি ১২,৫০০"
 X, Y, SIZE, DPI = 90.0, 220.0, 22.0, 300
 
 
@@ -98,21 +98,21 @@ class RenderTests(unittest.TestCase):
                 hexs, rise_value, array = match.groups()
                 if rise_value:
                     rise = float(rise_value)
-                pieces = [hexs] if hexs else [
-                    token for token in array.split() if not token.startswith("-")
-                ]
-                for piece in pieces:
-                    if piece.startswith("<"):
-                        piece = piece[1:-1]
-                    if re.fullmatch(r"[0-9A-F]+", piece or ""):
-                        for index in range(0, len(piece), 4):
-                            gid = int(piece[index:index + 4], 16)
+                tokens = [f"<{hexs}>"] if hexs else re.findall(
+                    r"<[0-9A-F]+>|-?\d+(?:\.\d+)?", array or ""
+                )
+                for token in tokens:
+                    if token.startswith("<"):
+                        encoded = token[1:-1]
+                        for index in range(0, len(encoded), 4):
+                            gid = int(encoded[index:index + 4], 16)
                             placed.append((name, gid, pen_x, pen_y + rise))
                             pen_x += widths[name][gid] / 1000.0 * size * squeeze
                     else:
-                        pen_x -= float(piece) / 1000.0 * size * squeeze
-                if hexs:
-                    continue
+                        # TJ numbers shift the next glyph by the negative of
+                        # their value; parse signed numbers even when they look
+                        # like hex digits (for example, `80`).
+                        pen_x -= float(token) / 1000.0 * size * squeeze
 
         self.assertEqual(len(placed), len(expected))
         for (name, gid, px, py), (face_key, source_gid, ex, ey) in zip(placed, expected):
@@ -120,6 +120,29 @@ class RenderTests(unittest.TestCase):
             self.assertEqual(resource.mapping.get(source_gid, -1), gid)
             self.assertAlmostEqual(px, ex, delta=0.02)
             self.assertAlmostEqual(py, height - ey, delta=0.02)
+
+    def test_complete_bangla_tour_memo_renders_with_unicode_font(self) -> None:
+        booking = {
+            "booking_no": "CBT-RTT-2026-0001",
+            "name": "মুহাম্মদ সুমন",
+            "phone": "01782250709",
+            "tour_name": "কক্সবাজার ট্যুর",
+            "tour_date": "2026-12-12",
+            "booking_date": "2026-10-06",
+            "seat": "A-1",
+            "status": "Confirmed",
+            "total": 12500,
+            "advance": 5000,
+            "due": 7500,
+        }
+        settings = config.load_settings()
+        self.assertEqual(settings["address"], "Vodra Mor, Rajshahi")
+        self.assertEqual(len(settings["terms"]), 6)
+        data = documents.booking_receipt(booking, settings)
+        self.assertIn(b"LiAbuJMAkkasUnicode", data)
+        page = fitz.open(stream=data)[0]
+        image = Image.open(io.BytesIO(page.get_pixmap(dpi=DPI).tobytes("png"))).convert("L")
+        self.assertIsNotNone(image.point(lambda value: 255 if value < 250 else 0).getbbox())
 
     def test_ink_matches_outline_boxes(self) -> None:
         data = self._render(TEXT)

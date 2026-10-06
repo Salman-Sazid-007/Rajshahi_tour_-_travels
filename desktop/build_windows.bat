@@ -10,8 +10,8 @@ python --version >nul 2>&1 || (
   exit /b 1
 )
 
-python -m pip install --upgrade pip
-python -m pip install pyinstaller || goto :error
+python -m pip install --upgrade pip || goto :error
+python -m pip install -r requirements.txt pyinstaller || goto :error
 
 if exist build rmdir /s /q build
 if exist dist rmdir /s /q dist

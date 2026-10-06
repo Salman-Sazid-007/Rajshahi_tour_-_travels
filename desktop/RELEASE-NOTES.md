@@ -1,3 +1,11 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.1.8
+
+* **Correct Bangla memo shaping:** use the repository's Li Abu J M Akkas Unicode
+  font with HarfBuzz so conjuncts and vowel marks print in the right positions.
+* **Bundled shaping support:** the source instructions and Windows build now
+  install/include HarfBuzz; Bangla PDFs fail with a clear hint if it is missing
+  instead of silently producing broken glyphs.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.1.7
 
 * **বাংলা ট্যুর বুকিং মেমো:** receipt headings, dates, amount labels, status,

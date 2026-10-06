@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 
 APP_TITLE = "Rajshahi Tours & Travels"
 APP_SUBTITLE = "Offline Tour & Bus Manager"
-APP_VERSION = "1.1.7"
+APP_VERSION = "1.1.8"
 
 BOOKING_FIELDS = (
     "booking_no",
@@ -100,8 +100,11 @@ def font_paths() -> Dict[str, str]:
     return {
         "latin": asset_path("fonts", "HindSiliguri-Latin-Regular.ttf"),
         "latin-bold": asset_path("fonts", "HindSiliguri-Latin-Bold.ttf"),
-        "bangla": asset_path("fonts", "HindSiliguri-Bengali-Regular.ttf"),
-        "bangla-bold": asset_path("fonts", "HindSiliguri-Bengali-Bold.ttf"),
+        "bangla": asset_path("fonts", "Li Abu J M Akkas Unicode.ttf"),
+        # Lipighor provides this Unicode family in regular and italic only; use
+        # its real Unicode regular face for both weights rather than synthetic
+        # bolding that can damage conjuncts and vowel marks.
+        "bangla-bold": asset_path("fonts", "Li Abu J M Akkas Unicode.ttf"),
     }
 
 

@@ -2250,7 +2250,11 @@ class BookingApp:
         if booking is None:
             messagebox.showinfo("Print", "Select a booking from the list first.", parent=self.root)
             return
-        data = documents.booking_receipt(booking, self.settings)
+        try:
+            data = documents.booking_receipt(booking, self.settings)
+        except Exception as exc:
+            messagebox.showerror("PDF error", str(exc), parent=self.root)
+            return
         path = os.path.join(config.export_dir(),
                             f"receipt-{booking.get('booking_no') or 'booking'}.pdf")
         with open(path, "wb") as handle:
@@ -2264,7 +2268,11 @@ class BookingApp:
             messagebox.showinfo("Nothing to print", "No bookings match the current view.",
                                 parent=self.root)
             return
-        data = documents.booking_list_report(rows, self.settings, subtitle=subtitle)
+        try:
+            data = documents.booking_list_report(rows, self.settings, subtitle=subtitle)
+        except Exception as exc:
+            messagebox.showerror("PDF error", str(exc), parent=self.root)
+            return
         path = self._save_pdf(data, filename, "Save booking list report")
         if path:
             self._after_pdf(path)
