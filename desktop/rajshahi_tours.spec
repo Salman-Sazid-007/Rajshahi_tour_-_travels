@@ -1,9 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller build: one folder with RajshahiTours.exe inside."""
 
+import os
+import sys
+
 from PyInstaller.utils.hooks import collect_data_files
 
 datas = [("assets", "assets")]
+app_icon = (
+    os.path.join(SPECPATH, "assets", "agency-app.ico")
+    if sys.platform == "win32" else None
+)
 
 block_cipher = None
 
@@ -13,7 +20,7 @@ a = Analysis(
     binaries=[],
     datas=datas,
     hiddenimports=["rtt.ui", "rtt.db", "rtt.documents", "rtt.pdf", "rtt.text", "rtt.ttf",
-                   "rtt.config"],
+                   "rtt.config", "uharfbuzz"],
     hookspath=[],
     runtime_hooks=[],
     excludes=["tkinter.test", "pytest", "PIL", "numpy"],
@@ -41,7 +48,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,
+    icon=app_icon,
 )
 
 coll = COLLECT(

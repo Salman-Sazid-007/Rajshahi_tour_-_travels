@@ -1,8 +1,98 @@
-## Rajshahi Tours & Travels — Desktop counter app
+## Rajshahi Tours & Travels — Desktop counter app 1.1.9
 
-The office-counter program: nine booking fields, a local database, and a PDF
-receipt plus booking-list report for the customer. Everything runs on the shop
-computer — it never connects to the internet.
+* **Office e-mail:** `rajshahitoursandtravels@gmail.com` is now the default
+  e-mail printed in the memo header and footer (and shown under Tools →
+  Settings). Existing installs that still had the old placeholder address are
+  upgraded automatically; a customised e-mail is left alone.
+* **Bangla office address:** the memo address now reads "ভদ্রা মোড়, রাজশাহী".
+  Installs that still had "Vodra Mor, Rajshahi" migrate automatically.
+* **Memo bottom section no longer overlaps:** the booking status and the print
+  date sit on their own row, separated from the terms by a rule, with the
+  signature lines below them. The terms are fitted into the space above that
+  block (shrinking slightly if needed) and, only if they still cannot fit,
+  continue on a second page — nothing is drawn on top of other text any more.
+* **"%" prints correctly** in the terms (previously shown as the word
+  "percent").
+* **Bigger text inside the input boxes — really fixed this time:** the earlier
+  versions set the font on the ttk *style*, which Tk ignores for entry boxes
+  and drop-downs. The font is now set on the widgets themselves, so booking,
+  bus-ticket, tour-setup, filter and settings inputs show large 20 pt / 17 pt
+  text, including the drop-down lists.
+* **Mouse wheel scrolling fixed:** the booking, bus-ticket and settings forms
+  scroll with the wheel wherever the pointer is over the form (previously only
+  in the empty margin). Works on Windows, macOS and Linux.
+
+## Rajshahi Tours & Travels — Desktop counter app 1.1.8
+
+* **Correct Bangla memo shaping:** use the repository's Li Abu J M Akkas Unicode
+  font with HarfBuzz so conjuncts and vowel marks print in the right positions.
+* **Bundled shaping support:** the source instructions and Windows build now
+  install/include HarfBuzz; Bangla PDFs fail with a clear hint if it is missing
+  instead of silently producing broken glyphs.
+
+## Rajshahi Tours & Travels — Desktop counter app 1.1.7
+
+* **বাংলা ট্যুর বুকিং মেমো:** receipt headings, dates, amount labels, status,
+  signatures, footer and the six requested booking terms are printed in Bangla.
+* **Office address:** the memo address is now Vodra Mor, Rajshahi. Existing
+  default settings migrate automatically; owner-customized settings are retained.
+* **Larger input text:** tour, bus and tour-setup entry fields use larger fonts,
+  with readable base styles for the remaining inputs and notes.
+
+## Rajshahi Tours & Travels — Desktop counter app 1.1.6
+
+* **Group bus tickets:** choose a passenger count and assign exactly that many
+  seats, with per-seat Male/Female selection colors. Fare is multiplied by the
+  passenger count; group seat occupancy, genders, receipts and CSV exports stay
+  within the separate bus-ticket workflow.
+* **Larger app text:** increased general UI, input, table and seat-map fonts.
+* **Database migration:** existing bus records gain a gender map without losing
+  route, seat or payment history.
+
+## Rajshahi Tours & Travels — Desktop counter app 1.1.5
+
+Tours can now be identified by a unique short code, shown before the serial in
+new tour-booking numbers. Tour setup and booking inputs are larger and easier to
+read. Bus ticketing remains a separate workflow with its own numbering and seat
+inventory.
+
+### What changed
+
+* **Tour codes:** add or edit a unique code in the tour catalogue. If left blank,
+  the app suggests initials from the tour name and adds a suffix if needed. New
+  tour booking numbers use the format `CODE-RTT-YYYY-NNNN`, for example
+  `CBT-RTT-2026-0001`. The underlying serial sequence stays unique across tours;
+  existing booking numbers are not changed.
+* **Existing database migration:** previous tour catalogues receive generated
+  codes automatically and keep all bookings and payments unchanged.
+* **Larger input boxes:** increased input font size, padding and form width across
+  tour bookings, bus ticketing and tour setup for easier reading and entry.
+* **Tour booking form:** the departure date is directly after passenger name and
+  phone; successful booking creates or edits clear the inputs and prepare a fresh
+  unique number.
+* **Desktop app logo:** the supplied company mark is used for the app window,
+  task switcher and packaged Windows executable icon.
+* **Separate bus tickets:** bus-ticket records and ticket numbers remain
+  independent from tour bookings.
+
+### Included features
+
+* **Date-specific tour seat map:** standard 40-seat and extended 46-seat layouts;
+  occupied seats are marked booked and locked for the selected tour/date.
+* **Editable bookings and payments:** new bookings get a fresh unique serial;
+  saved entries are edited only after selecting them. Due is recalculated from
+  total minus advance.
+* **Monthly travel report:** review trips, passengers, seats, availability and
+  balances, then export a printable PDF or CSV spreadsheet.
+* **Offline bus tickets:** issue a ticket for any route/date, choose from a
+  40-seat map, prevent duplicate route/date/seat sales, reprint or cancel
+  tickets, and export the register.
+* **Tour data controls:** archive a tour to preserve its history, or permanently
+  delete the tour and associated bookings after a clear warning and
+  confirmation.
+* **Professional receipts and branding:** supplied company artwork and exact
+  brand colors appear across receipts and reports; receipt typography and app
+  readability are improved.
 
 ### Which file should I download?
 
@@ -16,48 +106,16 @@ computer — it never connects to the internet.
 1. Download `RajshahiTours-Windows-<version>.zip`.
 2. Right-click the file → **Extract All**.
 3. Open the extracted folder and double-click **`RajshahiTours.exe`**.
-4. Read `START-HERE.txt` inside the folder for the day-to-day instructions.
+4. Read `START-HERE.txt` inside the folder for day-to-day instructions.
 
 If Windows shows a blue "Windows protected your PC" box, choose
 **More info → Run anyway** — the program is unsigned, so Windows warns about
-every new unsigned program. It is safe: the source code it was built from is in
-this repository under `desktop/`.
-
-### Getting started (source zip)
-
-1. Install Python 3.10 or newer from <https://www.python.org/downloads/> and
-   tick **Add Python to PATH** during setup.
-2. Unzip the download and double-click `app.py` (or run `python app.py`).
-3. To make your own double-clickable program later, run `build_windows.bat`
-   (Windows) or `./build_linux_mac.sh` (macOS / Linux).
+every new unsigned program. The source code it was built from is in this repository
+under `desktop/`.
 
 ### Your data
 
-| Item | Location |
-| --- | --- |
-| Database | `Documents\Rajshahi Tours & Travels\bookings.db` |
-| Settings | `Documents\Rajshahi Tours & Travels\settings.json` |
-| Backups | `Documents\Rajshahi Tours & Travels\Backups\` |
-| Exported receipts and reports | wherever you choose (defaults to `...\Exports\`) |
-
-Keep `bookings.db` safe and use **File → Backup database** regularly — that one
-file holds every booking.
-
-### What is inside
-
-* **Receipt PDF** — one booking on an A4 page: letterhead, passenger and tour
-  details, amounts with the due highlighted in red, amount in words, terms and
-  two signature lines.
-* **List PDF / Due list PDF** — landscape report of the bookings on screen,
-  with summary cards and a totals row, paginated automatically.
-* Search and filters (name, phone, seat, tour, booking number, only-with-due).
-* CSV export, database backup, and editable company details, receipt prefix,
-  currency symbol and printed terms under **Tools → Settings**.
-* Bangla and English names both print correctly — the PDF engine and the
-  Hind Siliguri fonts are bundled.
-
-### Not included
-
-* The desktop program does **not** sync with the online website editions and has
-  no SMS or payment-gateway integration. It is a standalone counter tool.
-* The `.exe` is unsigned, so Windows SmartScreen warns on first run.
+Bookings, tours and tickets are stored together in `bookings.db` under
+`Documents\Rajshahi Tours & Travels` (or beside the program in portable mode).
+Use **File → Backup database** regularly. The desktop app does **not** sync with
+the website, another computer, SMS services, or a payment gateway.

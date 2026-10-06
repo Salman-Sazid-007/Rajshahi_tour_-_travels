@@ -1,46 +1,91 @@
-# Rajshahi Tours & Travels — Booking & Receipt Manager (Desktop)
+# Rajshahi Tours & Travels — Offline Tour & Bus Manager (Desktop)
 
-## Download the zip
+## Download
 
-Both zips are on the Releases page — no build step, no GitHub account needed:
+These are the **latest published** downloads: desktop version 1.1.9.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.0.0.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.0/RajshahiTours-Windows-1.0.0.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.0.0.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.0.0/RajshahiTours-Desktop-1.0.0.zip) | Run from source with Python 3.10+ (any OS). Unzip and double-click `app.py`. |
+| [**RajshahiTours-Windows-1.1.9.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.9/RajshahiTours-Windows-1.1.9.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.1.9.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.9/RajshahiTours-Desktop-1.1.9.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
 
-All versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
-Open `START-HERE.txt` inside the zip first if you just want to start using it.
+All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
+Open `START-HERE.txt` inside a release zip first if you just want to start using it.
+
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.9 in **Help → About**.
 
 ---
 
-A small Windows/Mac/Linux program for the office counter. It collects the nine
-booking details, stores them in a local database, and prints a PDF you can hand
-to the customer, email, or send over WhatsApp.
+The desktop app is a local, offline counter workspace. It stores tour bookings,
+tour details, bus tickets, seat occupancy and payment balances in SQLite on this
+computer. Bangla memos use the supplied Li Abu J M Akkas Unicode font with
+HarfBuzz shaping so conjuncts and vowel marks are positioned correctly. The
+interface is organized into **Overview**, **Tour bookings**, **Bus tickets**,
+and **Tours & monthly reports**.
 
-| Field | Notes |
-| --- | --- |
-| Name | Required |
-| Phone Number | Free text, any format |
-| Seat | e.g. `A1, A2` |
-| Total Amount | Auto-formatted, e.g. `12,500.00` |
-| Advance | Paid now |
-| Due | Calculated automatically (Total − Advance) |
-| Booking Date | Date picker (`...` button) or type `YYYY-MM-DD` |
-| Tour Date | Date picker (`...` button) or type `YYYY-MM-DD` |
-| Tour Name | Dropdown with your own suggestions |
+## What it does
 
-Two PDFs are produced:
+* **Manage tours:** create tours with a unique short tour code and seat capacity;
+  leave the code blank to generate initials from the tour name, or enter your
+  own. The code appears at the front of new booking numbers (for example,
+  `CBT-RTT-2026-0001`). Existing booking numbers are kept unchanged. Archive a
+  tour to keep its history, or permanently delete it and its associated bookings
+  after a clear warning and confirmation.
+* **Book a tour:** choose a tour and travel date, open the seat map, select free
+  seats, and save the customer and payment. Occupied seats are marked booked and
+  locked for that same tour/date; form validation also blocks duplicate seats.
+  After any successful booking save, the passenger and trip inputs reset and a
+  fresh unique serial is shown. Select the tour and departure date for the next
+  booking. Seats can be reused on another departure date; saved rows can still
+  be selected for intentional edits.
+* **Issue offline bus tickets:** a separate workflow with its own ticket numbers,
+route/date and seat inventory; it is not linked to tour bookings. Select a
+passenger count, then assign exactly that many seats and a Male/Female marker to
+each seat (blue for Male, pink for Female). Fare is per passenger; the ticket
+stores a single group/contact record and the total fare. The same route/date/seat
+cannot be sold twice. Cancelled group tickets release every seat.
+* **Track trips:** see booked/open seats, trip totals and outstanding amounts on
+the Overview and in the monthly travel report.
+* **Export a monthly sheet:** filter by travel month, review each departure,
+bookings, seats, availability and due, then export a printable PDF or spreadsheet-friendly CSV.
+* **Larger entry forms:** taller input boxes and larger text improve readability
+in tour booking, bus ticketing, and tour setup.
+* **Bangla tour booking memo:** the printed booking receipt uses Bengali labels,
+  dates, amounts, status and signatures; it includes the six booking and safety
+  terms and shows the office address as **Vodra Mor, Rajshahi**. Existing default
+  receipt settings update automatically; custom office settings are preserved.
+* **Keep a local record:** search and filter bookings/tickets, reprint a receipt
+or ticket, and back up the SQLite database. No internet connection is used.
 
-* **Receipt PDF** — one booking on an A4 page: letterhead, passenger and tour
-  details, payment amounts (due highlighted in red), amount in words, notes,
-  terms and two signature lines.
-* **List PDF** — a landscape table of the bookings currently on screen with
-  summary cards and a totals row, paginated automatically.
+### Tour seat layouts
 
-Both are ready-made samples you can open right now:
-[`samples/sample-receipt.pdf`](samples/sample-receipt.pdf) ·
-[`samples/sample-booking-list.pdf`](samples/sample-booking-list.pdf)
+The standard tour map has 40 seats (`A-1` through `J-4`), with four seats per
+row and an aisle. A 46-seat tour can use the extended layout: front seat `1`,
+rows A–J, and `K-1` through `K-5`. Smaller capacities use the corresponding
+subset of the standard map. Labels such as `A1` are normalized to `A-1`.
+
+### Receipts and reports
+
+The desktop sidebar, tour receipts, bus tickets, and reports use the supplied
+full company logo. The original JPG is bundled at `assets/agency-logo.jpg`; a
+trimmed, print-resolution copy is embedded in PDFs and a compact PNG is used by
+the Tkinter sidebar, so no image package is required at runtime. Brand accents
+match the supplied palette: teal `#22B4B3`, orange `#F97000` / `#EE8625`, and
+black `#000000`. The owner **Safayet Hossain** and phone **01782250709** appear
+in the upper-right PDF header; booking details and payment balances follow
+below in an aligned layout with a compact logo and larger, more legible type.
+The desktop uses a matching company icon in the window/task switcher and the
+Windows executable (`assets/agency-app-icon.png` and `assets/agency-app.ico`).
+The UI and tables also use larger fonts. Company and owner details can be edited
+in **Tools → Settings**.
+
+* **Receipt PDF / Print** — a branded A4 receipt for one tour booking.
+* **Monthly PDF / CSV** — tour bookings for the selected travel month, with
+passenger, seat and payment data.
+* **List PDF / Due list PDF** — a landscape report of the filtered tour-booking
+view.
+* **Bus ticket PDF / Print** — a branded group ticket listing passenger count, seats and gender assignments.
+* **Export bus list** — CSV for the currently filtered offline ticket register.
 
 ---
 
@@ -49,23 +94,22 @@ Both are ready-made samples you can open right now:
 1. Install **Python 3.10 or newer** from <https://www.python.org/downloads/>
    (tick *Add Python to PATH* during setup).
 2. Download or clone this repository.
-3. Double-click `app.py`, or from a terminal:
+3. From a terminal in the `desktop` folder, install the PDF shaping dependency and start the app:
 
 ```bash
-cd desktop
+python -m pip install -r requirements.txt
 python app.py
 ```
 
-Nothing else has to be installed — the PDF engine is written in pure Python and
-the fonts are bundled. (`pip install uharfbuzz` is optional; it only improves how
-Bangla names are spaced inside the PDF. English output is identical either way.)
+The bundled Unicode Bangla font is shaped with HarfBuzz so conjuncts and vowel
+marks do not break. The Windows executable includes this dependency; the source
+version needs it installed once before creating Bangla memos.
 
 ## 2. Build a double-clickable program
 
 **Windows** — double-click `build_windows.bat`. It installs PyInstaller and
 creates `dist\RajshahiTours\RajshahiTours.exe`. Copy the whole
-`RajshahiTours` folder to the office computer and send a shortcut to the
-desktop.
+`RajshahiTours` folder to the office computer and create a shortcut on the desktop.
 
 **macOS / Linux** — run `./build_linux_mac.sh`, which produces
 `dist/RajshahiTours/RajshahiTours`.
@@ -74,36 +118,47 @@ desktop.
 
 | Item | Location |
 | --- | --- |
-| Database | `Documents\Rajshahi Tours & Travels\bookings.db` |
+| Database (bookings, tour catalogue, bus tickets) | `Documents\Rajshahi Tours & Travels\bookings.db` |
 | Settings | `Documents\Rajshahi Tours & Travels\settings.json` |
 | Backups | `Documents\Rajshahi Tours & Travels\Backups\` |
 | PDF/CSV exports | wherever you choose (defaults to `...\Exports\`) |
 
-*Help → About* shows the exact folder. The database is a normal SQLite file, so
-copying that one file copies every booking.
+*Help → About* shows the exact folder. Back up `bookings.db` regularly; it
+contains the tour catalogue, booking history, and offline bus tickets.
 
 **Portable mode:** put an empty file named `portable.txt` next to the program and
 it keeps the data in a `data` folder beside itself — handy for a USB stick.
 
 ## 4. Using it
 
-* **New** (or `Ctrl+N`) clears the form and assigns the next receipt number.
-* **Save** (or `Ctrl+S`) stores the booking; **Due** updates as you type.
-* Click a row to select it, double-click to load it into the form for editing.
-* **Search** matches name, phone, seat, tour name or booking number. Combine it
-  with *Only with due* and the *Tour* filter; every PDF/CSV you export then
-  follows that same view.
-* **Receipt PDF / Print** — `Print` sends the receipt straight to the default
-  printer and keeps a copy in the Exports folder; `Receipt PDF` asks where to
-  save it (that is the file you send to the customer).
-* **List PDF / Due list PDF** — print or share a report of what is on screen.
-* **File → Backup database** copies the database into `Backups` with a
-  timestamp. Do it regularly, and keep a copy on Google Drive too.
-* **Tools → Settings** changes the company name, address, phone, email, receipt
-  prefix, currency symbol, the terms printed on the receipt, and the tour names
-  offered in the dropdown.
+* **Overview** shows this month's tour bookings, seats sold, outstanding tour
+due, bus-ticket count and upcoming departures.
+* **Tour bookings** — choose a tour/date, click **Map**, select available seats,
+then save. Select a row and edit it to change customer details, seats, status,
+or payment; due is recalculated as Total − Advance. The seat map excludes the
+currently edited booking from its occupied-seat list.
+* **Tours & monthly reports** — add a tour, set its seat capacity, or select a
+tour to edit it. **Archive (keep history)** removes it from new-booking choices
+while retaining its bookings and reports. **Delete tour + bookings** permanently
+removes that tour and its associated booking/payment records after confirmation.
+Choose a travel month (`YYYY-MM`) and use **Monthly PDF** or **Export CSV**.
+* **Bus tickets** — enter a route and date, choose the number of passengers,
+then click **Map**. Choose Male or Female before selecting each open seat; Male
+seats are blue and Female seats are pink. Enter fare per passenger and the paid
+amount; the due amount is calculated for the whole group. Save, edit, cancel or
+delete a group ticket, then print a receipt showing its seats and genders. Seat
+occupancy is scoped to route + travel date. Group bus tickets remain completely
+separate from tour bookings and their numbering.
+* **Search and filters** apply to the relevant list. Select a booking or ticket
+row to load it for editing (double-click also works). Cancelled records stay in
+history but do not occupy a seat or add to payment totals.
+* **File → Backup database** copies all local data into `Backups` with a
+timestamp. Keep a second copy somewhere safe.
+* **Tools → Settings** changes the company and owner names, phone numbers,
+address, email, receipt prefix, currency symbol, and printed terms.
 
-Keyboard shortcuts: `Ctrl+N` new · `Ctrl+S` save · `Ctrl+F` jump to search.
+Keyboard shortcuts for the tour-booking page: `Ctrl+N` new · `Ctrl+S` save ·
+`Ctrl+F` jump to search.
 
 ## 5. Project layout
 
@@ -113,15 +168,15 @@ desktop/
   rajshahi_tours.spec    PyInstaller build recipe
   build_windows.bat      one-click Windows build
   build_linux_mac.sh     Linux/macOS build
-  requirements.txt       nothing required; uharfbuzz optional
-  assets/fonts/          Hind Siliguri (SIL Open Font License) for the PDFs
+  requirements.txt       HarfBuzz dependency for correct Bangla shaping
+  assets/fonts/          Li Abu J M Akkas Unicode (Bangla) + Hind Siliguri (Latin)
   rtt/
     config.py            settings, paths, money/date formatting
-    db.py                SQLite storage, CSV export, backup/restore
+    db.py                SQLite booking, tour and bus-ticket storage; CSV/backup
     ttf.py               TrueType parser + subsetter
     pdf.py               PDF writer with embedded subset fonts
     text.py              text shaping and measuring
-    documents.py         receipt and booking-list layouts
+    documents.py         branded receipt, ticket and monthly-report layouts
     ui.py                the Tkinter application
   samples/               example PDFs
   tests/                 headless tests (python tests/test_app.py)
@@ -130,13 +185,15 @@ desktop/
 ## 6. Tests
 
 ```bash
-python tests/test_app.py          # database, formatting, UI logic (no deps)
-python tests/test_pdf_render.py   # rendering checks (needs pymupdf, pillow,
-                                  # fonttools, uharfbuzz - skipped if absent)
+python -m pip install -r requirements.txt
+python tests/test_app.py          # database, formatting, UI logic
+python -m pip install PyMuPDF Pillow fonttools
+python tests/test_pdf_render.py   # rasterized glyph-position checks
 ```
 
-`test_pdf_render.py` rasterises a page and compares the ink against the
-font outlines, so a regression in glyph placement fails the suite immediately.
+The headless tests use a small Tkinter stand-in; they need the required
+`uharfbuzz` dependency listed above. The optional render tests also install
+PyMuPDF, Pillow and fontTools to rasterize PDFs and verify glyph placement.
 
 ## 7. If something goes wrong
 
@@ -147,8 +204,10 @@ font outlines, so a regression in glyph placement fails the suite immediately.
 
 ## 8. Notes
 
-* Amounts are stored as numbers and printed with two decimals; the receipt also
-  spells the amount out in words (`Taka Twelve Thousand Five Hundred Only`).
-* Printing a PDF and *sending* it are the same file — after saving, the program
+* Amounts are stored as numbers and printed with two decimals; receipts also
+  spell the amount out in words (`Taka Twelve Thousand Five Hundred Only`).
+* Printing a PDF and *sending* it use the same file — after saving, the program
   asks whether to open it, and you can attach it to WhatsApp or email.
-* The program never sends anything anywhere: no internet connection is used.
+* The desktop app never sends anything anywhere and does not sync with the
+  website or another computer. All bookings and seat locks are local to this
+  database. Back it up before moving the program or computer.

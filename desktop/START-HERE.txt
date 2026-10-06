@@ -1,58 +1,72 @@
-RAJSHAHI TOURS & TRAVELS - BOOKING & RECEIPT MANAGER (DESKTOP)
-===============================================================
-This program runs on your own computer. Nothing is sent anywhere.
-No internet connection is used.
+RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.1.9)
+===================================================================
+This program runs on your own computer. Bookings and ticket records stay in a
+local database; nothing is sent to the website or over the internet.
 
 
 HOW TO OPEN IT
 --------------
-1. Install Python 3.10 or newer from  https://www.python.org/downloads/
-   WINDOWS: during setup, TICK the box "Add Python to PATH".
-2. Double-click  app.py
+WINDOWS EXE: unzip the download and double-click RajshahiTours.exe.
 
-   If double-clicking does not work:
-     - Open the folder in a terminal / command prompt and type:
-         python app.py
-     - On Linux, if the window does not appear, run:
-         sudo apt install python3-tk
+SOURCE ZIP: install Python 3.10 or newer from https://www.python.org/downloads/
+(tick "Add Python to PATH" during setup). Open a terminal in the extracted
+folder, run `python -m pip install -r requirements.txt`, then `python app.py`.
+This installs HarfBuzz so Bangla text prints with correct letter shaping.
+
+If the source app does not open on Linux, install Tkinter with:
+  sudo apt install python3-tk
 
 
 WHAT THE PROGRAM DOES
 ---------------------
-* Type the nine booking details (name, phone, seat, amounts, dates, tour).
-* The Due amount is calculated for you as you type.
-* Save the booking - it is kept in a local database on this computer.
-* Click "Receipt PDF" to make the page you hand or send to the customer.
-* Click "List PDF" or "Due list PDF" for a report of what is on the screen.
-* Tools -> Settings: change company name, address, phone, receipt prefix,
-  currency symbol, the printed terms and the tour-name list.
+* Overview: see this month's tour bookings, seats, due and upcoming trips.
+* Tour bookings: enter a passenger name and phone, choose the tour date, select
+  a tour and open seats on the map, then save. After a successful new or edited
+  booking, the inputs clear and a fresh unique serial is shown. Select an existing
+  row when you want to edit it.
+* Tours & monthly reports: add tours with a short unique code and seat capacity;
+  blank codes use initials from the tour name. New tour booking numbers include
+  the code (for example, CBT-RTT-2026-0001). Export a selected travel month as PDF
+  or CSV. Archive keeps booking history; **Delete tour + bookings** permanently
+  erases the tour and its saved booking/payment records after confirmation.
+* Bus tickets are separate from tour bookings and use their own ticket numbers.
+  Choose a passenger count, assign the same number of open seats, and mark each
+  Male (blue) or Female (pink). Fare is per passenger; one group ticket stores
+  the contact and all passenger seats. Cancelled tickets release every seat.
+* Fonts and input boxes across the app are larger and easier to read.
+* The supplied company mark appears in the app window, task switcher and Windows
+  executable icon. Tour booking memos are in Bangla and include booking terms;
+  the office address is Vodra Mor, Rajshahi. Bus ticket receipts remain separate.
+* Print branded tour receipts and bus tickets; cancelled records release seats.
+* Use File -> Backup database regularly to make a copy of every local record.
 
-Example PDFs are already in the  samples  folder - open them to see the
-receipt and the booking-list report.
+Tour receipts use the agency teal/orange mark. Owner Safayet Hossain and phone
+01782250709 appear at the upper right. Update business details in Tools -> Settings.
 
 
-WHERE YOUR BOOKINGS ARE KEPT
-----------------------------
-  Documents\Rajshahi Tours & Travels\bookings.db      <- every booking
+WHERE YOUR RECORDS ARE KEPT
+---------------------------
+  Documents\Rajshahi Tours & Travels\bookings.db      <- bookings, tours, tickets
   Documents\Rajshahi Tours & Travels\settings.json    <- your settings
   Documents\Rajshahi Tours & Travels\Backups\         <- backups
 
-On macOS / Linux the same folder is inside your home folder.
-Use  File -> Backup database  regularly, and keep a copy on Google Drive.
+On macOS / Linux the same folder is inside your home folder. Help -> About shows
+the exact data folder. Keep a second backup somewhere safe.
 
-IMPORTANT: do not delete bookings.db - it is all your data.
+IMPORTANT: do not delete bookings.db - it contains all tour bookings, the tour
+catalogue and offline bus tickets.
 
 
-WANT A DOUBLE-CLICKABLE .EXE (WINDOWS)
---------------------------------------
-Double-click  build_windows.bat  once. It makes
-dist\RajshahiTours\RajshahiTours.exe . Copy that whole "RajshahiTours"
-folder to the office computer and put a shortcut on the desktop.
+WANT A DOUBLE-CLICKABLE WINDOWS EXE?
+------------------------------------
+Run build_windows.bat from a Windows computer. It makes
+dist\RajshahiTours\RajshahiTours.exe. Copy that whole "RajshahiTours" folder
+to the office computer and make a shortcut on the desktop.
 
-On macOS / Linux run  ./build_linux_mac.sh  instead.
+On macOS / Linux run ./build_linux_mac.sh instead.
 
 
 MORE HELP
 ---------
-The full manual is README.md in this folder. The user guide PDF and all
-downloads are on the GitHub releases page of this project.
+The full manual is README.md in this folder. The app does not sync with the
+website or other computers. Each office installation has its own local database.

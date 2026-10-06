@@ -6,8 +6,9 @@ reph glyph that has no direct Unicode code point. This writer therefore embeds
 CIDFontType2 subsets (Identity-H) and prints the glyph ids HarfBuzz produced,
 with ``TJ`` adjustments for the positions HarfBuzz calculated.
 
-Only the standard library is required; ``uharfbuzz`` is used for shaping when
-it is installed (see :mod:`rtt.text`).
+``uharfbuzz`` is required for correct Bangla conjuncts and vowel placement
+(see :mod:`rtt.text`); the desktop requirements and packaged Windows build
+include it.
 """
 
 from __future__ import annotations
@@ -36,6 +37,60 @@ def _pdf_color(color: Optional[Sequence[float]]) -> str:
         return ""
     r, g, b = (max(0.0, min(1.0, float(c))) for c in color[:3])
     return f"{_fmt(r)} {_fmt(g)} {_fmt(b)}"
+
+
+_JPEG_SOF_MARKERS = frozenset((0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7,
+                               0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF))
+
+
+def _jpeg_info(data: bytes) -> Tuple[int, int, int]:
+    """Return width, height and channel count from a JPEG start-of-frame marker."""
+    if data[:2] != bytes((255, 216)):
+        raise ValueError("The embedded image is not a JPEG file")
+    offset = 2
+    while offset < len(data):
+        if data[offset] != 0xFF:
+            offset += 1
+            continue
+        while offset < len(data) and data[offset] == 0xFF:
+            offset += 1
+        if offset >= len(data):
+            break
+        marker = data[offset]
+        offset += 1
+        if marker in (0xD8, 0xD9, 0x01) or 0xD0 <= marker <= 0xD7:
+            continue
+        if marker == 0xDA:  # image data starts; no frame header was found
+            break
+        if offset + 2 > len(data):
+            break
+        segment_length = int.from_bytes(data[offset:offset + 2], "big")
+        if segment_length < 2 or offset + segment_length > len(data):
+            break
+        if marker in _JPEG_SOF_MARKERS:
+            start = offset + 2
+            if start + 6 > len(data):
+                break
+            height = int.from_bytes(data[start + 1:start + 3], "big")
+            width = int.from_bytes(data[start + 3:start + 5], "big")
+            channels = data[start + 5]
+            if width > 0 and height > 0 and channels in (1, 3, 4):
+                return width, height, channels
+            break
+        offset += segment_length
+    raise ValueError("Unable to read dimensions from the JPEG image")
+
+
+class JpegResource:
+    """A JPEG XObject embedded in the output PDF without pixel re-encoding."""
+
+    def __init__(self, key: str, data: bytes) -> None:
+        self.key = key
+        self.data = data
+        self.width, self.height, self.channels = _jpeg_info(data)
+        self.color_space = {1: "DeviceGray", 3: "DeviceRGB", 4: "DeviceCMYK"}[self.channels]
+        self.resource_name = ""
+        self.object_number = 0
 
 
 class FontResource:
@@ -168,9 +223,10 @@ class Canvas:
             return
         if w <= 0 or h <= 0:
             return
-        y1 = self._y(y)
-        y2 = self._y(y + h)
-        path = self._path(x, y1, w, h, radius)
+        # Coordinates in Canvas are top-left based; PDF rectangle origins are
+        # bottom-left based, so position the lower edge at page_height - (y+h).
+        y_bottom = self._y(y + h)
+        path = self._path(x, y_bottom, w, h, radius)
         ops: List[str] = []
         if dash:
             ops.append(f"[{' '.join(_fmt(d) for d in dash)}] 0 d")
@@ -183,6 +239,29 @@ class Canvas:
         if dash:
             ops.append("[] 0 d")
         self.ops.append(" ".join(ops))
+
+    def path(self, commands: Sequence[Tuple], fill: Sequence[float]) -> None:
+        """Fill an absolute M/L/C/Z vector path in top-left page coordinates."""
+        if not self._emitting:
+            return
+        operators: List[str] = []
+        for command in commands:
+            name = str(command[0]).upper()
+            values = command[1:]
+            if name == "M" and len(values) == 2:
+                operators.append(f"{_fmt(float(values[0]))} {_fmt(self._y(float(values[1])))} m")
+            elif name == "L" and len(values) == 2:
+                operators.append(f"{_fmt(float(values[0]))} {_fmt(self._y(float(values[1])))} l")
+            elif name == "C" and len(values) == 6:
+                operators.append(
+                    f"{_fmt(float(values[0]))} {_fmt(self._y(float(values[1])))} "
+                    f"{_fmt(float(values[2]))} {_fmt(self._y(float(values[3])))} "
+                    f"{_fmt(float(values[4]))} {_fmt(self._y(float(values[5])))} c"
+                )
+            elif name == "Z":
+                operators.append("h")
+        if operators:
+            self.ops.append(f"{_pdf_color(fill)} rg {' '.join(operators)} f")
 
     def _path(self, x: float, y_bottom: float, w: float, h: float, radius: float) -> str:
         """Rounded-rectangle path built from lines and cubic beziers."""
@@ -202,6 +281,18 @@ class Canvas:
             f"{_fmt(x)} {_fmt(y_bottom + r)} l "
             f"{_fmt(x)} {_fmt(y_bottom + r - k)} {_fmt(x + r - k)} {_fmt(y_bottom)} {_fmt(x + r)} {_fmt(y_bottom)} c "
             f"h"
+        )
+
+    def image(self, key: str, x: float, y: float, width: float, height: float) -> None:
+        """Draw a registered JPEG XObject at a top-left based position."""
+        if not self._emitting or width <= 0 or height <= 0:
+            return
+        resource = self.doc.images.get(key)
+        if resource is None:
+            raise KeyError(f"PDF image resource {key!r} has not been registered")
+        self.ops.append(
+            f"q {_fmt(width)} 0 0 {_fmt(height)} {_fmt(x)} {_fmt(self._y(y + height))} cm "
+            f"/{resource.resource_name} Do Q"
         )
 
     # ---------------------------------------------------------------- text
@@ -426,6 +517,7 @@ class PdfDocument:
             key: FontResource(key, face, self._postscript_name(key, face))
             for key, face in faces.items()
         }
+        self.images: Dict[str, JpegResource] = {}
         self._collecting = False
 
     @staticmethod
@@ -434,6 +526,16 @@ class PdfDocument:
         stem = name.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
         stem = stem[:-4] if stem.lower().endswith(".ttf") else stem
         return "".join(ch if ch.isalnum() else "-" for ch in stem) or "Font"
+
+    def add_jpeg_image(self, key: str, path: str) -> JpegResource:
+        """Register a JPEG once so any page can paint it as an image XObject."""
+        if key in self.images:
+            return self.images[key]
+        with open(path, "rb") as handle:
+            resource = JpegResource(key, handle.read())
+        resource.resource_name = f"Im{len(self.images) + 1}"
+        self.images[key] = resource
+        return resource
 
     # ------------------------------------------------------------- shaping
 
@@ -447,7 +549,7 @@ class PdfDocument:
         replacements = {
             "‘": "'", "’": "'", "“": '"', "”": '"',
             "–": "-", "—": "-", "…": "...", " ": " ",
-            "|": "-", "%": " percent", "#": " no ",
+            "→": "->", "·": "-", "#": " no ",
         }
         out = []
         for ch in text:
@@ -509,6 +611,21 @@ class PdfDocument:
             resource = self.resources[key]
             font_object_numbers.append(self._write_font(objects, add, add_stream, resource))
 
+        image_object_numbers: Dict[str, int] = {}
+        for key in sorted(self.images):
+            image = self.images[key]
+            decode = b" /DecodeParms << /ColorTransform 1 >>" if image.channels == 3 else b""
+            body = (
+                b"<< /Type /XObject /Subtype /Image /Width " + str(image.width).encode()
+                + b" /Height " + str(image.height).encode()
+                + b" /ColorSpace /" + image.color_space.encode()
+                + b" /BitsPerComponent 8 /Filter /DCTDecode" + decode
+                + b" /Length " + str(len(image.data)).encode() + b" >>\nstream\n"
+                + image.data + b"\nendstream"
+            )
+            image.object_number = add(body)
+            image_object_numbers[key] = image.object_number
+
         page_ids: List[int] = []
         pages_id = add(b"")  # placeholder, filled below
         for canvas in self.pages:
@@ -518,7 +635,17 @@ class PdfDocument:
                 f"/{self.resources[key].resource_name} {num} 0 R".encode()
                 for key, num in zip(sorted(self.resources), font_object_numbers)
             )
-            resources = b"<< /Font << " + font_ref + b" >> /ProcSet [/PDF /Text] >>"
+            resource_parts = [b"/Font << " + font_ref + b" >>"]
+            if image_object_numbers:
+                image_ref = b" ".join(
+                    f"/{self.images[key].resource_name} {num} 0 R".encode()
+                    for key, num in sorted(image_object_numbers.items())
+                )
+                resource_parts.append(b"/XObject << " + image_ref + b" >>")
+                procset = b"/ProcSet [/PDF /Text /ImageC]"
+            else:
+                procset = b"/ProcSet [/PDF /Text]"
+            resources = b"<< " + b" ".join(resource_parts + [procset]) + b" >>"
             page_id = add(
                 b"<< /Type /Page /Parent "
                 + str(pages_id).encode()

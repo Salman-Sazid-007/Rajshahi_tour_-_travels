@@ -17,7 +17,7 @@ on:
       version:
         description: 'Version to publish (without the desktop-v prefix)'
         required: true
-        default: '1.0.0'
+        default: '1.1.9'
 
 permissions:
   contents: write
@@ -43,7 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Package the pure-Python desktop app
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Package the Python desktop source app
         run: |
           VERSION="${{ needs.version.outputs.version }}"
           rm -rf /tmp/pkg && mkdir -p /tmp/pkg/RajshahiTours-Desktop
@@ -55,12 +58,14 @@ jobs:
           find /tmp/pkg \( -name '__pycache__' -o -name '*.pyc' -o -name '.DS_Store' \) -exec rm -rf {} +
           (cd /tmp/pkg && zip -r -9 -X "RajshahiTours-Desktop-${VERSION}.zip" RajshahiTours-Desktop)
           mv "/tmp/pkg/RajshahiTours-Desktop-${VERSION}.zip" .
+      - name: Install PDF shaping and render-test dependencies
+        run: python3 -m pip install -r desktop/requirements.txt PyMuPDF Pillow fonttools
       - name: Smoke-test the packaged copy
         run: |
           VERSION="${{ needs.version.outputs.version }}"
           rm -rf /tmp/verify && mkdir -p /tmp/verify
           (cd /tmp/verify && unzip -q "$GITHUB_WORKSPACE/RajshahiTours-Desktop-${VERSION}.zip")
-          (cd /tmp/verify/RajshahiTours-Desktop && python3 tests/test_app.py)
+          (cd /tmp/verify/RajshahiTours-Desktop && python3 tests/test_app.py && python3 tests/test_pdf_render.py)
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-source-zip
@@ -75,11 +80,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install PDF shaping dependency
+        run: python -m pip install --upgrade pip -r desktop/requirements.txt
       - name: Make sure the app still passes its tests
         working-directory: desktop
         run: python tests/test_app.py
       - name: Install PyInstaller
-        run: python -m pip install --upgrade pip pyinstaller
+        run: python -m pip install pyinstaller
       - name: Build RajshahiTours.exe
         working-directory: desktop
         run: pyinstaller rajshahi_tours.spec --noconfirm --clean

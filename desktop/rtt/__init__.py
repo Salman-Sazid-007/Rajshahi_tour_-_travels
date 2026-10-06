@@ -1,4 +1,4 @@
-"""Rajshahi Tours & Travels - Booking & Receipt Manager.
+"""Rajshahi Tours & Travels - Offline Tour & Bus Manager.
 
 Modules:
     config      settings, paths, money and date helpers
@@ -10,4 +10,4 @@ Modules:
     ui          the Tkinter application
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.9"

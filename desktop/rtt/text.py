@@ -6,9 +6,9 @@ glyphs. HarfBuzz (through the ``uharfbuzz`` wheel) does that job; this module
 wraps it and splits every string into same-script runs so a Latin font can
 supply the digits and punctuation that the Bangla subset does not carry.
 
-If HarfBuzz is not installed the module degrades to a plain character -> glyph
-lookup. Latin text still comes out perfectly; Bangla simply loses its
-reordering, so the app warns the user in that case.
+HarfBuzz is required for correct Bangla conjuncts and vowel placement. Latin
+text can still be shaped without it, but Bangla PDF output fails with a clear
+install hint instead of silently producing broken text.
 """
 
 from __future__ import annotations
@@ -106,6 +106,11 @@ class Shaper:
         if not text:
             return []
         if _hb is None:
+            if variant == "bangla":
+                raise RuntimeError(
+                    "Correct Bangla PDF text requires HarfBuzz. Install the desktop "
+                    "dependencies with: python -m pip install -r requirements.txt"
+                )
             return self._shape_simple(text, variant)
         face = self.face(variant)
         buffer = _hb.Buffer()
@@ -113,16 +118,22 @@ class Shaper:
         buffer.guess_segment_properties()
         try:
             _hb.shape(self._hb_font(variant), buffer)
-        except Exception:
+        except Exception as exc:
+            if variant == "bangla":
+                raise RuntimeError(f"HarfBuzz failed to shape Bangla text: {exc}") from exc
             return self._shape_simple(text, variant)
         glyphs: List[Glyph] = []
         infos = list(buffer.glyph_infos)
         positions = list(buffer.glyph_positions)
         if len(infos) != len(positions):  # be defensive, the layout must not break
+            if variant == "bangla":
+                raise RuntimeError("HarfBuzz returned mismatched Bangla glyph positions")
             return self._shape_simple(text, variant)
         for info, pos in zip(infos, positions):
             gid = info.codepoint
             if gid >= face.num_glyphs:
+                if variant == "bangla":
+                    raise RuntimeError("HarfBuzz produced a glyph missing from the Bangla font")
                 gid = 0
             glyphs.append(
                 Glyph(

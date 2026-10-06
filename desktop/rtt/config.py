@@ -15,8 +15,8 @@ import threading
 from typing import Any, Dict, List
 
 APP_TITLE = "Rajshahi Tours & Travels"
-APP_SUBTITLE = "Booking & Receipt Manager"
-APP_VERSION = "1.0.0"
+APP_SUBTITLE = "Offline Tour & Bus Manager"
+APP_VERSION = "1.1.9"
 
 BOOKING_FIELDS = (
     "booking_no",
@@ -31,22 +31,29 @@ BOOKING_FIELDS = (
     "tour_name",
 )
 
+DEFAULT_TERMS_BN = (
+    "বুকিং ও পেমেন্ট: সিট নিশ্চিত করতে ৫০% অফেরতযোগ্য অগ্রিম দিতে হবে। বাকি টাকা যাত্রা শুরুর দিন পরিশোধ করতে হবে।",
+    "বাতিল ও রিফান্ড: বুকিং বাতিল করলে অগ্রিম ফেরত দেওয়া হবে না। তবে বুকিং করা সিটে অন্য কাউকে পাঠানো যাবে।",
+    "প্রাকৃতিক বা রাজনৈতিক কারণ: খারাপ আবহাওয়া, রাজনৈতিক অস্থিরতা বা অন্য কোনো অনাকাঙ্ক্ষিত পরিস্থিতিতে ট্যুর স্থগিত বা তারিখ পরিবর্তন হতে পারে।",
+    "রুম ও সিট প্ল্যান: কাপল রুমের জন্য আলাদা চার্জ প্রযোজ্য। বাসের সিট সাধারণত বুকিংয়ের ক্রমানুসারে বণ্টন করা হয়।",
+    "আচরণবিধি ও নিরাপত্তা: গ্রুপের শৃঙ্খলা ও স্থানীয় আইন মেনে চলতে হবে। মাদক সম্পূর্ণ নিষিদ্ধ।",
+    "দায়বদ্ধতা: ব্যক্তিগত মালামাল ও নিজের নিরাপত্তার দায়িত্ব নিজেকেই নিতে হবে।",
+)
+
 DEFAULT_SETTINGS: Dict[str, Any] = {
     "company_name": "Rajshahi Tours & Travels",
-    "company_tagline": "Tour operator, bus service & ticketing",
-    "address": "Sopura Mor, near Shaheb Bazar Zero Point, Boalia, Rajshahi 6100",
+    "company_tagline": "ট্যুর, বাস সার্ভিস ও টিকিটিং",
+    "address": "ভদ্রা মোড়, রাজশাহী",
     "phone": "01782250709",
     "whatsapp": "8801782250709",
-    "email": "info@rajshahitours.com",
+    "email": "rajshahitoursandtravels@gmail.com",
+    "owner_name": "Safayet Hossain",
+    "owner_phone": "01782250709",
     "receipt_prefix": "RTT",
     "next_receipt_no": 1,
     "currency": "Tk.",
-    "footer_note": "Thank you for travelling with Rajshahi Tours & Travels.",
-    "terms": (
-        "Advance payment is non-refundable within 7 days of the tour date.",
-        "Please carry this receipt on the day of departure.",
-        "Seat numbers are confirmed only after full payment unless stated otherwise.",
-    ),
+    "footer_note": "রাজশাহী ট্যুরস অ্যান্ড ট্রাভেলসের সঙ্গে ভ্রমণের জন্য ধন্যবাদ।",
+    "terms": DEFAULT_TERMS_BN,
     "tour_suggestions": (
         "Cox's Bazar Tour",
         "Sajek Valley Tour",
@@ -61,6 +68,24 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     ),
     "window_geometry": "1180x720",
     "last_export_dir": "",
+}
+
+_LEGACY_DEFAULT_TERMS_EN = (
+    "Advance payment is non-refundable within 7 days of the tour date.",
+    "Please carry this receipt on the day of departure.",
+    "Seat numbers are confirmed only after full payment unless stated otherwise.",
+)
+
+# Earlier shipped defaults, keyed by setting. A stored value that still equals
+# one of these was never customised by the office, so it is safe to upgrade.
+_LEGACY_DEFAULT_SETTINGS = {
+    "company_tagline": ("Tour operator, bus service & ticketing",),
+    "address": (
+        "Sopura Mor, near Shaheb Bazar Zero Point, Boalia, Rajshahi 6100",
+        "Vodra Mor, Rajshahi",
+    ),
+    "email": ("info@rajshahitours.com",),
+    "footer_note": ("Thank you for travelling with Rajshahi Tours & Travels.",),
 }
 
 _lock = threading.Lock()
@@ -81,8 +106,11 @@ def font_paths() -> Dict[str, str]:
     return {
         "latin": asset_path("fonts", "HindSiliguri-Latin-Regular.ttf"),
         "latin-bold": asset_path("fonts", "HindSiliguri-Latin-Bold.ttf"),
-        "bangla": asset_path("fonts", "HindSiliguri-Bengali-Regular.ttf"),
-        "bangla-bold": asset_path("fonts", "HindSiliguri-Bengali-Bold.ttf"),
+        "bangla": asset_path("fonts", "Li Abu J M Akkas Unicode.ttf"),
+        # Lipighor provides this Unicode family in regular and italic only; use
+        # its real Unicode regular face for both weights rather than synthetic
+        # bolding that can damage conjuncts and vowel marks.
+        "bangla-bold": asset_path("fonts", "Li Abu J M Akkas Unicode.ttf"),
     }
 
 
@@ -142,6 +170,15 @@ def load_settings() -> Dict[str, Any]:
                     settings[key] = value
         except (OSError, ValueError):
             pass
+
+    # Upgrade untouched defaults from earlier versions without overwriting any
+    # settings the office owner deliberately customized.
+    for key, old_values in _LEGACY_DEFAULT_SETTINGS.items():
+        if settings.get(key) in old_values:
+            settings[key] = DEFAULT_SETTINGS[key]
+    old_terms = settings.get("terms") or ()
+    if isinstance(old_terms, (list, tuple)) and tuple(old_terms) == _LEGACY_DEFAULT_TERMS_EN:
+        settings["terms"] = DEFAULT_TERMS_BN
     return settings
 
 
