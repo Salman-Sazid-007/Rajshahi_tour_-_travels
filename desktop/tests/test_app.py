@@ -751,7 +751,10 @@ class DocumentTests(unittest.TestCase):
         data = documents.bus_ticket_receipt(ticket, self.settings)
         self.assertTrue(data.startswith(b"%PDF"))
         self.assertTrue(data.rstrip().endswith(b"%%EOF"))
-        import pymupdf
+        try:
+            import pymupdf  # optional render dependency (not installed in the Windows build job)
+        except ImportError:
+            return
         text = pymupdf.open(stream=data, filetype="pdf")[0].get_text()
         self.assertIn("Bus 2", text)
         self.assertIn("45 seats", text)
