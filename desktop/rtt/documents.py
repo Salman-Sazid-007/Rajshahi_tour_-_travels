@@ -472,11 +472,15 @@ def bus_ticket_receipt(ticket: Dict[str, Any], settings: Dict[str, Any]) -> byte
             for seat in seats
         )
         passenger_count = len(seats) or 1
+        bus_no = str(ticket.get("bus_no") or "1").strip() or "1"
+        bus_label = str(ticket.get("bus_label") or "").strip()
         values = [
             ("Booking contact", str(ticket.get("name", ""))),
             ("Phone number", str(ticket.get("phone", ""))),
             ("Travel date", format_date(ticket.get("travel_date", ""))),
             ("Departure time", str(ticket.get("departure_time", ""))),
+            ("Bus", f"Bus {bus_no}"),
+            ("Coach type", bus_label or "—"),
             ("Passenger count", str(passenger_count)),
             ("Ticket status", str(ticket.get("status", "Booked"))),
         ]

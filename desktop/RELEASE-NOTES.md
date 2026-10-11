@@ -1,3 +1,25 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.2.1
+
+* **41- and 45-seat coaches for daily bus tickets too.** The *Bus tickets* form
+  gains a **Bus & coach type** row. Every route/date runs one 41-seat bus until
+  the office changes it; pick **45 seats** there and that day's bus (only that
+  day) becomes a 45-seat coach with the K-1 … K-5 back row.
+* **Choose which bus runs on which date.** Press **＋ Bus** to run a second (or
+  third …) coach on a busy day — each bus has its own number and its own 41/45
+  type — and **✕** to take an empty bus off the trip again. The drop-down lists
+  the day's buses (`Bus 1 · 41 seats`, `Bus 2 · 45 seats`); the seat map,
+  passenger-count limit and "filled / open" summary are per bus, with an
+  all-buses total when more than one coach runs.
+* **Tickets know their bus.** Seats are checked against the chosen bus (so A-1
+  can be sold on bus 1 and again on bus 2, and K-5 is refused on a 41-seater).
+  The bus number appears in the ticket table, CSV export and the printed ticket
+  (which now shows "Bus 2" and "Coach type 45 seats").
+* **Safe changes.** A bus cannot be switched to a coach type that lacks one of
+  its sold seats, cannot be removed while it still has tickets, and a trip
+  always keeps at least one bus.
+* **Automatic upgrade.** Existing bus tickets are assigned to bus 1 of their
+  route/date, which keeps the classic plan's seat labels (now with J-5 added).
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.2.0
 
 * **Two coach types — 41 and 45 seats.** Every bus is now either a 41-seat

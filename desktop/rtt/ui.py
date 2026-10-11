@@ -927,7 +927,7 @@ class BookingApp:
             "route": tk.StringVar(value="Rajshahi → Dhaka"), "travel_date": tk.StringVar(),
             "departure_time": tk.StringVar(value="09:00 AM"), "seat": tk.StringVar(),
             "fare": tk.StringVar(value="0"), "advance": tk.StringVar(value="0"),
-            "status": tk.StringVar(value="Booked"),
+            "status": tk.StringVar(value="Booked"), "bus_no": tk.StringVar(),
         }
         self.bus_due_var = tk.StringVar(value="0.00")
         self.bus_passenger_count_var = tk.StringVar(value="1")
@@ -939,6 +939,7 @@ class BookingApp:
         row = self._bus_form_row(card, row, "Phone / WhatsApp", "phone")
         row = self._bus_form_row(card, row, "Route *", "route", combo=True, values=self.db.bus_routes())
         row = self._bus_form_row(card, row, "Travel date *", "travel_date", date=True)
+        row = self._build_trip_bus_row(card, row)
         row = self._bus_form_row(card, row, "Departure time", "departure_time")
         ttk.Label(card, text="Number of passengers *", style="Field.TLabel").grid(
             row=row, column=0, sticky="w", pady=(7, 0))
@@ -989,9 +990,43 @@ class BookingApp:
             side="left", expand=True, fill="x", padx=(4, 0))
         for key in ("fare", "advance"):
             self.bus_vars[key].trace_add("write", lambda *_: self.update_bus_due())
-        self.bus_vars["route"].trace_add("write", lambda *_: self.update_bus_seat_summary())
-        self.bus_vars["travel_date"].trace_add("write", lambda *_: self.update_bus_seat_summary())
+        self.bus_vars["route"].trace_add("write", lambda *_: self.refresh_trip_bus_choices())
+        self.bus_vars["travel_date"].trace_add("write", lambda *_: self.refresh_trip_bus_choices())
         self.bus_vars["seat"].trace_add("write", lambda *_: self.update_bus_seat_summary())
+        self.refresh_trip_bus_choices()
+
+    def _build_trip_bus_row(self, card: ttk.Frame, row: int) -> int:
+        """Bus picker for the daily route: which bus runs that day and its coach type."""
+        ttk.Label(card, text="Bus & coach type *", style="Field.TLabel").grid(
+            row=row, column=0, sticky="w", pady=(6, 0))
+        holder = ttk.Frame(card, style="Card.TFrame")
+        holder.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
+        holder.columnconfigure(0, weight=3)
+        holder.columnconfigure(1, weight=2)
+        self.trip_bus_choice_var = tk.StringVar()
+        self.trip_bus_choice_map: Dict[str, str] = {}
+        self.trip_bus_combo = ttk.Combobox(
+            holder, textvariable=self.trip_bus_choice_var, values=(), state="readonly",
+            style="Input.TCombobox", font=self.input_font, width=14,
+        )
+        self.trip_bus_combo.grid(row=0, column=0, sticky="ew")
+        self.trip_bus_type_var = tk.StringVar()
+        self.trip_bus_type_combo = ttk.Combobox(
+            holder, textvariable=self.trip_bus_type_var, values=tuple(db.BUS_TYPES.values()),
+            state="readonly", style="Input.TCombobox", font=self.input_font, width=10,
+        )
+        self.trip_bus_type_combo.grid(row=0, column=1, sticky="ew", padx=(6, 0))
+        ttk.Button(holder, text="＋ Bus", width=7, command=self.add_trip_bus).grid(
+            row=0, column=2, sticky="e", padx=(6, 0))
+        ttk.Button(holder, text="✕", width=3, command=self.remove_trip_bus).grid(
+            row=0, column=3, sticky="e", padx=(4, 0))
+        self.trip_bus_hint_var = tk.StringVar(value="One 41-seat bus runs by default; pick 45 seats or add a bus for busy days.")
+        ttk.Label(card, textvariable=self.trip_bus_hint_var, style="Muted.TLabel", wraplength=350,
+                  justify="left").grid(row=row + 2, column=0, columnspan=3, sticky="w", pady=(1, 0))
+        self._syncing_trip_bus = False
+        self.trip_bus_choice_var.trace_add("write", lambda *_: self.on_trip_bus_choice())
+        self.trip_bus_type_var.trace_add("write", lambda *_: self.on_trip_bus_type_change())
+        return row + 3
 
     def _bus_form_row(self, card: ttk.Frame, row: int, label: str, key: str,
                       combo: bool = False, values: Optional[List[str]] = None,
@@ -1045,7 +1080,7 @@ class BookingApp:
 
         columns = (
             ("ticket_no", "Ticket", 112), ("name", "Contact / lead", 135), ("phone", "Phone", 105),
-            ("route", "Route", 148), ("travel_date", "Travel date", 95),
+            ("route", "Route", 148), ("travel_date", "Travel date", 95), ("bus_no", "Bus", 48),
             ("departure_time", "Time", 78), ("passengers", "Pax", 58), ("seat", "Seat(s)", 125),
             ("fare", "Total fare", 92), ("advance", "Paid", 82), ("due", "Due", 82), ("status", "Status", 78),
         )
@@ -1503,7 +1538,151 @@ class BookingApp:
             count = int(str(self.bus_passenger_count_var.get() or "1"))
         except (AttributeError, TypeError, ValueError):
             count = 1
-        return max(1, min(40, count))
+        return max(1, min(self._trip_bus_capacity(), count))
+
+    # -- bus of the day -------------------------------------------------------
+    def _trip_route_and_date(self) -> Tuple[str, Optional[_dt.date]]:
+        route = str(self.bus_vars["route"].get() or "").strip()
+        travel_date = parse_date(str(self.bus_vars["travel_date"].get() or ""))
+        return route, travel_date
+
+    def current_trip_bus(self) -> Optional[Dict[str, Any]]:
+        """The bus the ticket is being sold on (route + date + bus number)."""
+        if not hasattr(self, "bus_vars"):
+            return None
+        route, travel_date = self._trip_route_and_date()
+        if not route or not travel_date:
+            return None
+        return self.db.trip_bus(route, travel_date.isoformat(), self.bus_vars["bus_no"].get())
+
+    def _trip_bus_capacity(self) -> int:
+        bus = self.current_trip_bus()
+        return int(bus["capacity"]) if bus else db.layout_capacity(db.DEFAULT_BUS_LAYOUT)
+
+    def refresh_trip_bus_choices(self) -> None:
+        """Fill the bus drop-down for the route/date and keep a valid choice."""
+        if not hasattr(self, "trip_bus_combo"):
+            return
+        route, travel_date = self._trip_route_and_date()
+        if route and travel_date:
+            buses = self.db.trip_buses(route, travel_date.isoformat())
+        else:
+            buses = [{"bus_no": "1", "layout": db.DEFAULT_BUS_LAYOUT,
+                      "label": db.layout_label(db.DEFAULT_BUS_LAYOUT)}]
+        self.trip_bus_choice_map = {self._bus_display(bus): bus["bus_no"] for bus in buses}
+        self.trip_bus_combo.configure(values=list(self.trip_bus_choice_map))
+        wanted = db.normalise_bus_no(self.bus_vars["bus_no"].get())
+        match = next((bus for bus in buses if bus["bus_no"].casefold() == wanted.casefold()), buses[0])
+        self._syncing_trip_bus = True
+        try:
+            self.trip_bus_choice_var.set(self._bus_display(match))
+            if self.bus_vars["bus_no"].get() != match["bus_no"]:
+                self.bus_vars["bus_no"].set(match["bus_no"])
+            type_values = list(db.BUS_TYPES.values())
+            if match["label"] not in type_values:
+                type_values.append(match["label"])  # classic plan of an old bus
+            self.trip_bus_type_combo.configure(values=type_values)
+            self.trip_bus_type_var.set(match["label"])
+        finally:
+            self._syncing_trip_bus = False
+        if len(buses) > 1:
+            self.trip_bus_hint_var.set(
+                f"{len(buses)} buses run this route on this date: "
+                + ", ".join(f"bus {bus['bus_no']} ({bus['label']})" for bus in buses) + "."
+            )
+        else:
+            self.trip_bus_hint_var.set(
+                "One bus runs this route on this date. Change its coach type here, or press ＋ Bus "
+                "to add a second coach for the day."
+            )
+        self.update_bus_seat_summary()
+
+    def on_trip_bus_choice(self) -> None:
+        if getattr(self, "_syncing_trip_bus", False):
+            return
+        bus_no = self.trip_bus_choice_map.get(self.trip_bus_choice_var.get())
+        if bus_no is not None and self.bus_vars["bus_no"].get() != bus_no:
+            previous = self.bus_vars["bus_no"].get()
+            self.bus_vars["bus_no"].set(bus_no)
+            if previous and self.bus_vars["seat"].get().strip():
+                # Seats belong to one bus; start the selection again on the new bus.
+                self.bus_vars["seat"].set("")
+                self.bus_seat_genders = {}
+        self.refresh_trip_bus_choices()
+
+    def on_trip_bus_type_change(self) -> None:
+        """The office picked 41 or 45 seats for the selected bus on this date."""
+        if getattr(self, "_syncing_trip_bus", False):
+            return
+        bus = self.current_trip_bus()
+        wanted = self.trip_bus_type_var.get()
+        if bus is None:
+            messagebox.showinfo("Choose the bus", "Enter the bus route and a valid travel date first.",
+                                parent=self.root)
+            self.refresh_trip_bus_choices()
+            return
+        if wanted == bus["label"]:
+            return
+        route, travel_date = self._trip_route_and_date()
+        try:
+            layout = db.normalise_layout(wanted)
+            self.db.set_trip_bus(route, travel_date.isoformat(), bus["bus_no"], layout)
+        except ValueError as exc:
+            messagebox.showerror("Coach type not changed", str(exc), parent=self.root)
+            self.refresh_trip_bus_choices()
+            return
+        allowed = set(db.bus_seat_ids(layout))
+        kept = [seat for seat in db.seat_tokens(self.bus_vars["seat"].get()) if seat in allowed]
+        if len(kept) != len(db.seat_tokens(self.bus_vars["seat"].get())):
+            self.bus_vars["seat"].set(", ".join(kept))
+            self.bus_seat_genders = {seat: g for seat, g in self.bus_seat_genders.items() if seat in kept}
+        self.refresh_trip_bus_choices()
+        self.set_status(f"Bus {bus['bus_no']} on {travel_date.isoformat()} now runs as a {db.layout_label(layout)} coach.")
+
+    def add_trip_bus(self) -> None:
+        route, travel_date = self._trip_route_and_date()
+        if not route or not travel_date:
+            messagebox.showinfo("Add a bus", "Enter the bus route and a valid travel date first.",
+                                parent=self.root)
+            return
+        buses = self.db.trip_buses(route, travel_date.isoformat())
+        used = {bus["bus_no"].casefold() for bus in buses}
+        number = 1
+        while str(number).casefold() in used:
+            number += 1
+        try:
+            bus = self.db.set_trip_bus(route, travel_date.isoformat(), str(number), db.DEFAULT_BUS_LAYOUT)
+        except ValueError as exc:
+            messagebox.showerror("Add a bus", str(exc), parent=self.root)
+            return
+        if self.bus_vars["seat"].get().strip():
+            self.bus_vars["seat"].set("")
+            self.bus_seat_genders = {}
+        self.bus_vars["bus_no"].set(bus["bus_no"])
+        self.refresh_trip_bus_choices()
+        self.set_status(f"Added bus {bus['bus_no']} ({bus['label']}) for {route} on {travel_date.isoformat()}.")
+
+    def remove_trip_bus(self) -> None:
+        bus = self.current_trip_bus()
+        route, travel_date = self._trip_route_and_date()
+        if bus is None or not route or not travel_date:
+            messagebox.showinfo("Remove bus", "Choose the route, date and bus first.", parent=self.root)
+            return
+        if not messagebox.askyesno(
+            "Remove bus", f"Take bus {bus['bus_no']} ({bus['label']}) off {route} on {travel_date.isoformat()}?",
+            parent=self.root,
+        ):
+            return
+        try:
+            self.db.remove_trip_bus(route, travel_date.isoformat(), bus["bus_no"])
+        except ValueError as exc:
+            messagebox.showerror("Remove bus", str(exc), parent=self.root)
+            return
+        self.bus_vars["bus_no"].set("")
+        self.bus_vars["seat"].set("")
+        self.bus_seat_genders = {}
+        self.refresh_trip_bus_choices()
+        self.set_status(f"Removed bus {bus['bus_no']} from {route} on {travel_date.isoformat()}.")
 
     def on_bus_passenger_count_change(self) -> None:
         count = self._bus_passenger_count()
@@ -1531,23 +1710,24 @@ class BookingApp:
     def update_bus_seat_summary(self) -> None:
         if not hasattr(self, "bus_seat_summary_var"):
             return
+        capacity = self._trip_bus_capacity()
         if hasattr(self, "bus_passenger_count_combo"):
             self.bus_passenger_count_combo.configure(
-                values=tuple(str(count) for count in range(1, 41)), state="readonly"
+                values=tuple(str(count) for count in range(1, capacity + 1)), state="readonly"
             )
-        route = str(self.bus_vars["route"].get() or "").strip()
-        travel_date = parse_date(str(self.bus_vars["travel_date"].get() or ""))
+        route, travel_date = self._trip_route_and_date()
         selected_count = len(db.seat_tokens(self.bus_vars["seat"].get()))
         target_count = self._bus_passenger_count()
-        if not route or not travel_date:
+        bus = self.current_trip_bus()
+        if not route or not travel_date or bus is None:
             self.bus_seat_summary_var.set(
                 f"Select {target_count} seat{'s' if target_count != 1 else ''} for the passengers"
             )
             return
         occupied = self.db.bus_seat_occupancy(
-            route, travel_date.isoformat(), exclude_id=self.bus_selected_id
+            route, travel_date.isoformat(), exclude_id=self.bus_selected_id, bus_no=bus["bus_no"]
         )
-        available = max(0, 40 - len(occupied))
+        available = max(0, capacity - len(occupied))
         if hasattr(self, "bus_passenger_count_combo"):
             options = tuple(str(count) for count in range(1, max(1, available) + 1))
             self.bus_passenger_count_combo.configure(values=options, state="readonly" if available else "disabled")
@@ -1555,9 +1735,14 @@ class BookingApp:
             detail = f"Only {available} seat{'s' if available != 1 else ''} left — reduce passenger count"
         else:
             detail = f"{selected_count}/{target_count} passenger seats selected"
-        self.bus_seat_summary_var.set(
-            f"{len(occupied)} / 40 seats filled  ·  {available} open  ·  {detail}"
+        text = (
+            f"Bus {bus['bus_no']}: {len(occupied)} / {capacity} seats filled  ·  {available} open  ·  {detail}"
         )
+        buses = self.db.trip_buses(route, travel_date.isoformat())
+        if len(buses) > 1:
+            taken = self.db.trip_seats_taken(route, travel_date.isoformat(), exclude_id=self.bus_selected_id)
+            text += f"   |   all buses: {taken} / {self.db.trip_capacity(route, travel_date.isoformat())}"
+        self.bus_seat_summary_var.set(text)
 
     def new_bus_ticket(self) -> None:
         self.bus_selected_id = None
@@ -1571,9 +1756,10 @@ class BookingApp:
         self.bus_notes_text.delete("1.0", "end")
         self.bus_vars["travel_date"].set(_dt.date.today().isoformat())
         self.assign_bus_number()
+        self.refresh_trip_bus_choices()
         self.update_bus_due()
         self.update_bus_seat_summary()
-        self.set_status("New bus booking — choose passenger count, seats and each passenger's gender.")
+        self.set_status("New bus booking — choose the bus, passenger count, seats and each passenger's gender.")
 
     def pick_bus_date(self) -> None:
         current = parse_date(self.bus_vars["travel_date"].get())
@@ -1592,20 +1778,29 @@ class BookingApp:
             messagebox.showinfo("Choose a seat", "Enter the bus route and a valid travel date first.",
                                 parent=self.root)
             return
+        bus = self.current_trip_bus()
+        if bus is None:
+            self.bus_vars["bus_no"].set("")
+            self.refresh_trip_bus_choices()
+            bus = self.current_trip_bus()
+        if bus is None:
+            return
         occupied = self.db.bus_seat_occupancy(
-            route, date_value.isoformat(), exclude_id=self.bus_selected_id
+            route, date_value.isoformat(), exclude_id=self.bus_selected_id, bus_no=bus["bus_no"]
         )
         passenger_count = self._bus_passenger_count()
-        available = 40 - len(occupied)
+        available = bus["capacity"] - len(occupied)
         if passenger_count > available:
             messagebox.showwarning(
-                "Not enough seats", f"Only {available} seat(s) are available for this route and date.",
+                "Not enough seats",
+                f"Only {available} seat(s) are available on bus {bus['bus_no']} for this route and date.",
                 parent=self.root,
             )
             return
         current = db.seat_tokens(self.bus_vars["seat"].get())
         SeatMapDialog(
-            self.root, f"{route} · {date_value.strftime('%d %b %Y')}", 40, occupied, current,
+            self.root, f"{route} · {date_value.strftime('%d %b %Y')} · Bus {bus['bus_no']} ({bus['label']})",
+            bus["capacity"], occupied, current, seats=bus["seats"],
             max_select=passenger_count, gendered=True, selected_genders=self.bus_seat_genders,
             on_save=self.apply_bus_seat_selection,
         )
@@ -1653,14 +1848,18 @@ class BookingApp:
             passenger_count = int(data.get("passenger_count") or 0)
         except (TypeError, ValueError):
             passenger_count = 0
-        if passenger_count < 1 or passenger_count > 40:
-            return "Choose a passenger count from 1 to 40."
+        bus = self.current_trip_bus()
+        capacity = int(bus["capacity"]) if bus else db.layout_capacity(db.DEFAULT_BUS_LAYOUT)
+        if passenger_count < 1 or passenger_count > capacity:
+            return f"Choose a passenger count from 1 to {capacity}."
         seats = db.seat_tokens(data.get("seat"))
         if len(seats) != passenger_count:
             return f"Choose exactly {passenger_count} seat(s) for the passengers; {len(seats)} selected."
-        invalid = [seat for seat in seats if seat not in seat_ids(40)]
+        allowed = bus["seats"] if bus else db.bus_seat_ids(db.DEFAULT_BUS_LAYOUT)
+        invalid = [seat for seat in seats if seat not in allowed]
         if invalid:
-            return "Choose valid seats from the bus seat map."
+            label = f"bus {bus['bus_no']} ({bus['label']})" if bus else "this bus"
+            return f"Seat(s) {', '.join(invalid)} are not part of {label}. Choose seats from its seat map."
         genders = data.get("seat_genders") if isinstance(data.get("seat_genders"), dict) else {}
         missing_gender = [seat for seat in seats if genders.get(seat) not in {"male", "female"}]
         legacy_unchanged = (
@@ -1730,9 +1929,12 @@ class BookingApp:
         self.bus_passenger_count_var.set(str(passenger_count))
         self.bus_notes_text.delete("1.0", "end")
         self.bus_notes_text.insert("1.0", str(row.get("notes") or ""))
+        self.refresh_trip_bus_choices()
         self.update_bus_due()
         self.update_bus_seat_summary()
-        self.set_status(f"Editing bus ticket {row.get('ticket_no')} · seats {row.get('seat')}")
+        self.set_status(
+            f"Editing bus ticket {row.get('ticket_no')} · bus {row.get('bus_no') or '1'} · seats {row.get('seat')}"
+        )
 
     def delete_bus_ticket(self) -> None:
         if self.bus_selected_id is None:
@@ -1781,8 +1983,8 @@ class BookingApp:
             self.bus_tree.insert(
                 "", "end", iid=str(row["id"]),
                 values=(row.get("ticket_no", ""), row.get("name", ""), row.get("phone", ""),
-                        row.get("route", ""), row.get("travel_date", ""), row.get("departure_time", ""),
-                        len(seats) or 1, seat_display,
+                        row.get("route", ""), row.get("travel_date", ""), row.get("bus_no", "1") or "1",
+                        row.get("departure_time", ""), len(seats) or 1, seat_display,
                         money(row.get("fare"), self.currency),
                         money(row.get("advance"), self.currency), money(row.get("due"), self.currency), status),
                 tags=tags,
@@ -1809,6 +2011,9 @@ class BookingApp:
         ticket = self.db.bus_ticket_get(self.bus_selected_id)
         if not ticket:
             return
+        bus = self.db.trip_bus(ticket.get("route"), ticket.get("travel_date"), ticket.get("bus_no"))
+        if bus:
+            ticket = dict(ticket, bus_label=bus["label"])
         try:
             data = documents.bus_ticket_receipt(ticket, self.settings)
         except Exception as exc:

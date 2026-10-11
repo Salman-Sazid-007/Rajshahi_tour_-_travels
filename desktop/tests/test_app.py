@@ -417,6 +417,51 @@ class DatabaseTests(unittest.TestCase):
         self.database.add_bus_ticket(duplicate)
         self.assertEqual(len(self.database.list_bus_tickets(route=ticket["route"], travel_date=ticket["travel_date"])), 2)
 
+    def test_daily_bus_route_runs_one_41_seat_bus_until_the_office_changes_it(self) -> None:
+        route, day = "Rajshahi → Dhaka", "2026-12-20"
+        buses = self.database.trip_buses(route, day)
+        self.assertEqual([(b["bus_no"], b["layout"], b["capacity"]) for b in buses], [("1", "41", 41)])
+        ticket = {"route": route, "travel_date": day, "name": "Back row", "seat": "J-5", "fare": 1000}
+        first = self.database.add_bus_ticket(ticket)
+        self.assertEqual(self.database.bus_ticket_get(first)["bus_no"], "1")
+        with self.assertRaisesRegex(ValueError, "K-5 do not exist on bus 1 \\(41 seats\\)"):
+            self.database.add_bus_ticket(dict(ticket, seat="K-5"))
+        # The 41-seat bus already sold J-5, so it cannot become a 45-seat coach …
+        with self.assertRaisesRegex(ValueError, "already use seats: J-5"):
+            self.database.set_trip_bus(route, day, "1", "45")
+        # … but a second 45-seat coach can be added for the same day.
+        added = self.database.set_trip_bus(route, "20/12/2026", "2", "45 seats")
+        self.assertEqual((added["bus_no"], added["layout"], added["capacity"]), ("2", "45", 45))
+        self.assertEqual([b["bus_no"] for b in self.database.trip_buses(route, day)], ["1", "2"])
+        second = self.database.add_bus_ticket(dict(ticket, seat="K-5", bus_no="2"))
+        same_label = self.database.add_bus_ticket(dict(ticket, seat="J-4", bus_no="2"))
+        self.database.add_bus_ticket(dict(ticket, seat="J-4", bus_no="1"))  # J-4 is free on bus 1
+        with self.assertRaisesRegex(ValueError, "already booked on bus 2"):
+            self.database.add_bus_ticket(dict(ticket, seat="J-4", bus_no="2"))
+        with self.assertRaisesRegex(ValueError, "Bus '3' does not run"):
+            self.database.add_bus_ticket(dict(ticket, seat="A-1", bus_no="3"))
+        self.assertEqual(sorted(self.database.bus_seat_occupancy(route, day, bus_no="2")), ["J-4", "K-5"])
+        self.assertEqual(self.database.trip_seats_taken(route, day), 4)
+        self.assertEqual(self.database.trip_capacity(route, day), 86)
+        with self.assertRaisesRegex(ValueError, "Bus 2 cannot change to 41 seats"):
+            self.database.set_trip_bus(route, day, "2", "41")
+        with self.assertRaisesRegex(ValueError, "Bus 2 still has tickets"):
+            self.database.remove_trip_bus(route, day, "2")
+        # Other days are untouched, and a trip always keeps at least one bus.
+        self.assertEqual(len(self.database.trip_buses(route, "2026-12-21")), 1)
+        with self.assertRaisesRegex(ValueError, "at least one bus"):
+            self.database.remove_trip_bus(route, "2026-12-21", "1")
+        self.database.set_trip_bus(route, day, "3", "41")
+        self.database.remove_trip_bus(route, day, "3")
+        self.assertEqual([b["bus_no"] for b in self.database.trip_buses(route, day)], ["1", "2"])
+        # Moving a ticket to the other bus re-checks seats there.
+        moved = self.database.bus_ticket_get(first)
+        self.database.update_bus_ticket(first, dict(moved, bus_no="2", seat="A-1"))
+        self.assertEqual(self.database.bus_ticket_get(first)["bus_no"], "2")
+        self.assertNotIn("J-5", self.database.bus_seat_occupancy(route, day, bus_no="1"))
+        self.assertIsNotNone(second)
+        self.assertIsNotNone(same_label)
+
     def test_bus_group_ticket_locks_each_seat_and_keeps_gender(self) -> None:
         ticket = {
             "ticket_no": self.database.next_bus_number(), "route": "Rajshahi → Dhaka",
@@ -701,11 +746,15 @@ class DocumentTests(unittest.TestCase):
             "ticket_no": "RTT-BUS-2026-0001", "route": "Rajshahi → Dhaka",
             "travel_date": "2026-12-20", "departure_time": "09:00 AM", "name": "Bus customer",
             "phone": "01700000000", "seat": "A-1", "fare": 1000, "advance": 400,
-            "due": 600, "status": "Booked",
+            "due": 600, "status": "Booked", "bus_no": "2", "bus_label": "45 seats",
         }
         data = documents.bus_ticket_receipt(ticket, self.settings)
         self.assertTrue(data.startswith(b"%PDF"))
         self.assertTrue(data.rstrip().endswith(b"%%EOF"))
+        import pymupdf
+        text = pymupdf.open(stream=data, filetype="pdf")[0].get_text()
+        self.assertIn("Bus 2", text)
+        self.assertIn("45 seats", text)
 
     def test_group_bus_receipt_renders_seats_and_gender_assignments(self) -> None:
         ticket = {
@@ -1249,6 +1298,64 @@ class UiTests(unittest.TestCase):
         self.app.bus_vars["seat"].set("A1, A2")
         error = self.app.validate_bus_ticket(self.app.collect_bus_ticket())
         self.assertIn("Male or Female", error)
+
+    def test_bus_ticket_form_lets_the_office_pick_the_bus_and_coach_type_per_day(self) -> None:
+        self.app.new_bus_ticket()
+        self.app.bus_vars["route"].set("Rajshahi → Dhaka")
+        self.app.bus_vars["travel_date"].set("2026-12-24")
+        self.assertEqual(list(self.app.trip_bus_combo.cget("values")), ["Bus 1  ·  41 seats"])
+        self.assertEqual(self.app.trip_bus_type_var.get(), "41 seats")
+        self.assertEqual(self.app.bus_vars["bus_no"].get(), "1")
+        self.assertIn("Bus 1: 0 / 41 seats filled", self.app.bus_seat_summary_var.get())
+        # Switch this day's bus to a 45-seat coach: the change is saved for the date only.
+        self.app.trip_bus_type_var.set("45 seats")
+        self.assertEqual(self.app.db.trip_buses("Rajshahi → Dhaka", "2026-12-24")[0]["layout"], "45")
+        self.assertEqual(self.app.db.trip_buses("Rajshahi → Dhaka", "2026-12-25")[0]["layout"], "41")
+        self.assertEqual(list(self.app.trip_bus_combo.cget("values")), ["Bus 1  ·  45 seats"])
+        self.assertIn("/ 45 seats filled", self.app.bus_seat_summary_var.get())
+        # Add a second (41-seat) bus for the day and sell the back-row seat on it.
+        self.app.add_trip_bus()
+        self.assertEqual(list(self.app.trip_bus_combo.cget("values")),
+                         ["Bus 1  ·  45 seats", "Bus 2  ·  41 seats"])
+        self.assertEqual(self.app.bus_vars["bus_no"].get(), "2")
+        self.app.bus_vars["name"].set("Bus two passenger")
+        self.app.bus_vars["seat"].set("J-5")
+        self.app.bus_seat_genders = {"J-5": "female"}
+        self.app.bus_vars["fare"].set("900")
+        self.app.save_bus_ticket()
+        saved = self.database.bus_ticket_get(self.app.bus_selected_id)
+        self.assertEqual((saved["bus_no"], saved["seat"]), ("2", "J-5"))
+        # The summary leaves out the ticket being edited (its own seats are not "taken" for it).
+        self.assertIn("all buses: 0 / 86", self.app.bus_seat_summary_var.get())
+        self.assertEqual(self.database.trip_seats_taken("Rajshahi → Dhaka", "2026-12-24"), 1)
+        self.assertEqual(self.app.bus_tree.item(str(saved["id"]))["values"][5], "2")
+        # Bus 2 now carries a ticket on J-5, so it cannot shrink … er, change to 45 seats (no J-5 there).
+        self.app.trip_bus_type_var.set("45 seats")
+        self.assertEqual(ANSWERS.get("showerror"), 1)
+        self.assertEqual(self.app.trip_bus_type_var.get(), "41 seats")
+        # Picking bus 1 clears the seats (they belong to one bus) and K-5 is valid there.
+        self.app.new_bus_ticket()
+        self.app.bus_vars["route"].set("Rajshahi → Dhaka")
+        self.app.bus_vars["travel_date"].set("2026-12-24")
+        self.app.bus_vars["name"].set("Bus one passenger")
+        self.app.trip_bus_choice_var.set("Bus 2  ·  41 seats")
+        self.app.bus_vars["seat"].set("K-5")
+        self.app.bus_seat_genders = {"K-5": "male"}
+        error = self.app.validate_bus_ticket(self.app.collect_bus_ticket())
+        self.assertIn("not part of bus 2 (41 seats)", error)
+        self.app.trip_bus_choice_var.set("Bus 1  ·  45 seats")
+        self.assertEqual(self.app.bus_vars["seat"].get(), "")
+        self.app.bus_vars["seat"].set("K-5")
+        self.app.bus_seat_genders = {"K-5": "male"}
+        self.assertIsNone(self.app.validate_bus_ticket(self.app.collect_bus_ticket()))
+        self.app.save_bus_ticket()
+        # Reopening the first ticket restores its bus; an empty bus cannot be removed while booked.
+        self.app.bus_selected_id = saved["id"]
+        self.app.load_bus_selected()
+        self.assertEqual(self.app.trip_bus_choice_var.get(), "Bus 2  ·  41 seats")
+        self.app.remove_trip_bus()
+        self.assertEqual(ANSWERS.get("showerror"), 2)
+        self.assertEqual(len(self.app.db.trip_buses("Rajshahi → Dhaka", "2026-12-24")), 2)
 
     def test_bus_seat_map_selects_exact_count_and_colours_gender(self) -> None:
         selected = []

@@ -1,4 +1,4 @@
-RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.0)
+RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.1)
 ===================================================================
 This program runs on your own computer. Bookings and ticket records stay in a
 local database; nothing is sent to the website or over the internet.
@@ -34,7 +34,11 @@ WHAT THE PROGRAM DOES
   or CSV. Archive keeps booking history; **Delete tour + bookings** permanently
   erases the tour and its saved booking/payment records after confirmation.
 * Bus tickets are separate from tour bookings and use their own ticket numbers.
-  Choose a passenger count, assign the same number of open seats, and mark each
+  Every route/date runs one 41-seat bus until you change it: in the "Bus &
+  coach type" row pick 41 or 45 seats for that day's bus, or press "+ Bus" to
+  run a second coach (each bus can be 41 or 45 independently). Tickets are
+  sold per bus, so pick the bus first, then the passenger count, then the
+  seats; assign the same number of open seats, and mark each
   Male (blue) or Female (pink). Fare is per passenger; one group ticket stores
   the contact and all passenger seats. Cancelled tickets release every seat.
 * Fonts and input boxes across the app are larger and easier to read.

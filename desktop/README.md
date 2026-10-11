@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.2.0.
+These are the **latest published** downloads: desktop version 1.2.1.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.2.0.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.0/RajshahiTours-Windows-1.2.0.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.2.0.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.0/RajshahiTours-Desktop-1.2.0.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
+| [**RajshahiTours-Windows-1.2.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.1/RajshahiTours-Windows-1.2.1.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.2.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.1/RajshahiTours-Desktop-1.2.1.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.0 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.1 in **Help → About**.
 
 ---
 
@@ -42,8 +42,10 @@ and **Tours & monthly reports**.
   booking. Seats can be reused on another departure date; saved rows can still
   be selected for intentional edits.
 * **Issue offline bus tickets:** a separate workflow with its own ticket numbers,
-route/date and seat inventory; it is not linked to tour bookings. Select a
-passenger count, then assign exactly that many seats and a Male/Female marker to
+route/date and seat inventory; it is not linked to tour bookings. Each
+route/date runs one 41-seat bus by default; the office can switch that day's
+bus to a 45-seat coach or add more buses for the day (bus 1, 2, … each 41 or
+45 seats). Pick the bus, then select a passenger count, then assign exactly that many seats and a Male/Female marker to
 each seat (blue for Male, pink for Female). Fare is per passenger; the ticket
 stores a single group/contact record and the total fare. The same route/date/seat
 cannot be sold twice. Cancelled group tickets release every seat.
@@ -73,7 +75,7 @@ A tour may have several buses (bus numbers `1`, `2`, … or any short label), an
 each bus can be 41 or 45 seats independently. Seat labels repeat on every bus,
 so a booking always stores the bus number together with its seats; the seat map
 in the booking form shows the selected bus only. Labels such as `A1` are
-normalized to `A-1`. Tours created before 1.2.0 with the classic 40-seat map
+normalized to `A-1`. Tours created before 1.2.1 with the classic 40-seat map
 become a single 41-seat bus (the old seats keep their labels; `J-5` is added);
 other old capacities are kept as a "classic" layout until you change them.
 
@@ -156,13 +158,16 @@ removed or shrunk while active bookings still use its seats. **Archive (keep his
 while retaining its bookings and reports. **Delete tour + bookings** permanently
 removes that tour and its associated booking/payment records after confirmation.
 Choose a travel month (`YYYY-MM`) and use **Monthly PDF** or **Export CSV**.
-* **Bus tickets** — enter a route and date, choose the number of passengers,
-then click **Map**. Choose Male or Female before selecting each open seat; Male
+* **Bus tickets** — enter a route and date, then use the **Bus & coach type**
+row: the drop-down lists the buses running that day (one 41-seat bus until you
+change it), the second box sets that bus to **41 seats** or **45 seats** for
+this date only, **＋ Bus** adds another coach and **✕** removes an empty one.
+Choose the number of passengers, then click **Map** (the seat map is per bus). Choose Male or Female before selecting each open seat; Male
 seats are blue and Female seats are pink. Enter fare per passenger and the paid
 amount; the due amount is calculated for the whole group. Save, edit, cancel or
 delete a group ticket, then print a receipt showing its seats and genders. Seat
-occupancy is scoped to route + travel date. Group bus tickets remain completely
-separate from tour bookings and their numbering.
+occupancy is scoped to route + travel date + bus. Group bus tickets remain
+completely separate from tour bookings and their numbering.
 * **Search and filters** apply to the relevant list. Select a booking or ticket
 row to load it for editing (double-click also works). Cancelled records stay in
 history but do not occupy a seat or add to payment totals.
