@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     name          TEXT NOT NULL,
     phone         TEXT DEFAULT '',
     seat          TEXT DEFAULT '',
+    bus_no        TEXT DEFAULT '',
     total         REAL DEFAULT 0,
     advance       REAL DEFAULT 0,
     due           REAL DEFAULT 0,
@@ -51,6 +52,18 @@ CREATE TABLE IF NOT EXISTS tour_catalog (
     active        INTEGER NOT NULL DEFAULT 1,
     created_at    TEXT NOT NULL DEFAULT ''
 );
+
+-- Every tour runs one or more coaches. Each coach has an office-chosen bus
+-- number and a seat layout ("41" or "45" for the current coach types, or a
+-- "legacyNN" layout kept for tours created before buses existed).
+CREATE TABLE IF NOT EXISTS tour_buses (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    tour_id   INTEGER NOT NULL,
+    bus_no    TEXT NOT NULL,
+    layout    TEXT NOT NULL DEFAULT '41',
+    position  INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_tour_buses_tour ON tour_buses(tour_id);
 
 -- The office's offline point-to-point bus inventory is kept separate from
 -- tour bookings so the same physical seat can be sold on a different date.
@@ -81,7 +94,7 @@ CREATE TABLE IF NOT EXISTS app_meta (
 """
 
 COLUMNS = (
-    "id", "booking_no", "name", "phone", "seat", "total", "advance", "due",
+    "id", "booking_no", "name", "phone", "seat", "bus_no", "total", "advance", "due",
     "booking_date", "tour_date", "tour_name", "notes", "status",
     "created_at", "updated_at",
 )
@@ -100,7 +113,7 @@ def _clean(row: Dict[str, Any]) -> Dict[str, Any]:
         except (TypeError, ValueError):
             data[field] = 0.0
     data["due"] = round(data.get("total", 0) - data.get("advance", 0), 2)
-    for field in ("name", "phone", "seat", "tour_name", "booking_no", "status"):
+    for field in ("name", "phone", "seat", "bus_no", "tour_name", "booking_no", "status"):
         if field in data:
             data[field] = str(data[field]).strip()
     for field in ("booking_date", "tour_date"):
@@ -193,7 +206,7 @@ def _parse_seat_genders(value: Any) -> Dict[str, str]:
 
 
 def tour_seat_ids(capacity: Any = 40) -> List[str]:
-    """Website-style tour map labels for a standard or extended coach."""
+    """Classic tour map labels (standard 40 / extended 46), kept for old tours."""
     try:
         count = int(capacity or 40)
     except (TypeError, ValueError):
@@ -202,6 +215,112 @@ def tour_seat_ids(capacity: Any = 40) -> List[str]:
     standard = [f"{row}-{number}" for row in "ABCDEFGHIJ" for number in range(1, 5)]
     extended = ["1", *standard, *(f"K-{number}" for number in range(1, 6))]
     return extended[:count] if count > 40 else standard[:count]
+
+
+# Coach types the office can pick for a tour bus. Both are 2+2 rows with a
+# five-across back row: the extra seat sits in the middle of the last row.
+#   41 seats = rows A–I (36) + back row J-1 … J-5
+#   45 seats = rows A–J (40) + back row K-1 … K-5
+BUS_TYPES: Dict[str, str] = {"41": "41 seats", "45": "45 seats"}
+MAX_BUSES_PER_TOUR = 12
+
+
+def normalise_layout(value: Any) -> str:
+    """Return a layout code: ``"41"``, ``"45"`` or ``"legacy<n>"`` (1–46)."""
+    text = str(value if value is not None else "").strip().lower()
+    if text in BUS_TYPES:
+        return text
+    if text.startswith("legacy"):
+        text = text[len("legacy"):]
+        try:
+            count = int(text or 40)
+        except ValueError:
+            raise ValueError("Unknown bus layout.")
+        if not 1 <= count <= 46:
+            raise ValueError("Seat capacity must be between 1 and 46.")
+        return f"legacy{count}"
+    if text.endswith(" seats"):
+        text = text[:-len(" seats")].strip()
+    try:
+        count = int(text)
+    except ValueError:
+        raise ValueError("Choose a 41-seat or 45-seat bus.")
+    if str(count) in BUS_TYPES:
+        return str(count)
+    if not 1 <= count <= 46:
+        raise ValueError("Seat capacity must be between 1 and 46.")
+    return f"legacy{count}"
+
+
+def bus_seat_ids(layout: Any = "41") -> List[str]:
+    """Seat labels for one bus, front to back."""
+    try:
+        code = normalise_layout(layout)
+    except ValueError:
+        code = "41"
+    if code == "41":
+        rows = [f"{row}-{number}" for row in "ABCDEFGHI" for number in range(1, 5)]
+        return rows + [f"J-{number}" for number in range(1, 6)]
+    if code == "45":
+        rows = [f"{row}-{number}" for row in "ABCDEFGHIJ" for number in range(1, 5)]
+        return rows + [f"K-{number}" for number in range(1, 6)]
+    return tour_seat_ids(int(code[len("legacy"):]))
+
+
+def layout_capacity(layout: Any) -> int:
+    return len(bus_seat_ids(layout))
+
+
+def layout_label(layout: Any) -> str:
+    """Human label for a layout: ``41 seats`` or ``40 seats (classic)``."""
+    try:
+        code = normalise_layout(layout)
+    except ValueError:
+        code = "41"
+    if code in BUS_TYPES:
+        return BUS_TYPES[code]
+    return f"{layout_capacity(code)} seats (classic)"
+
+
+def normalise_bus_no(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value if value is not None else "")).strip()
+
+
+def normalise_bus_specs(value: Any) -> List[Dict[str, Any]]:
+    """Accept a capacity, a layout, or a list of bus specs; return clean specs.
+
+    A spec is ``{"id": Optional[int], "bus_no": str, "layout": str}``. A bare
+    number such as ``40`` (old callers) becomes one bus numbered ``1``.
+    """
+    if value is None or isinstance(value, (int, float, str)):
+        return [{"id": None, "bus_no": "1", "layout": normalise_layout(value if value not in (None, "") else 41)}]
+    if isinstance(value, dict):
+        value = [value]
+    specs: List[Dict[str, Any]] = []
+    seen = set()
+    for index, item in enumerate(value, start=1):
+        if isinstance(item, (list, tuple)):
+            item = {"bus_no": item[0] if len(item) > 0 else "", "layout": item[1] if len(item) > 1 else 41,
+                    "id": item[2] if len(item) > 2 else None}
+        if not isinstance(item, dict):
+            raise ValueError("Bus details are not valid.")
+        bus_no = normalise_bus_no(item.get("bus_no")) or str(index)
+        if len(bus_no) > 24:
+            raise ValueError(f"Bus number '{bus_no}' is too long (24 characters at most).")
+        if bus_no.casefold() in seen:
+            raise ValueError(f"Bus number '{bus_no}' is used twice. Give every bus its own number.")
+        seen.add(bus_no.casefold())
+        raw_id = item.get("id")
+        try:
+            bus_id = int(raw_id) if raw_id not in (None, "") else None
+        except (TypeError, ValueError):
+            bus_id = None
+        specs.append({"id": bus_id, "bus_no": bus_no, "layout": normalise_layout(item.get("layout", 41))})
+    if not specs:
+        raise ValueError("Add at least one bus to the tour.")
+    if len(specs) > MAX_BUSES_PER_TOUR:
+        raise ValueError(f"A tour can have at most {MAX_BUSES_PER_TOUR} buses.")
+    return specs
 
 
 def _clean_bus_ticket(row: Dict[str, Any]) -> Dict[str, Any]:
@@ -245,9 +364,11 @@ class Database:
         self.connection.commit()
         self._ensure_tour_code_column()
         self._ensure_bus_ticket_columns()
+        self._ensure_booking_bus_column()
         self._normalise_legacy_values()
         self._seed_tour_catalog()
         self._backfill_tour_codes()
+        self._backfill_tour_buses()
 
     def _ensure_tour_code_column(self) -> None:
         columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(tour_catalog)")}
@@ -256,6 +377,43 @@ class Database:
                 "ALTER TABLE tour_catalog ADD COLUMN tour_code TEXT NOT NULL DEFAULT ''"
             )
             self.connection.commit()
+
+    def _ensure_booking_bus_column(self) -> None:
+        columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(bookings)")}
+        if "bus_no" not in columns:
+            self.connection.execute("ALTER TABLE bookings ADD COLUMN bus_no TEXT DEFAULT ''")
+            self.connection.commit()
+
+    def _backfill_tour_buses(self) -> None:
+        """Give every tour created before bus support exactly one bus ("1").
+
+        40-seat tours become 41-seat buses (same labels plus J-5); any other
+        size keeps its old seat plan as ``legacy<n>`` so existing labels such as
+        the front seat "1" of a 46-seat coach stay valid. Bookings without a
+        bus are attached to that single bus.
+        """
+        rows = self.connection.execute(
+            "SELECT t.id, t.seat_capacity FROM tour_catalog t "
+            "WHERE NOT EXISTS (SELECT 1 FROM tour_buses b WHERE b.tour_id = t.id)"
+        ).fetchall()
+        for row in rows:
+            capacity = max(1, min(46, int(row["seat_capacity"] or 40)))
+            # The 41-seat coach is the old 40-seat plan plus the middle seat of
+            # the back row, so 40-seat tours become 41-seat buses without any
+            # seat label changing. Other sizes keep their exact classic plan.
+            layout = "41" if capacity == 40 else f"legacy{capacity}"
+            self.connection.execute(
+                "INSERT INTO tour_buses(tour_id, bus_no, layout, position) VALUES (?, '1', ?, 0)",
+                (row["id"], layout),
+            )
+        self.connection.execute(
+            "UPDATE bookings SET bus_no = ("
+            "  SELECT b.bus_no FROM tour_buses b JOIN tour_catalog t ON t.id = b.tour_id "
+            "  WHERE t.name = bookings.tour_name COLLATE NOCASE ORDER BY b.position, b.id LIMIT 1"
+            ") WHERE TRIM(COALESCE(bus_no, '')) = '' AND EXISTS ("
+            "  SELECT 1 FROM tour_catalog t WHERE t.name = bookings.tour_name COLLATE NOCASE)"
+        )
+        self.connection.commit()
 
     def _ensure_bus_ticket_columns(self) -> None:
         columns = {str(row["name"]) for row in self.connection.execute("PRAGMA table_info(bus_tickets)")}
@@ -494,7 +652,137 @@ class Database:
             "FROM tour_catalog t LEFT JOIN bookings b ON b.tour_name = t.name COLLATE NOCASE "
             f"{active_clause} GROUP BY t.id ORDER BY t.active DESC, t.name COLLATE NOCASE"
         ).fetchall()
-        return [dict(row) for row in rows]
+        result = []
+        for row in rows:
+            tour = dict(row)
+            buses = self.tour_buses(int(tour["id"]))
+            tour["buses"] = buses
+            tour["bus_count"] = len(buses)
+            if buses:
+                tour["seat_capacity"] = sum(int(bus["capacity"]) for bus in buses)
+            result.append(tour)
+        return result
+
+    # ---------------------------------------------------------------- buses
+
+    def _tour_id_for(self, tour: Any) -> Optional[int]:
+        if isinstance(tour, int):
+            return tour
+        name = str(tour or "").strip()
+        if not name:
+            return None
+        row = self.connection.execute(
+            "SELECT id FROM tour_catalog WHERE name = ? COLLATE NOCASE", (name,)
+        ).fetchone()
+        return int(row[0]) if row else None
+
+    def tour_buses(self, tour: Any) -> List[Dict[str, Any]]:
+        """Buses of a tour (by id or name), front of the list = bus position 0."""
+        tour_id = self._tour_id_for(tour)
+        if tour_id is None:
+            return []
+        rows = self.connection.execute(
+            "SELECT id, tour_id, bus_no, layout, position FROM tour_buses "
+            "WHERE tour_id = ? ORDER BY position, id", (tour_id,)
+        ).fetchall()
+        buses = []
+        for row in rows:
+            layout = normalise_layout(row["layout"])
+            seats = bus_seat_ids(layout)
+            buses.append({
+                "id": int(row["id"]), "tour_id": int(row["tour_id"]),
+                "bus_no": str(row["bus_no"]), "layout": layout, "seats": seats,
+                "capacity": len(seats), "label": layout_label(layout),
+            })
+        return buses
+
+    def tour_bus(self, tour: Any, bus_no: Any = "") -> Optional[Dict[str, Any]]:
+        """One bus of a tour; an empty ``bus_no`` means the first bus."""
+        buses = self.tour_buses(tour)
+        if not buses:
+            return None
+        wanted = normalise_bus_no(bus_no)
+        if not wanted:
+            return buses[0]
+        for bus in buses:
+            if bus["bus_no"].casefold() == wanted.casefold():
+                return bus
+        return None
+
+    def resolve_bus_no(self, tour: Any, bus_no: Any = "") -> str:
+        bus = self.tour_bus(tour, bus_no)
+        return bus["bus_no"] if bus else normalise_bus_no(bus_no)
+
+    def _write_tour_buses(self, tour_id: int, specs: List[Dict[str, Any]], tour_name: str) -> None:
+        """Replace a tour's buses with *specs* without stranding any booking.
+
+        Buses are matched by id when the spec carries one, else by number.
+        Removing a bus that still has active bookings, or shrinking a layout
+        below seats already sold, is refused. Renumbering a bus renumbers its
+        bookings.
+        """
+        existing = {bus["id"]: bus for bus in self.tour_buses(tour_id)}
+        by_number = {bus["bus_no"].casefold(): bus for bus in existing.values()}
+        active_rows = self.connection.execute(
+            "SELECT bus_no, seat FROM bookings WHERE tour_name = ? COLLATE NOCASE "
+            "AND LOWER(COALESCE(status, '')) != 'cancelled'", (tour_name,)
+        ).fetchall()
+        first_bus_no = next(iter(existing.values()))["bus_no"] if existing else ""
+        seats_by_bus: Dict[str, set] = {}
+        for row in active_rows:
+            key = (normalise_bus_no(row["bus_no"]) or first_bus_no).casefold()
+            seats_by_bus.setdefault(key, set()).update(seat_tokens(row["seat"]))
+
+        matched: Dict[int, Dict[str, Any]] = {}
+        for spec in specs:
+            current = existing.get(spec["id"]) if spec["id"] is not None else None
+            if current is None:
+                current = by_number.get(spec["bus_no"].casefold())
+            if current is not None and current["id"] not in matched:
+                matched[current["id"]] = spec
+                spec["_current"] = current
+        removed = [bus for bus_id, bus in existing.items() if bus_id not in matched]
+        for bus in removed:
+            if seats_by_bus.get(bus["bus_no"].casefold()):
+                raise ValueError(
+                    f"Bus {bus['bus_no']} still has active bookings and cannot be removed. "
+                    "Move or cancel those bookings first."
+                )
+        for spec in specs:
+            current = spec.get("_current")
+            if current is None:
+                continue
+            used = seats_by_bus.get(current["bus_no"].casefold(), set())
+            invalid = sorted(used - set(bus_seat_ids(spec["layout"])))
+            if invalid:
+                raise ValueError(
+                    f"Bus {current['bus_no']} cannot change to {layout_label(spec['layout'])}; "
+                    "active bookings already use seats: " + ", ".join(invalid)
+                )
+        for bus in removed:
+            self.connection.execute("DELETE FROM tour_buses WHERE id = ?", (bus["id"],))
+        for position, spec in enumerate(specs):
+            current = spec.pop("_current", None)
+            if current is None:
+                self.connection.execute(
+                    "INSERT INTO tour_buses(tour_id, bus_no, layout, position) VALUES (?, ?, ?, ?)",
+                    (tour_id, spec["bus_no"], spec["layout"], position),
+                )
+                continue
+            self.connection.execute(
+                "UPDATE tour_buses SET bus_no = ?, layout = ?, position = ? WHERE id = ?",
+                (spec["bus_no"], spec["layout"], position, current["id"]),
+            )
+            if current["bus_no"] != spec["bus_no"]:
+                self.connection.execute(
+                    "UPDATE bookings SET bus_no = ?, updated_at = ? WHERE tour_name = ? COLLATE NOCASE "
+                    "AND (bus_no = ? COLLATE NOCASE OR (TRIM(COALESCE(bus_no, '')) = '' AND ? = ?))",
+                    (spec["bus_no"], _now(), tour_name, current["bus_no"], current["bus_no"], first_bus_no),
+                )
+        total = sum(layout_capacity(spec["layout"]) for spec in specs)
+        self.connection.execute(
+            "UPDATE tour_catalog SET seat_capacity = ? WHERE id = ?", (max(1, min(999, total)), tour_id)
+        )
 
     def tour_code(self, name: str) -> str:
         name = str(name or "").strip()
@@ -539,25 +827,29 @@ class Database:
                 )
             return int(row["id"])
         code = self._unique_tour_code(name)
+        specs = normalise_bus_specs(capacity)
         cur = self.connection.execute(
             "INSERT INTO tour_catalog(name, tour_code, seat_capacity, active, created_at) "
             "VALUES (?, ?, ?, 1, ?)",
-            (name, code, max(1, min(46, int(capacity))), _now()),
+            (name, code, sum(layout_capacity(spec["layout"]) for spec in specs), _now()),
         )
-        return int(cur.lastrowid)
+        tour_id = int(cur.lastrowid)
+        self._write_tour_buses(tour_id, specs, name)
+        return tour_id
 
     def add_tour(
-        self, name: str, seat_capacity: int = 40, tour_code: Optional[str] = None
+        self, name: str, buses: Any = 41, tour_code: Optional[str] = None
     ) -> int:
+        """Create (or re-activate) a tour.
+
+        ``buses`` is a list of ``{"bus_no", "layout"}`` specs — layout ``"41"``
+        or ``"45"`` — or, for old callers, a single seat capacity.
+        """
         name = str(name or "").strip()
         if not name:
             raise ValueError("Enter a tour name.")
-        try:
-            capacity = int(seat_capacity)
-        except (TypeError, ValueError):
-            raise ValueError("Seat capacity must be a whole number.")
-        if not 1 <= capacity <= 46:
-            raise ValueError("Seat capacity must be between 1 and 46.")
+        specs = normalise_bus_specs(buses)
+        capacity = sum(layout_capacity(spec["layout"]) for spec in specs)
         requested_code = str(tour_code or "").strip()
         existing = self.connection.execute(
             "SELECT id, active, tour_code FROM tour_catalog WHERE name = ? COLLATE NOCASE", (name,)
@@ -570,36 +862,44 @@ class Database:
                 code = self._validate_unique_tour_code(requested_code, exclude_id=int(existing["id"]))
             elif not code:
                 code = self._unique_tour_code(name, exclude_id=int(existing["id"]))
-            self.connection.execute(
-                "UPDATE tour_catalog SET active = 1, seat_capacity = ?, tour_code = ? WHERE id = ?",
-                (capacity, code, existing["id"]),
-            )
-            self.connection.commit()
+            self.connection.execute("BEGIN IMMEDIATE")
+            try:
+                self.connection.execute(
+                    "UPDATE tour_catalog SET active = 1, seat_capacity = ?, tour_code = ? WHERE id = ?",
+                    (capacity, code, existing["id"]),
+                )
+                self._write_tour_buses(int(existing["id"]), specs, name)
+                self.connection.commit()
+            except Exception:
+                self.connection.rollback()
+                raise
             return int(existing["id"])
         code = (
             self._validate_unique_tour_code(requested_code)
             if requested_code else self._unique_tour_code(name)
         )
-        cur = self.connection.execute(
-            "INSERT INTO tour_catalog(name, tour_code, seat_capacity, active, created_at) "
-            "VALUES (?, ?, ?, 1, ?)",
-            (name, code, capacity, _now()),
-        )
-        self.connection.commit()
-        return int(cur.lastrowid)
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            cur = self.connection.execute(
+                "INSERT INTO tour_catalog(name, tour_code, seat_capacity, active, created_at) "
+                "VALUES (?, ?, ?, 1, ?)",
+                (name, code, capacity, _now()),
+            )
+            tour_id = int(cur.lastrowid)
+            self._write_tour_buses(tour_id, specs, name)
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+        return tour_id
 
     def update_tour(
-        self, tour_id: int, name: str, seat_capacity: int, tour_code: Optional[str] = None
+        self, tour_id: int, name: str, buses: Any, tour_code: Optional[str] = None
     ) -> None:
         name = str(name or "").strip()
         if not name:
             raise ValueError("Enter a tour name.")
-        try:
-            capacity = int(seat_capacity)
-        except (TypeError, ValueError):
-            raise ValueError("Seat capacity must be a whole number.")
-        if not 1 <= capacity <= 46:
-            raise ValueError("Seat capacity must be between 1 and 46.")
+        specs = normalise_bus_specs(buses)
         current = self.connection.execute(
             "SELECT id, name, seat_capacity, tour_code FROM tour_catalog WHERE id = ?", (tour_id,)
         ).fetchone()
@@ -620,21 +920,10 @@ class Database:
         old_name = str(current["name"])
         self.connection.execute("BEGIN IMMEDIATE")
         try:
-            if capacity < int(current["seat_capacity"]):
-                allowed = set(tour_seat_ids(capacity))
-                bookings = self.connection.execute(
-                    "SELECT seat FROM bookings WHERE tour_name = ? COLLATE NOCASE "
-                    "AND LOWER(COALESCE(status, '')) != 'cancelled'", (old_name,)
-                ).fetchall()
-                assigned = {seat for row in bookings for seat in seat_tokens(row["seat"])}
-                invalid = sorted(assigned - allowed)
-                if invalid:
-                    raise ValueError(
-                        "Capacity cannot be reduced; active bookings already use: " + ", ".join(invalid)
-                    )
+            self._write_tour_buses(tour_id, specs, old_name)
             self.connection.execute(
-                "UPDATE tour_catalog SET name = ?, tour_code = ?, seat_capacity = ? WHERE id = ?",
-                (name, code, capacity, tour_id),
+                "UPDATE tour_catalog SET name = ?, tour_code = ? WHERE id = ?",
+                (name, code, tour_id),
             )
             if old_name != name:
                 self.connection.execute(
@@ -677,6 +966,7 @@ class Database:
             self.connection.execute(
                 "DELETE FROM bookings WHERE tour_name = ? COLLATE NOCASE", (name,)
             )
+            self.connection.execute("DELETE FROM tour_buses WHERE tour_id = ?", (tour_id,))
             self.connection.execute("DELETE FROM tour_catalog WHERE id = ?", (tour_id,))
             self.connection.commit()
             return True
@@ -689,14 +979,25 @@ class Database:
         return self.delete_tour(tour_id)
 
     def tour_capacity(self, name: str) -> int:
+        """Total seats across all buses of the tour."""
+        buses = self.tour_buses(name)
+        if buses:
+            return sum(int(bus["capacity"]) for bus in buses)
         row = self.connection.execute(
             "SELECT seat_capacity FROM tour_catalog WHERE name = ? COLLATE NOCASE", (str(name or "").strip(),)
         ).fetchone()
-        return int(row[0]) if row else 40
+        return int(row[0]) if row else 41
 
     def tour_seat_occupancy(
-        self, tour_name: str, tour_date: str, exclude_id: Optional[int] = None
+        self, tour_name: str, tour_date: str, exclude_id: Optional[int] = None,
+        bus_no: Any = None,
     ) -> Dict[str, Dict[str, Any]]:
+        """Seats taken on one bus (``bus_no``; default: the tour's first bus).
+
+        Pass ``bus_no=""`` explicitly for the first bus, or ``bus_no="*"`` to
+        count every bus together (used for totals only — seat labels repeat
+        across buses).
+        """
         clauses = ["tour_name = ? COLLATE NOCASE", "tour_date = ?", "LOWER(COALESCE(status, '')) != 'cancelled'"]
         parsed_date = parse_date(str(tour_date or ""))
         canonical_date = parsed_date.isoformat() if parsed_date else str(tour_date or "").strip()
@@ -707,18 +1008,54 @@ class Database:
         rows = self.connection.execute(
             "SELECT * FROM bookings WHERE " + " AND ".join(clauses) + " ORDER BY id", params
         ).fetchall()
+        wanted = None
+        if bus_no != "*":
+            wanted = self.resolve_bus_no(tour_name, bus_no or "")
+        first_bus = self.resolve_bus_no(tour_name, "")
         occupied: Dict[str, Dict[str, Any]] = {}
         for row in rows:
             data = dict(row)
+            row_bus = normalise_bus_no(data.get("bus_no")) or first_bus
+            if wanted is not None and row_bus.casefold() != wanted.casefold():
+                continue
             for seat in seat_tokens(data.get("seat")):
                 occupied.setdefault(seat, data)
         return occupied
 
+    def tour_seats_taken(self, tour_name: str, tour_date: str) -> int:
+        """Number of seats sold across every bus of a departure."""
+        buses = self.tour_buses(tour_name) or [{"bus_no": ""}]
+        return sum(
+            len(self.tour_seat_occupancy(tour_name, tour_date, bus_no=bus["bus_no"]))
+            for bus in buses
+        )
+
     def tour_seat_conflicts(
-        self, tour_name: str, tour_date: str, seats: Any, exclude_id: Optional[int] = None
+        self, tour_name: str, tour_date: str, seats: Any, exclude_id: Optional[int] = None,
+        bus_no: Any = None,
     ) -> List[str]:
-        occupied = self.tour_seat_occupancy(tour_name, tour_date, exclude_id=exclude_id)
+        occupied = self.tour_seat_occupancy(tour_name, tour_date, exclude_id=exclude_id, bus_no=bus_no)
         return sorted(set(seat_tokens(seats)).intersection(occupied))
+
+    def _check_booking_bus(self, row: Dict[str, Any]) -> None:
+        """Attach the booking to a real bus of its tour and validate its seats."""
+        tour_name = str(row.get("tour_name") or "")
+        buses = self.tour_buses(tour_name)
+        if not buses:
+            return  # tour is created on the fly by _ensure_tour (single bus)
+        bus = self.tour_bus(tour_name, row.get("bus_no"))
+        if bus is None:
+            numbers = ", ".join(b["bus_no"] for b in buses)
+            raise ValueError(
+                f"Bus '{row.get('bus_no')}' is not part of {tour_name}. Choose one of: {numbers}."
+            )
+        row["bus_no"] = bus["bus_no"]
+        invalid = [seat for seat in seat_tokens(row.get("seat")) if seat not in bus["seats"]]
+        if invalid:
+            raise ValueError(
+                f"Seat(s) {', '.join(invalid)} do not exist on bus {bus['bus_no']} "
+                f"({bus['label']}). Open the seat map and choose again."
+            )
 
     def month_bookings(self, year_month: str) -> List[Dict[str, Any]]:
         try:
@@ -770,10 +1107,19 @@ class Database:
         sql = f"INSERT INTO bookings ({', '.join(columns)}) VALUES ({', '.join('?' * len(columns))})"
         self.connection.execute("BEGIN IMMEDIATE")
         try:
-            conflicts = self.tour_seat_conflicts(row.get("tour_name", ""), row.get("tour_date", ""), row.get("seat", ""))
+            self._check_booking_bus(row)
+            conflicts = self.tour_seat_conflicts(
+                row.get("tour_name", ""), row.get("tour_date", ""), row.get("seat", ""),
+                bus_no=row.get("bus_no", ""),
+            )
             if conflicts and str(row.get("status") or "").lower() != "cancelled":
-                raise ValueError("These seats are already booked for this tour date: " + ", ".join(conflicts))
+                raise ValueError(
+                    f"These seats are already booked on bus {row.get('bus_no') or '1'} for this "
+                    "tour date: " + ", ".join(conflicts)
+                )
             self._ensure_tour(row.get("tour_name", ""))
+            if not normalise_bus_no(row.get("bus_no")):
+                row["bus_no"] = self.resolve_bus_no(row.get("tour_name", ""), "")
             cur = self.connection.execute(sql, [row.get(c, "") for c in columns])
             self.connection.commit()
             return int(cur.lastrowid)
@@ -788,13 +1134,19 @@ class Database:
         assignments = ", ".join(f"{c} = ?" for c in columns)
         self.connection.execute("BEGIN IMMEDIATE")
         try:
+            self._check_booking_bus(row)
             conflicts = self.tour_seat_conflicts(
                 row.get("tour_name", ""), row.get("tour_date", ""), row.get("seat", ""),
-                exclude_id=booking_id,
+                exclude_id=booking_id, bus_no=row.get("bus_no", ""),
             )
             if conflicts and str(row.get("status") or "").lower() != "cancelled":
-                raise ValueError("These seats are already booked for this tour date: " + ", ".join(conflicts))
+                raise ValueError(
+                    f"These seats are already booked on bus {row.get('bus_no') or '1'} for this "
+                    "tour date: " + ", ".join(conflicts)
+                )
             self._ensure_tour(row.get("tour_name", ""))
+            if not normalise_bus_no(row.get("bus_no")):
+                row["bus_no"] = self.resolve_bus_no(row.get("tour_name", ""), "")
             self.connection.execute(
                 f"UPDATE bookings SET {assignments} WHERE id = ?",
                 [row.get(c, "") for c in columns] + [booking_id],
@@ -1046,7 +1398,7 @@ class Database:
         if directory:
             os.makedirs(directory, exist_ok=True)
         headers = [
-            "Booking No", "Name", "Phone", "Seat", "Total Amount", "Advance",
+            "Booking No", "Name", "Phone", "Seat", "Bus", "Total Amount", "Advance",
             "Due", "Booking Date", "Tour Date", "Tour Name", "Notes", "Status",
         ]
         with open(path, "w", newline="", encoding="utf-8-sig") as handle:
@@ -1055,7 +1407,7 @@ class Database:
             for row in rows:
                 writer.writerow([
                     row.get("booking_no", ""), row.get("name", ""), row.get("phone", ""),
-                    row.get("seat", ""), f"{float(row.get('total') or 0):.2f}",
+                    row.get("seat", ""), row.get("bus_no", ""), f"{float(row.get('total') or 0):.2f}",
                     f"{float(row.get('advance') or 0):.2f}", f"{float(row.get('due') or 0):.2f}",
                     row.get("booking_date", ""), row.get("tour_date", ""),
                     row.get("tour_name", ""), row.get("notes", ""), row.get("status", ""),
@@ -1063,7 +1415,7 @@ class Database:
             writer.writerow([])
             totals = self.totals(rows)
             writer.writerow([
-                "TOTAL", f"{totals['count']} bookings", "", "",
+                "TOTAL", f"{totals['count']} bookings", "", "", "",
                 f"{totals['total']:.2f}", f"{totals['advance']:.2f}", f"{totals['due']:.2f}",
             ])
         return path
@@ -1089,16 +1441,18 @@ class Database:
         self.connection.commit()
         self._ensure_tour_code_column()
         self._ensure_bus_ticket_columns()
+        self._ensure_booking_bus_column()
         self._normalise_legacy_values()
         self._seed_tour_catalog()
         self._backfill_tour_codes()
+        self._backfill_tour_buses()
 
     def seed_demo(self, count: int = 6) -> None:
         """Insert a few sample rows (used by the Settings dialog and tests)."""
         samples = [
             ("Mohammad Rahim", "01712223344", "A1, A2", 12500, 5000, "2026-11-15", "Cox's Bazar Tour"),
             ("Fatima Akter", "01823334455", "B3", 9800, 9800, "2026-11-20", "Sajek Valley Tour"),
-            ("Abdul Karim", "01934445566", "C5, C6", 18500, 8000, "2026-12-02", "Sylhet Tour"),
+            ("Abdul Karim", "01934445566", "C3, C4", 18500, 8000, "2026-12-02", "Sylhet Tour"),
             ("Sumaiya Islam", "01645556677", "D2", 7600, 2000, "2026-12-10", "Sundarbans Tour"),
             ("Tanvir Ahmed", "01556667788", "E4", 14200, 14200, "2026-12-18", "Bandarban Tour"),
             ("Nusrat Jahan", "01367778899", "F1, F2, F3", 21500, 10000, "2026-12-22", "Saint Martin Tour"),

@@ -1,4 +1,4 @@
-RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.1.9)
+RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.0)
 ===================================================================
 This program runs on your own computer. Bookings and ticket records stay in a
 local database; nothing is sent to the website or over the internet.
@@ -24,8 +24,12 @@ WHAT THE PROGRAM DOES
   a tour and open seats on the map, then save. After a successful new or edited
   booking, the inputs clear and a fresh unique serial is shown. Select an existing
   row when you want to edit it.
-* Tours & monthly reports: add tours with a short unique code and seat capacity;
-  blank codes use initials from the tour name. New tour booking numbers include
+* Tours & monthly reports: add tours with a short unique code and one or more
+  buses. Every bus has a bus number and a type: 41 seats (rows A-J, five seats
+  across the back row) or 45 seats (rows A-K, five across the back row). Use
+  "+ Add bus" for multi-bus tours; each bus can be 41 or 45 independently. In
+  the booking form choose the bus first, then the seats - every bus has its own
+  seat map. Blank codes use initials from the tour name. New tour booking numbers include
   the code (for example, CBT-RTT-2026-0001). Export a selected travel month as PDF
   or CSV. Archive keeps booking history; **Delete tour + bookings** permanently
   erases the tour and its saved booking/payment records after confirmation.

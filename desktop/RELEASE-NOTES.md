@@ -1,3 +1,33 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.2.0
+
+* **Two coach types — 41 and 45 seats.** Every bus is now either a 41-seat
+  coach (rows A–I with 2 + 2 seats, back row J-1 … J-5) or a 45-seat coach
+  (rows A–J, back row K-1 … K-5). The fifth seat sits in the middle of the back
+  row, so the whole coach is filled. The seat map draws the five-across back
+  row exactly like the real bus.
+* **Multiple buses per tour.** In *Tours & monthly reports* a tour has a bus
+  list instead of a single capacity: give each bus a bus number (1, 2, … or any
+  short label) and choose 41 or 45 seats for it independently, using
+  **+ Add bus** / **Remove**. The catalogue shows the buses (for example
+  `1:41 + 2:45`) and the summed capacity.
+* **Bookings know their bus.** The booking form has a **Bus** drop-down next to
+  the tour (pre-selected when the tour has one bus). Seats, the seat map, the
+  "booked / open" summary and double-booking checks are all per bus, so seat
+  A-1 can be sold once on bus 1 and once on bus 2. A booking saved against
+  seats that do not exist on the chosen bus type is refused with a clear
+  message. The booking table, booking-list PDF and CSV export gained a **Bus**
+  column; the customer memo prints the bus number after the seats
+  (`K-1, K-2  (বাস ২)`).
+* **Safe edits.** A bus with active bookings cannot be removed, and cannot be
+  switched to a type that lacks one of its booked seats; renumbering a bus
+  carries its bookings along.
+* **Upgrade from earlier versions is automatic.** Existing tours with the
+  classic 40-seat plan become one 41-seat bus "1" (all old seat labels stay
+  valid; J-5 is simply added). Tours with any other old capacity keep their
+  previous seat plan as a "classic" bus until you change the bus type. All
+  existing bookings are assigned to bus 1.
+* Demo data and the built-in default tours now use 41-seat buses.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.1.9
 
 * **Office e-mail:** `rajshahitoursandtravels@gmail.com` is now the default

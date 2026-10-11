@@ -297,7 +297,11 @@ def booking_receipt(booking: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
 
         row_y = y
         left_y = _field(canvas, MARGIN, row_y, col, "ট্যুরের নাম", str(booking.get("tour_name", "")))
-        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "সিট নম্বর", str(booking.get("seat", "")))
+        seat_text = str(booking.get("seat", "") or "")
+        bus_no = str(booking.get("bus_no") or "").strip()
+        if bus_no:
+            seat_text = f"{seat_text}  (বাস {_bangla_digits(bus_no)})" if seat_text else f"বাস {_bangla_digits(bus_no)}"
+        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "সিট নম্বর", seat_text)
         y = max(left_y, right_y)
 
         row_y = y
@@ -528,8 +532,9 @@ REPORT_COLUMNS = (
     ("Booking No", 74, "left"),
     ("Name", 116, "left"),
     ("Phone", 76, "left"),
-    ("Tour Name", 104, "left"),
-    ("Seat", 54, "left"),
+    ("Tour Name", 96, "left"),
+    ("Bus", 28, "center"),
+    ("Seat", 50, "left"),
     ("Tour Date", 58, "center"),
     ("Status", 50, "center"),
     ("Booked On", 58, "center"),
@@ -638,6 +643,7 @@ def booking_list_report(
                 str(row.get("name") or ""),
                 str(row.get("phone") or ""),
                 str(row.get("tour_name") or ""),
+                str(row.get("bus_no") or ""),
                 str(row.get("seat") or ""),
                 format_date(row.get("tour_date", ""), "%d %b %y"),
                 str(row.get("status") or "Confirmed"),

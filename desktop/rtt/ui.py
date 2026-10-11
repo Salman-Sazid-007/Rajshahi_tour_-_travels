@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from . import config, db, documents
 from .config import money, parse_date
@@ -777,13 +777,13 @@ class BookingApp:
         tour_table.rowconfigure(0, weight=1)
         tour_table.columnconfigure(0, weight=1)
         self.tour_catalog_tree = ttk.Treeview(
-            tour_table, columns=("name", "code", "capacity", "bookings", "state"),
+            tour_table, columns=("name", "code", "buses", "capacity", "bookings", "state"),
             show="headings", height=11
         )
         for key, heading, width, anchor in (
-            ("name", "Tour name", 155, "w"), ("code", "Tour code", 78, "center"),
-            ("capacity", "Seats", 58, "center"), ("bookings", "Bookings", 72, "center"),
-            ("state", "State", 75, "center"),
+            ("name", "Tour name", 150, "w"), ("code", "Tour code", 72, "center"),
+            ("buses", "Buses", 110, "center"), ("capacity", "Seats", 54, "center"),
+            ("bookings", "Bookings", 68, "center"), ("state", "State", 70, "center"),
         ):
             self.tour_catalog_tree.heading(key, text=heading)
             self.tour_catalog_tree.column(key, width=width, anchor=anchor, stretch=True)
@@ -815,21 +815,23 @@ class BookingApp:
             font=self.input_font,
         )
         self.tour_code_entry.grid(row=1, column=1, sticky="ew", padx=(0, 8))
-        ttk.Label(tour_form, text="Seats (1–46)", style="Field.TLabel").grid(
-            row=0, column=2, sticky="w")
-        self.tour_capacity_var = tk.StringVar(value="40")
-        self.tour_capacity_entry = ttk.Entry(
-            tour_form, textvariable=self.tour_capacity_var, width=8, style="Input.TEntry",
-            font=self.input_font,
-        )
-        self.tour_capacity_entry.grid(row=1, column=2, sticky="ew")
         ttk.Label(
             tour_form,
             text="Code appears before the booking serial (example: CBT-RTT-2026-0001). Leave blank for initials.",
             style="Muted.TLabel", wraplength=390,
         ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(5, 0))
+        ttk.Label(tour_form, text="Buses on this tour", style="Field.TLabel").grid(
+            row=3, column=0, columnspan=3, sticky="w", pady=(8, 0))
+        self.tour_bus_editor = BusListEditor(tour_form, self.ui_font, self.input_font)
+        self.tour_bus_editor.grid(row=4, column=0, columnspan=3, sticky="ew", pady=(2, 0))
+        ttk.Label(
+            tour_form,
+            text="Each bus is a 41-seat or 45-seat coach (2+2 rows, five seats across the back row). "
+                 "Add more buses when one tour runs several coaches; every bus has its own seat map.",
+            style="Muted.TLabel", wraplength=390,
+        ).grid(row=5, column=0, columnspan=3, sticky="w", pady=(4, 0))
         buttons = ttk.Frame(tour_form, style="Card.TFrame")
-        buttons.grid(row=3, column=0, columnspan=3, sticky="ew", pady=(9, 0))
+        buttons.grid(row=6, column=0, columnspan=3, sticky="ew", pady=(9, 0))
         ttk.Button(buttons, text="＋ Add tour", style="Accent.TButton",
                    command=lambda: self.save_tour(add_only=True)).pack(
             side="left", padx=(0, 6))
@@ -838,7 +840,7 @@ class BookingApp:
         ttk.Button(buttons, text="Clear", command=self.clear_tour_editor).pack(side="right")
 
         tour_actions = ttk.Frame(tour_form, style="Card.TFrame")
-        tour_actions.grid(row=4, column=0, columnspan=3, sticky="ew", pady=(7, 0))
+        tour_actions.grid(row=7, column=0, columnspan=3, sticky="ew", pady=(7, 0))
         ttk.Button(tour_actions, text="Archive (keep history)", style="Secondary.TButton",
                    command=self.archive_tour).pack(side="left", padx=(0, 6))
         ttk.Button(tour_actions, text="Delete tour + bookings", style="Danger.TButton",
@@ -1137,13 +1139,13 @@ class BookingApp:
         if row:
             self.tour_name_var.set(row["name"])
             self.tour_code_var.set(str(row.get("tour_code") or ""))
-            self.tour_capacity_var.set(str(row["seat_capacity"]))
+            self.tour_bus_editor.set_buses(row.get("buses") or [])
 
     def clear_tour_editor(self) -> None:
         self.selected_tour_catalog_id = None
         self.tour_name_var.set("")
         self.tour_code_var.set("")
-        self.tour_capacity_var.set("40")
+        self.tour_bus_editor.set_buses([])
         if hasattr(self, "tour_catalog_tree"):
             self.tour_catalog_tree.selection_remove(*self.tour_catalog_tree.selection())
 
@@ -1155,12 +1157,14 @@ class BookingApp:
                          if int(tour["id"]) == editing_id), None) if editing_id is not None else None
         old_name = str(previous["name"]) if previous else ""
         try:
+            buses = self.tour_bus_editor.get_buses()
             if editing_id is None:
-                self.db.add_tour(name, self.tour_capacity_var.get(), tour_code)
+                buses = [dict(bus, id=None) for bus in buses]
+                self.db.add_tour(name, buses, tour_code)
                 saved_code = self.db.tour_code(name)
                 message = f"Tour '{name}' ({saved_code}) added. It is ready for bookings."
             else:
-                self.db.update_tour(editing_id, name, self.tour_capacity_var.get(), tour_code)
+                self.db.update_tour(editing_id, name, buses, tour_code)
                 saved_code = self.db.tour_code(name)
                 message = f"Tour '{name}' ({saved_code}) updated."
                 if old_name != name:
@@ -1179,6 +1183,7 @@ class BookingApp:
         self.clear_tour_editor()
         self.refresh_tour_catalog()
         self.apply_tour_choices()
+        self.refresh_bus_choices()
         if (self.selected_id is None and str(self.vars["tour_name"].get() or "").casefold()
                 == name.casefold()):
             self.assign_number()
@@ -1279,9 +1284,14 @@ class BookingApp:
             self.tour_catalog_tree.delete(item)
         for tour in self.db.tour_catalog(include_inactive=True):
             active = bool(tour["active"])
+            buses = tour.get("buses") or []
+            if len(buses) == 1:
+                bus_text = f"1 × {buses[0]['capacity']}"
+            else:
+                bus_text = " + ".join(f"{bus['bus_no']}:{bus['capacity']}" for bus in buses) or "-"
             self.tour_catalog_tree.insert(
                 "", "end", iid=str(tour["id"]),
-                values=(tour["name"], tour["tour_code"], tour["seat_capacity"],
+                values=(tour["name"], tour["tour_code"], bus_text, tour["seat_capacity"],
                         tour["booking_count"], "Active" if active else "Archived"),
                 tags=() if active else ("archived",),
             )
@@ -1388,17 +1398,70 @@ class BookingApp:
             messagebox.showinfo("Choose seats", "Enter a valid travel date before choosing seats.", parent=self.root)
             return
         date_text = parsed.isoformat()
-        capacity = self.db.tour_capacity(tour)
-        occupied = self.db.tour_seat_occupancy(tour, date_text, exclude_id=self.selected_id)
+        bus = self.current_bus()
+        if bus is None:
+            messagebox.showinfo("Choose seats", "Choose which bus of the tour first.", parent=self.root)
+            return
+        occupied = self.db.tour_seat_occupancy(tour, date_text, exclude_id=self.selected_id,
+                                               bus_no=bus["bus_no"])
         selected = db.seat_tokens(self.vars["seat"].get())
         SeatMapDialog(
-            self.root, f"{tour} · {parsed.strftime('%d %b %Y')}", capacity, occupied, selected,
-            max_select=capacity,
+            self.root, f"{tour} · Bus {bus['bus_no']} ({bus['label']}) · {parsed.strftime('%d %b %Y')}",
+            bus["capacity"], occupied, selected, max_select=bus["capacity"], seats=bus["seats"],
             on_save=lambda seats: self.set_tour_seats(seats),
         )
 
     def set_tour_seats(self, seats: List[str]) -> None:
         self.vars["seat"].set(", ".join(seats))
+        self.update_tour_seat_summary()
+
+    # -- bus choice -----------------------------------------------------------
+    @staticmethod
+    def _bus_display(bus: Dict[str, Any]) -> str:
+        return f"Bus {bus['bus_no']}  ·  {bus['label']}"
+
+    def current_bus(self) -> Optional[Dict[str, Any]]:
+        tour = str(self.vars["tour_name"].get() or "").strip()
+        if not tour:
+            return None
+        return self.db.tour_bus(tour, self.vars["bus_no"].get())
+
+    def refresh_bus_choices(self) -> None:
+        """Fill the Bus drop-down from the selected tour and keep a valid choice."""
+        if not hasattr(self, "bus_combo"):
+            return
+        tour = str(self.vars["tour_name"].get() or "").strip()
+        buses = self.db.tour_buses(tour) if tour else []
+        self.bus_choice_map = {self._bus_display(bus): bus["bus_no"] for bus in buses}
+        self.bus_combo.configure(values=list(self.bus_choice_map))
+        wanted = db.normalise_bus_no(self.vars["bus_no"].get())
+        match = next((bus for bus in buses if bus["bus_no"].casefold() == wanted.casefold()), None)
+        if match is None and buses:
+            match = buses[0]
+        self._syncing_bus = True
+        try:
+            if match is None:
+                self.bus_choice_var.set("")
+                if not buses:
+                    self.vars["bus_no"].set("")
+            else:
+                self.bus_choice_var.set(self._bus_display(match))
+                if self.vars["bus_no"].get() != match["bus_no"]:
+                    self.vars["bus_no"].set(match["bus_no"])
+        finally:
+            self._syncing_bus = False
+        self.update_tour_seat_summary()
+
+    def on_bus_choice(self) -> None:
+        if getattr(self, "_syncing_bus", False):
+            return
+        bus_no = self.bus_choice_map.get(self.bus_choice_var.get())
+        if bus_no is not None and self.vars["bus_no"].get() != bus_no:
+            previous = self.vars["bus_no"].get()
+            self.vars["bus_no"].set(bus_no)
+            # Seats belong to one bus; clear them when the office switches bus.
+            if previous and self.vars["seat"].get().strip():
+                self.vars["seat"].set("")
         self.update_tour_seat_summary()
 
     def update_tour_seat_summary(self) -> None:
@@ -1409,12 +1472,26 @@ class BookingApp:
         if not tour or not parsed:
             self.seat_summary_var.set("Choose a tour and date to see availability")
             return
-        capacity = self.db.tour_capacity(tour)
-        occupied = self.db.tour_seat_occupancy(tour, parsed.isoformat(), exclude_id=self.selected_id)
+        bus = self.current_bus()
         selected = db.seat_tokens(self.vars["seat"].get())
-        self.seat_summary_var.set(
-            f"{len(occupied)} booked  ·  {max(0, capacity - len(occupied))} open  ·  {len(selected)} selected"
+        if bus is None:
+            capacity = self.db.tour_capacity(tour)
+            occupied = self.db.tour_seat_occupancy(tour, parsed.isoformat(), exclude_id=self.selected_id)
+            self.seat_summary_var.set(
+                f"{len(occupied)} booked  ·  {max(0, capacity - len(occupied))} open  ·  {len(selected)} selected"
+            )
+            return
+        occupied = self.db.tour_seat_occupancy(tour, parsed.isoformat(), exclude_id=self.selected_id,
+                                               bus_no=bus["bus_no"])
+        total_taken = self.db.tour_seats_taken(tour, parsed.isoformat())
+        total_capacity = self.db.tour_capacity(tour)
+        text = (
+            f"Bus {bus['bus_no']}: {len(occupied)} booked  ·  "
+            f"{max(0, bus['capacity'] - len(occupied))} open  ·  {len(selected)} selected"
         )
+        if len(self.db.tour_buses(tour)) > 1:
+            text += f"   |   all buses: {total_taken} / {total_capacity}"
+        self.seat_summary_var.set(text)
 
     # -------------------------------------------------------------- bus desk
 
@@ -1813,6 +1890,7 @@ class BookingApp:
             "name": tk.StringVar(),
             "phone": tk.StringVar(),
             "seat": tk.StringVar(),
+            "bus_no": tk.StringVar(),
             "tour_name": tk.StringVar(),
             "total": tk.StringVar(value="0"),
             "advance": tk.StringVar(value="0"),
@@ -1830,6 +1908,17 @@ class BookingApp:
         row = self._form_row(card, row, "Phone Number", "phone")
         row = self._form_row(card, row, "Tour Date *", "tour_date", date=True)
         row = self._form_row(card, row, "Tour Name *", "tour_name", combobox=True)
+        ttk.Label(card, text="Bus *", style="Field.TLabel").grid(row=row, column=0, sticky="w",
+                                                                  pady=(8, 0))
+        self.bus_choice_var = tk.StringVar()
+        self.bus_choice_map: Dict[str, str] = {}
+        self.bus_combo = ttk.Combobox(card, textvariable=self.bus_choice_var, values=(), width=28,
+                                      state="readonly", style="Input.TCombobox", font=self.input_font)
+        self.bus_combo.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
+        self.bus_combo.bind("<<ComboboxSelected>>", lambda event: self.on_bus_choice())
+        self.bus_choice_var.trace_add("write", lambda *_: self.on_bus_choice())
+        self.booking_form_widgets["bus_no"] = self.bus_combo
+        row += 2
         row = self._form_row(card, row, "Seats · use the seat map", "seat", extra="seatmap")
         ttk.Label(card, textvariable=self.seat_summary_var, style="Muted.TLabel").grid(
             row=row, column=0, columnspan=3, sticky="w", pady=(1, 0))
@@ -1899,11 +1988,13 @@ class BookingApp:
 
         for name in ("total", "advance"):
             self.vars[name].trace_add("write", lambda *_: self.update_due())
-        for name in ("tour_name", "tour_date", "seat"):
+        for name in ("tour_name", "tour_date", "seat", "bus_no"):
             self.vars[name].trace_add("write", lambda *_: self.update_tour_seat_summary())
+        self.vars["tour_name"].trace_add("write", lambda *_: self.refresh_bus_choices())
         self.vars["tour_name"].trace_add(
             "write", lambda *_: self._update_new_booking_number_for_tour()
         )
+        self.refresh_bus_choices()
 
     def _form_row(self, card: ttk.Frame, row: int, label: str, key: str,
                   combobox: bool = False, date: bool = False, extra: str = "") -> int:
@@ -1966,6 +2057,7 @@ class BookingApp:
             ("name", "Name", 150),
             ("phone", "Phone", 92),
             ("seat", "Seat", 74),
+            ("bus_no", "Bus", 48),
             ("tour_name", "Tour Name", 130),
             ("tour_date", "Tour Date", 88),
             ("booking_date", "Booked On", 88),
@@ -2098,19 +2190,28 @@ class BookingApp:
         seats = db.seat_tokens(data.get("seat"))
         if not seats:
             return "Choose at least one seat from the tour seat map."
-        allowed = set(seat_ids(self.db.tour_capacity(str(data.get("tour_name") or ""))))
+        buses = self.db.tour_buses(tour_name)
+        bus = self.db.tour_bus(tour_name, data.get("bus_no")) if buses else None
+        if buses and bus is None:
+            return "Choose which bus of the tour this booking is for."
+        allowed = set(bus["seats"]) if bus else set(seat_ids(self.db.tour_capacity(tour_name)))
         if any(seat not in allowed for seat in seats):
-            return "One or more seats are not part of this tour's seat layout. Open the seat map and choose again."
+            where = f"bus {bus['bus_no']} ({bus['label']})" if bus else "this tour's seat layout"
+            return f"One or more seats are not part of {where}. Open the seat map and choose again."
+        if bus:
+            data["bus_no"] = bus["bus_no"]
         tour_date = parse_date(str(data.get("tour_date") or ""))
         if not tour_date:
             return "Tour date must be valid before a seat can be reserved."
         if str(data.get("status") or "").casefold() != "cancelled":
             conflicts = self.db.tour_seat_conflicts(
-                tour_name, tour_date.isoformat(), ", ".join(seats), exclude_id=self.selected_id
+                tour_name, tour_date.isoformat(), ", ".join(seats), exclude_id=self.selected_id,
+                bus_no=bus["bus_no"] if bus else "",
             )
             if conflicts:
+                where = f"bus {bus['bus_no']} of {tour_name}" if bus else tour_name
                 return (
-                    f"Seat(s) {', '.join(conflicts)} are already booked for {tour_name} "
+                    f"Seat(s) {', '.join(conflicts)} are already booked on {where} "
                     f"on {tour_date.isoformat()}. Choose different seats for this trip."
                 )
         if data["total"] < 0 or data["advance"] < 0:
@@ -2283,6 +2384,7 @@ class BookingApp:
                     row.get("name", ""),
                     row.get("phone", ""),
                     row.get("seat", ""),
+                    row.get("bus_no", ""),
                     row.get("tour_name", ""),
                     row.get("tour_date", ""),
                     row.get("booking_date", ""),
@@ -2509,7 +2611,7 @@ class BookingApp:
             "TOUR BOOKINGS\n"
             "Enter passenger name and phone, choose the tour date and tour, then use Map to select open seats. Booked seats are locked for that trip. After a successful booking create or update, all trip/passenger inputs clear and a fresh unique number is shown. Click a saved row to edit it; due is Total minus Advance.\n\n"
             "TOURS & MONTHLY REPORTS\n"
-            "Add or edit tours, a unique tour code, and seat capacity. The code is added before new tour booking serials; leaving it blank generates initials. Archive a tour to keep its booking history, or permanently delete it and its booking/payment records. Select a travel month to preview trips and export PDF or CSV.\n\n"
+            "Add or edit tours, a unique tour code, and the buses that run the tour (each bus is a 41-seat or 45-seat coach with its own bus number and seat map). The code is added before new tour booking serials; leaving it blank generates initials. Archive a tour to keep its booking history, or permanently delete it and its booking/payment records. Select a travel month to preview trips and export PDF or CSV.\n\n"
             "BUS TICKETS\n"
             "Bus ticketing is separate from tour bookings and uses its own ticket numbers and seat inventory. Choose the passenger count, then use Map to select exactly that many free seats. Assign Male or Female before each seat; selected seats are blue for Male and pink for Female. Fare is per passenger, and the name/phone are the group contact.\n\n"
             "Use File → Backup database regularly. Everything is stored offline on this computer.\n\n"
@@ -2590,7 +2692,7 @@ class SettingsDialog(tk.Toplevel):
         self.terms.grid(row=row, column=0, columnspan=2, sticky="ew")
         row += 1
 
-        ttk.Label(content, text="Manage active tours and seat capacity under Tours & monthly reports.",
+        ttk.Label(content, text="Manage active tours and their buses under Tours & monthly reports.",
                   wraplength=380, foreground=MUTED).grid(row=row, column=0, columnspan=2,
                                                          sticky="w", pady=(9, 0))
         row += 1
@@ -2616,8 +2718,150 @@ class SettingsDialog(tk.Toplevel):
 
 
 def seat_ids(capacity: int = 40) -> List[str]:
-    """Seat labels mirror the website's standard 40 / extended 46 layout."""
+    """Classic seat labels (standard 40 / extended 46) used by bus tickets."""
     return db.tour_seat_ids(capacity)
+
+
+def seat_rows(seats: List[str]) -> List[Tuple[str, List[str]]]:
+    """Group seat labels into drawing rows: ``("1", ["1"])`` for a front seat,
+    then one entry per row letter in order, e.g. ``("J", ["J-1", …, "J-5"])``."""
+    rows: List[Tuple[str, List[str]]] = []
+    index: Dict[str, List[str]] = {}
+    for seat in seats:
+        letter = seat.split("-", 1)[0] if "-" in seat else seat
+        if letter not in index:
+            index[letter] = []
+            rows.append((letter, index[letter]))
+        index[letter].append(seat)
+    return rows
+
+
+class BusListEditor(ttk.Frame):
+    """Rows of "bus number + coach type" used when setting up a tour.
+
+    The office can add as many buses as a tour needs; each bus is either a
+    41-seat or a 45-seat coach (a bus that still uses an older classic plan
+    shows that plan as an extra choice until it is changed).
+    """
+
+    def __init__(self, master, ui_font: str, input_font, on_change=None) -> None:
+        super().__init__(master, style="Card.TFrame")
+        self.ui_font = ui_font
+        self.input_font = input_font
+        self.on_change = on_change
+        self.rows: List[Dict[str, Any]] = []
+        self.columnconfigure(1, weight=1)
+        ttk.Label(self, text="Bus no.", style="Field.TLabel").grid(row=0, column=0, sticky="w")
+        ttk.Label(self, text="Coach type", style="Field.TLabel").grid(row=0, column=1, sticky="w", padx=(8, 0))
+        self.rows_frame = ttk.Frame(self, style="Card.TFrame")
+        self.rows_frame.grid(row=1, column=0, columnspan=3, sticky="ew")
+        self.rows_frame.columnconfigure(1, weight=1)
+        self.add_button = ttk.Button(self, text="＋ Add another bus", style="Secondary.TButton",
+                                     command=lambda: self.add_bus())
+        self.add_button.grid(row=2, column=0, columnspan=3, sticky="w", pady=(6, 0))
+        self.summary_var = tk.StringVar()
+        ttk.Label(self, textvariable=self.summary_var, style="Muted.TLabel").grid(
+            row=3, column=0, columnspan=3, sticky="w", pady=(4, 0))
+        self.set_buses([])
+
+    # -- data ------------------------------------------------------------
+    @staticmethod
+    def _choices(layout: str) -> List[str]:
+        values = list(db.BUS_TYPES.values())
+        label = db.layout_label(layout)
+        if label not in values:
+            values.append(label)
+        return values
+
+    def set_buses(self, buses: List[Dict[str, Any]]) -> None:
+        for row in self.rows:
+            row["frame"].destroy()
+        self.rows = []
+        if not buses:
+            buses = [{"id": None, "bus_no": "1", "layout": "41"}]
+        for bus in buses:
+            self.add_bus(bus.get("bus_no", ""), bus.get("layout", "41"), bus.get("id"))
+
+    def add_bus(self, bus_no: str = "", layout: str = "41", bus_id: Optional[int] = None) -> None:
+        if len(self.rows) >= db.MAX_BUSES_PER_TOUR:
+            return
+        try:
+            layout = db.normalise_layout(layout)
+        except ValueError:
+            layout = "41"
+        if not str(bus_no or "").strip():
+            used = {str(row["number"].get()).strip().casefold() for row in self.rows}
+            candidate = len(self.rows) + 1
+            while str(candidate).casefold() in used:
+                candidate += 1
+            bus_no = str(candidate)
+        frame = ttk.Frame(self.rows_frame, style="Card.TFrame")
+        frame.grid(row=len(self.rows), column=0, columnspan=3, sticky="ew", pady=(3, 0))
+        frame.columnconfigure(1, weight=1)
+        number = tk.StringVar(value=str(bus_no))
+        type_var = tk.StringVar(value=db.layout_label(layout))
+        entry = ttk.Entry(frame, textvariable=number, width=8, style="Input.TEntry", font=self.input_font)
+        entry.grid(row=0, column=0, sticky="ew")
+        combo = ttk.Combobox(frame, textvariable=type_var, values=self._choices(layout), width=18,
+                             state="readonly", style="Input.TCombobox", font=self.input_font)
+        combo.grid(row=0, column=1, sticky="ew", padx=(8, 8))
+        remove = ttk.Button(frame, text="✕", width=3, command=lambda f=frame: self.remove_bus(f))
+        remove.grid(row=0, column=2, sticky="e")
+        row = {"frame": frame, "number": number, "type": type_var, "layout": layout, "id": bus_id,
+               "entry": entry, "combo": combo, "remove": remove}
+        self.rows.append(row)
+        type_var.trace_add("write", lambda *_: self._changed())
+        number.trace_add("write", lambda *_: self._changed())
+        self._changed()
+
+    def remove_bus(self, frame) -> None:
+        if len(self.rows) <= 1:
+            return  # a tour always has at least one bus
+        self.rows = [row for row in self.rows if row["frame"] is not frame]
+        frame.destroy()
+        for index, row in enumerate(self.rows):
+            row["frame"].grid(row=index, column=0, columnspan=3, sticky="ew", pady=(3, 0))
+        self._changed()
+
+    @staticmethod
+    def _layout_from_label(label: str, fallback: str) -> str:
+        text = str(label or "").strip()
+        for code, name in db.BUS_TYPES.items():
+            if text == name:
+                return code
+        if text.endswith("(classic)"):
+            try:
+                return db.normalise_layout(f"legacy{int(text.split()[0])}")
+            except (ValueError, IndexError):
+                return fallback
+        try:
+            return db.normalise_layout(text)
+        except ValueError:
+            return fallback
+
+    def get_buses(self) -> List[Dict[str, Any]]:
+        specs = []
+        for row in self.rows:
+            specs.append({
+                "id": row["id"],
+                "bus_no": str(row["number"].get()).strip(),
+                "layout": self._layout_from_label(row["type"].get(), row["layout"]),
+            })
+        return specs
+
+    def total_capacity(self) -> int:
+        return sum(db.layout_capacity(spec["layout"]) for spec in self.get_buses())
+
+    def _changed(self) -> None:
+        buses = self.get_buses()
+        if len(buses) == 1:
+            text = f"1 bus · {self.total_capacity()} seats in total"
+        else:
+            parts = " + ".join(str(db.layout_capacity(spec["layout"])) for spec in buses)
+            text = f"{len(buses)} buses ({parts}) · {self.total_capacity()} seats in total"
+        self.summary_var.set(text)
+        if self.on_change is not None:
+            self.on_change()
 
 
 class SeatMapDialog(tk.Toplevel):
@@ -2626,10 +2870,15 @@ class SeatMapDialog(tk.Toplevel):
     def __init__(self, master, title: str, capacity: int,
                  occupied: Dict[str, Dict[str, Any]], selected: List[str],
                  max_select: int = 40, on_save=None, gendered: bool = False,
-                 selected_genders: Optional[Dict[str, str]] = None) -> None:
+                 selected_genders: Optional[Dict[str, str]] = None,
+                 seats: Optional[List[str]] = None) -> None:
         super().__init__(master)
-        self.capacity = max(1, min(46, int(capacity or 40)))
-        self.seats = seat_ids(self.capacity)
+        if seats:
+            self.seats = list(seats)
+            self.capacity = len(self.seats)
+        else:
+            self.capacity = max(1, min(46, int(capacity or 40)))
+            self.seats = seat_ids(self.capacity)
         self.occupied = {db.normalise_seat(key): value for key, value in occupied.items()}
         selected_set = {db.normalise_seat(item) for item in selected
                         if db.normalise_seat(item) in self.seats}
@@ -2691,30 +2940,26 @@ class SeatMapDialog(tk.Toplevel):
         self.map_frame = ttk.Frame(plan, style="Card.TFrame")
         self.map_frame.grid(row=1, column=0, sticky="ew")
         self.buttons: Dict[str, ttk.Button] = {}
-        if "1" in self.seats:
-            ttk.Label(self.map_frame, text="Front passenger", style="Muted.TLabel").grid(
-                row=0, column=0, columnspan=3, sticky="w", padx=(0, 8), pady=3)
-            self._make_seat_button("1", 0, 3)
-            first_row = 1
-        else:
-            first_row = 0
-        for index, letter in enumerate("ABCDEFGHIJ"):
-            row_seats = [f"{letter}-{number}" for number in range(1, 5)]
-            if not any(seat in self.seats for seat in row_seats):
-                break
-            grid_row = first_row + index
-            ttk.Label(self.map_frame, text=letter, width=3, anchor="center",
-                      font=("Segoe UI", 13, "bold"), foreground=MUTED,
-                      background=WHITE).grid(row=grid_row, column=2, padx=5, pady=2)
-            self._make_seat_button(row_seats[0], grid_row, 0)
-            self._make_seat_button(row_seats[1], grid_row, 1)
-            self._make_seat_button(row_seats[2], grid_row, 3)
-            self._make_seat_button(row_seats[3], grid_row, 4)
-        back_row = first_row + 10
-        for index in range(1, 6):
-            seat = f"K-{index}"
-            if seat in self.seats:
-                self._make_seat_button(seat, back_row, index - 1)
+        # Layout drawing: 2+2 rows have the aisle (row letter) in the middle
+        # column; a five-seat back row fills the aisle with its middle seat.
+        grid_row = 0
+        for letter, row_seats in seat_rows(self.seats):
+            if letter == "1" and row_seats == ["1"]:
+                ttk.Label(self.map_frame, text="Front passenger", style="Muted.TLabel").grid(
+                    row=grid_row, column=0, columnspan=3, sticky="w", padx=(0, 8), pady=3)
+                self._make_seat_button("1", grid_row, 3)
+                grid_row += 1
+                continue
+            if len(row_seats) >= 5:
+                for column, seat in enumerate(row_seats[:5]):
+                    self._make_seat_button(seat, grid_row, column)
+            else:
+                ttk.Label(self.map_frame, text=letter, width=3, anchor="center",
+                          font=("Segoe UI", 13, "bold"), foreground=MUTED,
+                          background=WHITE).grid(row=grid_row, column=2, padx=5, pady=2)
+                for position, seat in enumerate(row_seats[:4]):
+                    self._make_seat_button(seat, grid_row, (0, 1, 3, 4)[position])
+            grid_row += 1
 
         legend = ttk.Frame(self, style="Page.TFrame")
         legend.grid(row=row + 1, column=0, sticky="w", pady=(10, 4))

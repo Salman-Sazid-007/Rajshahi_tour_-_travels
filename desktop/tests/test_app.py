@@ -262,15 +262,115 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual(self.database.tour_seat_conflicts("New tour name", "2026-12-15", "C2"), ["C-2"])
 
     def test_capacity_cannot_hide_an_active_booked_seat(self) -> None:
-        tour_id = self.database.add_tour("Long coach", 40)
+        tour_id = self.database.add_tour("Long coach", 41)
         self.database.add({
             "booking_no": self.database.next_number("RTT"), "name": "Rear-row passenger",
-            "tour_name": "Long coach", "tour_date": "2026-12-25", "seat": "J-4",
+            "tour_name": "Long coach", "tour_date": "2026-12-25", "seat": "J-5",
         })
-        with self.assertRaisesRegex(ValueError, "Capacity cannot be reduced"):
+        # J-5 (middle of the back row) exists on a 41-seat coach but not on a
+        # classic 32-seat plan, and not on a 45-seat coach either (its back
+        # row is K).
+        with self.assertRaisesRegex(ValueError, "active bookings already use seats: J-5"):
             self.database.update_tour(tour_id, "Long coach", 32)
-        self.database.update_tour(tour_id, "Long coach", 46)
-        self.assertEqual(self.database.tour_capacity("Long coach"), 46)
+        with self.assertRaisesRegex(ValueError, "active bookings already use seats: J-5"):
+            self.database.update_tour(tour_id, "Long coach", [{"bus_no": "1", "layout": "45"}])
+        # Adding a second bus is always allowed.
+        self.database.update_tour(tour_id, "Long coach",
+                                  [{"bus_no": "1", "layout": "41"}, {"bus_no": "2", "layout": "45"}])
+        self.assertEqual(self.database.tour_capacity("Long coach"), 86)
+
+    def test_bus_layouts_put_the_extra_seat_in_the_middle_of_the_back_row(self) -> None:
+        coach41 = db.bus_seat_ids("41")
+        coach45 = db.bus_seat_ids("45")
+        self.assertEqual(len(coach41), 41)
+        self.assertEqual(len(coach45), 45)
+        self.assertEqual(coach41[:4], ["A-1", "A-2", "A-3", "A-4"])
+        self.assertEqual(coach41[-5:], ["J-1", "J-2", "J-3", "J-4", "J-5"])
+        self.assertEqual(coach45[-5:], ["K-1", "K-2", "K-3", "K-4", "K-5"])
+        self.assertNotIn("K-1", coach41)
+        self.assertNotIn("1", coach45)
+        # The 41-seat plan is the old 40-seat plan plus J-5.
+        self.assertEqual(set(coach41) - set(db.tour_seat_ids(40)), {"J-5"})
+        self.assertEqual(db.layout_label("41"), "41 seats")
+        self.assertEqual(db.layout_label("legacy46"), "46 seats (classic)")
+        self.assertEqual(db.normalise_layout(45), "45")
+        self.assertEqual(db.normalise_layout("45 seats"), "45")
+        self.assertEqual(db.normalise_layout(40), "legacy40")
+        with self.assertRaises(ValueError):
+            db.normalise_layout("bus")
+        with self.assertRaisesRegex(ValueError, "used twice"):
+            db.normalise_bus_specs([{"bus_no": "1", "layout": "41"}, {"bus_no": " 1 ", "layout": "45"}])
+
+    def test_existing_tours_migrate_to_single_buses_and_bookings_follow(self) -> None:
+        path = os.path.join(tempfile.mkdtemp(prefix="rtt-legacy-"), "bookings.db")
+        raw = sqlite3.connect(path)
+        raw.executescript(
+            "CREATE TABLE bookings (id INTEGER PRIMARY KEY AUTOINCREMENT, booking_no TEXT, name TEXT,"
+            " phone TEXT, seat TEXT, total REAL, advance REAL, due REAL, booking_date TEXT,"
+            " tour_date TEXT, tour_name TEXT, notes TEXT, status TEXT DEFAULT 'Confirmed',"
+            " created_at TEXT, updated_at TEXT);"
+            "CREATE TABLE tour_catalog (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL"
+            " COLLATE NOCASE UNIQUE, tour_code TEXT NOT NULL DEFAULT '', seat_capacity INTEGER NOT NULL"
+            " DEFAULT 40, active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT '');"
+            "CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);"
+            "INSERT INTO app_meta VALUES ('tour_catalog_seeded', '1');"
+            "INSERT INTO tour_catalog(name, tour_code, seat_capacity) VALUES"
+            " ('Old Forty', 'OF', 40), ('Old Express', 'OE', 46);"
+            "INSERT INTO bookings(booking_no, name, seat, tour_date, tour_name, status) VALUES"
+            " ('OF-RTT-2026-0001', 'A', 'J-3, J-4', '2026-12-01', 'Old Forty', 'Confirmed'),"
+            " ('OE-RTT-2026-0001', 'B', '1, K-5', '2026-12-01', 'Old Express', 'Confirmed');"
+        )
+        raw.commit()
+        raw.close()
+        upgraded = db.Database(path)
+        try:
+            forty = upgraded.tour_buses("Old Forty")
+            express = upgraded.tour_buses("Old Express")
+            self.assertEqual([(b["bus_no"], b["layout"], b["capacity"]) for b in forty], [("1", "41", 41)])
+            self.assertEqual([(b["bus_no"], b["layout"], b["capacity"]) for b in express],
+                             [("1", "legacy46", 46)])
+            self.assertEqual({row["bus_no"] for row in upgraded.list()}, {"1"})
+            # Old seat labels remain valid on the migrated buses.
+            self.assertEqual(upgraded.tour_seat_conflicts("Old Express", "2026-12-01", "1", bus_no="1"), ["1"])
+            self.assertEqual(upgraded.tour_seat_conflicts("Old Forty", "2026-12-01", "J-4"), ["J-4"])
+            with self.assertRaisesRegex(ValueError, "already use seats: 1"):
+                upgraded.update_tour(express[0]["tour_id"], "Old Express", [{"bus_no": "1", "layout": "45"}])
+        finally:
+            upgraded.close()
+
+    def test_multiple_buses_keep_separate_seat_inventories(self) -> None:
+        tour_id = self.database.add_tour(
+            "Sajek Double", [{"bus_no": "1", "layout": "41"}, {"bus_no": "2", "layout": "45"}], "SJD"
+        )
+        base = {"tour_name": "Sajek Double", "tour_date": "2026-12-20", "total": 1000, "advance": 0}
+        first = self.database.add(dict(base, name="Bus one", seat="J-1", bus_no="1"))
+        second = self.database.add(dict(base, name="Bus two", seat="J-1", bus_no="2"))
+        self.assertNotEqual(first, second)
+        with self.assertRaisesRegex(ValueError, "already booked on bus 1"):
+            self.database.add(dict(base, name="Clash", seat="J-1", bus_no="1"))
+        with self.assertRaisesRegex(ValueError, "do not exist on bus 1"):
+            self.database.add(dict(base, name="Wrong plan", seat="K-5", bus_no="1"))
+        with self.assertRaisesRegex(ValueError, "not part of Sajek Double"):
+            self.database.add(dict(base, name="Ghost bus", seat="A-1", bus_no="9"))
+        implicit = self.database.add(dict(base, name="No bus given", seat="A-1"))
+        self.assertEqual(self.database.get(implicit)["bus_no"], "1")
+        self.assertEqual(sorted(self.database.tour_seat_occupancy("Sajek Double", "2026-12-20", bus_no="2")),
+                         ["J-1"])
+        self.assertEqual(self.database.tour_seats_taken("Sajek Double", "2026-12-20"), 3)
+        self.assertEqual(self.database.tour_capacity("Sajek Double"), 86)
+        catalog = next(item for item in self.database.tour_catalog() if item["name"] == "Sajek Double")
+        self.assertEqual((catalog["bus_count"], catalog["seat_capacity"]), (2, 86))
+        # Renumbering a bus carries its bookings along; removing a busy bus is refused.
+        buses = self.database.tour_buses(tour_id)
+        self.database.update_tour(tour_id, "Sajek Double", [
+            {"id": buses[0]["id"], "bus_no": "1", "layout": "41"},
+            {"id": buses[1]["id"], "bus_no": "B", "layout": "45"},
+        ])
+        self.assertEqual(self.database.get(second)["bus_no"], "B")
+        with self.assertRaisesRegex(ValueError, "Bus B still has active bookings"):
+            self.database.update_tour(tour_id, "Sajek Double", [{"bus_no": "1", "layout": "41"}])
+        self.assertTrue(self.database.delete_tour(tour_id))
+        self.assertEqual(self.database.tour_buses(tour_id), [])
 
     def test_tour_seats_are_unique_per_date_and_release_on_cancel(self) -> None:
         base = {
@@ -659,7 +759,10 @@ class UiTests(unittest.TestCase):
         self.assertEqual(self.app.status_combo.cget("font"), large)
         self.assertEqual(self.app.tour_name_entry.cget("font"), large)
         self.assertEqual(self.app.tour_code_entry.cget("font"), large)
-        self.assertEqual(self.app.tour_capacity_entry.cget("font"), large)
+        for row in self.app.tour_bus_editor.rows:
+            self.assertEqual(row["entry"].cget("font"), large)
+            self.assertEqual(row["combo"].cget("font"), large)
+        self.assertEqual(self.app.bus_combo.cget("font"), large)
         self.assertEqual(self.app.bus_status_combo.cget("font"), large)
         self.assertEqual(self.app.bus_passenger_count_combo.cget("font"), large)
         bus_inputs = [w for w in self.app.bus_form_panel.card.winfo_children()
@@ -942,16 +1045,24 @@ class UiTests(unittest.TestCase):
         self.assertEqual(self.app.tour_name_entry.cget("style"), "Input.TEntry")
         self.app.tour_name_var.set("UI-created day trip")
         self.app.tour_code_var.set("uid")
-        self.app.tour_capacity_var.set("28")
+        editor = self.app.tour_bus_editor
+        self.assertEqual([bus["layout"] for bus in editor.get_buses()], ["41"])
+        editor.rows[0]["type"].set("45 seats")
+        editor.add_bus()
+        self.assertEqual([bus["bus_no"] for bus in editor.get_buses()], ["1", "2"])
         self.app.save_tour(add_only=True)
         self.assertEqual(self.app.tour_name_var.get(), "")
         self.assertEqual(self.app.tour_code_var.get(), "")
-        self.assertEqual(self.app.tour_capacity_var.get(), "40")
+        self.assertEqual([bus["layout"] for bus in editor.get_buses()], ["41"])
         tour = next(item for item in self.database.tour_catalog() if item["name"] == "UI-created day trip")
         self.assertEqual(tour["tour_code"], "UID")
-        self.assertEqual(tour["seat_capacity"], 28)
+        self.assertEqual(tour["seat_capacity"], 86)
+        self.assertEqual([(b["bus_no"], b["layout"]) for b in tour["buses"]], [("1", "45"), ("2", "41")])
         self.assertEqual(
             self.app.tour_catalog_tree.item(str(tour["id"]))["values"][1], "UID"
+        )
+        self.assertEqual(
+            self.app.tour_catalog_tree.item(str(tour["id"]))["values"][2], "1:45 + 2:41"
         )
         booking_id = self.database.add({
             "booking_no": self.database.next_number("RTT"), "name": "UI trip customer",
@@ -1010,15 +1121,68 @@ class UiTests(unittest.TestCase):
         rows = self.app.month_tree.get_children()
         self.assertEqual(len(rows), 1)
         values = self.app.month_tree.item(rows[0])["values"]
-        self.assertEqual(values[2:5], (2, 2, 38))
+        self.assertEqual(values[2:5], (2, 2, 39))
         self.assertIn("1 departures", self.app.month_summary_var.get())
+
+    def test_booking_form_offers_the_tours_buses_and_books_per_bus(self) -> None:
+        self.database.add_tour(
+            "Two Bus Trip", [{"bus_no": "1", "layout": "41"}, {"bus_no": "2", "layout": "45"}], "TBT"
+        )
+        self.app.apply_tour_choices()
+        self.app.new_booking()
+        self.app.vars["tour_name"].set("Two Bus Trip")
+        self.assertEqual(list(self.app.bus_combo.cget("values")),
+                         ["Bus 1  ·  41 seats", "Bus 2  ·  45 seats"])
+        self.assertEqual(self.app.vars["bus_no"].get(), "1")  # first bus pre-selected
+        self.app.vars["tour_date"].set("2026-12-24")
+        self.app.vars["seat"].set("J-5")
+        self.app.bus_choice_var.set("Bus 2  ·  45 seats")
+        self.assertEqual(self.app.vars["bus_no"].get(), "2")
+        self.assertEqual(self.app.vars["seat"].get(), "")  # seats cleared on bus change
+        self.app.vars["seat"].set("K-5")
+        self.app.vars["name"].set("Back-row passenger")
+        self.app.vars["total"].set("3000")
+        self.app.save_booking()
+        saved = self.database.list()[0]
+        self.assertEqual((saved["bus_no"], saved["seat"]), ("2", "K-5"))
+        # The form resets after saving; pick the trip again to see availability.
+        self.app.new_booking()
+        self.app.vars["tour_name"].set("Two Bus Trip")
+        self.app.vars["tour_date"].set("2026-12-24")
+        self.app.bus_choice_var.set("Bus 2  ·  45 seats")
+        self.assertIn("Bus 2: 1 booked  ·  44 open", self.app.seat_summary_var.get())
+        self.assertIn("all buses: 1 / 86", self.app.seat_summary_var.get())
+        self.app.bus_choice_var.set("Bus 1  ·  41 seats")
+        self.assertIn("Bus 1: 0 booked  ·  41 open", self.app.seat_summary_var.get())
+        # The same seat on bus 1 is still free; K-5 does not exist on bus 1.
+        self.app.vars["name"].set("Second passenger")
+        self.app.vars["seat"].set("K-5")
+        error = self.app.validate_form(self.app.collect_form())
+        self.assertIn("not part of bus 1 (41 seats)", error)
+        self.app.vars["seat"].set("J-5")
+        self.assertIsNone(self.app.validate_form(self.app.collect_form()))
+        # Opening a saved booking restores its bus.
+        self.app.selected_id = saved["id"]
+        self.app.load_selected()
+        self.assertEqual(self.app.bus_choice_var.get(), "Bus 2  ·  45 seats")
+
+    def test_seat_map_draws_five_seats_across_the_back_row(self) -> None:
+        dialog = ui.SeatMapDialog(self.root, "Bus 1", 41, {}, [], seats=db.bus_seat_ids("41"))
+        self.assertEqual(len(dialog.buttons), 41)
+        back = {seat: dialog.buttons[seat].cget("column") for seat in ("J-1", "J-2", "J-3", "J-4", "J-5")}
+        self.assertEqual(back, {"J-1": 0, "J-2": 1, "J-3": 2, "J-4": 3, "J-5": 4})
+        self.assertEqual(dialog.buttons["A-3"].cget("column"), 3)  # aisle gap stays in 2+2 rows
+        self.assertEqual(ui.seat_rows(db.bus_seat_ids("45"))[-1], ("K", ["K-1", "K-2", "K-3", "K-4", "K-5"]))
+        legacy = ui.SeatMapDialog(self.root, "Classic", 46, {}, [], seats=db.bus_seat_ids("legacy46"))
+        self.assertEqual(len(legacy.buttons), 46)
+        self.assertIn("1", legacy.buttons)
 
     def test_renamed_tour_updates_legacy_suggestions(self) -> None:
         old_name = "Cox's Bazar Tour"
         tour = next(item for item in self.database.tour_catalog() if item["name"] == old_name)
         self.app.selected_tour_catalog_id = int(tour["id"])
         self.app.tour_name_var.set("Coastal Weekend")
-        self.app.tour_capacity_var.set("40")
+        self.app.tour_bus_editor.set_buses(tour["buses"])
         self.app.save_tour()
         self.assertNotIn(old_name, self.app.settings["tour_suggestions"])
         self.assertIn("Coastal Weekend", self.app.settings["tour_suggestions"])

@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 
 APP_TITLE = "Rajshahi Tours & Travels"
 APP_SUBTITLE = "Offline Tour & Bus Manager"
-APP_VERSION = "1.1.9"
+APP_VERSION = "1.2.0"
 
 BOOKING_FIELDS = (
     "booking_no",

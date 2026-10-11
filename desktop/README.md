@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.1.9.
+These are the **latest published** downloads: desktop version 1.2.0.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.1.9.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.9/RajshahiTours-Windows-1.1.9.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.1.9.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.1.9/RajshahiTours-Desktop-1.1.9.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
+| [**RajshahiTours-Windows-1.2.0.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.0/RajshahiTours-Windows-1.2.0.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.2.0.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.0/RajshahiTours-Desktop-1.2.0.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.1.9 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.0 in **Help → About**.
 
 ---
 
@@ -25,8 +25,11 @@ and **Tours & monthly reports**.
 
 ## What it does
 
-* **Manage tours:** create tours with a unique short tour code and seat capacity;
-  leave the code blank to generate initials from the tour name, or enter your
+* **Manage tours:** create tours with a unique short tour code and one or more
+  buses — each bus has a bus number and is either a **41-seat** or a **45-seat**
+  coach (the extra seat sits in the middle of the back row). A tour can run
+  several buses, each with its own type and its own seat map; bookings record
+  the bus number as well as the seats. Leave the code blank to generate initials from the tour name, or enter your
   own. The code appears at the front of new booking numbers (for example,
   `CBT-RTT-2026-0001`). Existing booking numbers are kept unchanged. Archive a
   tour to keep its history, or permanently delete it and its associated bookings
@@ -59,10 +62,20 @@ or ticket, and back up the SQLite database. No internet connection is used.
 
 ### Tour seat layouts
 
-The standard tour map has 40 seats (`A-1` through `J-4`), with four seats per
-row and an aisle. A 46-seat tour can use the extended layout: front seat `1`,
-rows A–J, and `K-1` through `K-5`. Smaller capacities use the corresponding
-subset of the standard map. Labels such as `A1` are normalized to `A-1`.
+Every bus on a tour is one of two coach types:
+
+* **41 seats** — rows `A`–`I` with four seats each (2 + 2 around the aisle) and
+  a back row `J-1` … `J-5` with five seats across (the fifth seat fills the
+  aisle gap).
+* **45 seats** — rows `A`–`J` with four seats each and a back row `K-1` … `K-5`.
+
+A tour may have several buses (bus numbers `1`, `2`, … or any short label), and
+each bus can be 41 or 45 seats independently. Seat labels repeat on every bus,
+so a booking always stores the bus number together with its seats; the seat map
+in the booking form shows the selected bus only. Labels such as `A1` are
+normalized to `A-1`. Tours created before 1.2.0 with the classic 40-seat map
+become a single 41-seat bus (the old seats keep their labels; `J-5` is added);
+other old capacities are kept as a "classic" layout until you change them.
 
 ### Receipts and reports
 
@@ -137,8 +150,9 @@ due, bus-ticket count and upcoming departures.
 then save. Select a row and edit it to change customer details, seats, status,
 or payment; due is recalculated as Total − Advance. The seat map excludes the
 currently edited booking from its occupied-seat list.
-* **Tours & monthly reports** — add a tour, set its seat capacity, or select a
-tour to edit it. **Archive (keep history)** removes it from new-booking choices
+* **Tours & monthly reports** — add a tour with its buses (use **+ Add bus**
+and pick 41 or 45 seats per bus), or select a tour to edit it. A bus cannot be
+removed or shrunk while active bookings still use its seats. **Archive (keep history)** removes it from new-booking choices
 while retaining its bookings and reports. **Delete tour + bookings** permanently
 removes that tour and its associated booking/payment records after confirmation.
 Choose a travel month (`YYYY-MM`) and use **Monthly PDF** or **Export CSV**.
