@@ -1,3 +1,20 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.2.2
+
+* **Male / Female seats for tour bookings** — the same feature the bus-ticket
+  desk already had. In the tour seat map choose **Male** or **Female**, then
+  click each passenger's seat; selected seats turn blue or pink and seats sold
+  earlier show the gender of the passenger sitting there. Unlike bus tickets
+  there is no fixed passenger count: pick as many seats as the group needs.
+  Every seat must have a gender before the booking saves (bookings made before
+  this version can still be edited unchanged until their seats change).
+* The booking table shows the markers (`A-1 M, A-2 F`), the seat summary counts
+  them (`3 selected (1 M / 2 F)`) and the CSV export gains a **Seat genders**
+  column. Genders are stored per seat with the booking and follow seat edits.
+* **Logo watermark on the memo.** A large, faint copy of the company logo now
+  sits in the middle of the booking memo, spanning most of the page width,
+  behind all text and boxes — on every page of the memo, on screen and in
+  print.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.2.1
 
 * **41- and 45-seat coaches for daily bus tickets too.** The *Bus tickets* form

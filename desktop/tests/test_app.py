@@ -741,6 +741,25 @@ class DocumentTests(unittest.TestCase):
         data = documents.booking_list_report([], self.settings)
         self.assertTrue(data.startswith(b"%PDF"))
 
+    def test_memo_carries_a_large_faint_logo_watermark_behind_the_text(self) -> None:
+        self.assertTrue(os.path.isfile(config.asset_path("agency-logo-watermark.jpg")))
+        booking = self.database.list()[0]
+        data = documents.booking_receipt(booking, self.settings)
+        try:
+            import pymupdf
+        except ImportError:
+            return
+        page = pymupdf.open(stream=data, filetype="pdf")[0]
+        images = page.get_image_info()
+        self.assertEqual(len(images), 2, "letterhead logo + watermark")
+        watermark = max(images, key=lambda info: info["bbox"][2] - info["bbox"][0])
+        x0, y0, x1, y1 = watermark["bbox"]
+        self.assertGreater(x1 - x0, page.rect.width * 0.8)
+        self.assertAlmostEqual((x0 + x1) / 2, page.rect.width / 2, delta=2)
+        self.assertAlmostEqual((y0 + y1) / 2, page.rect.height / 2, delta=2)
+        # Drawn first, so every text block paints over it.
+        self.assertEqual(page.get_image_info()[0]["bbox"], watermark["bbox"])
+
     def test_branded_bus_ticket_pdf(self) -> None:
         ticket = {
             "ticket_no": "RTT-BUS-2026-0001", "route": "Rajshahi → Dhaka",
@@ -898,6 +917,7 @@ class UiTests(unittest.TestCase):
         self.app.vars["name"].set("Kamal Hossain")
         self.app.vars["phone"].set("01711112222")
         self.app.vars["seat"].set("A4")
+        self.app.seat_genders = {"A-4": "male"}
         self.app.vars["tour_name"].set("Sajek Valley Tour")
         self.app.vars["total"].set("15000")
         self.app.vars["advance"].set("6000")
@@ -920,8 +940,15 @@ class UiTests(unittest.TestCase):
         self.app.vars["name"].set("Sazid")
         self.app.vars["phone"].set("01710000000")
         self.app.vars["seat"].set("A1, A2")
+        # Like bus tickets, every tour seat needs a Male/Female marker.
+        error = self.app.validate_form(self.app.collect_form())
+        self.assertIn("Male or Female", error)
+        self.assertIn("A-1, A-2", error)
+        self.app.seat_genders = {"A-1": "male", "A-2": "female"}
         self.app.save_booking()
         self.assertEqual(len(self.database.list()), 1)
+        self.assertEqual(self.database.list()[0]["seat_genders"], {"A-1": "male", "A-2": "female"})
+        self.assertEqual(self.app.seat_genders, {})
         self.assertIsNone(self.app.selected_id)
         self.assertNotEqual(self.app.vars["booking_no"].get(), first_number)
         self.assertEqual(self.app.vars["booking_no"].get(), self.database.next_number("RTT"))
@@ -934,6 +961,7 @@ class UiTests(unittest.TestCase):
         self.app.vars["tour_date"].set("2026-12-11")
         self.app.vars["name"].set("Second passenger")
         self.app.vars["seat"].set("A-1, A-2")
+        self.app.seat_genders = {"A-1": "female", "A-2": "female"}
         error = self.app.validate_form(self.app.collect_form())
         self.assertIsNotNone(error)
         self.assertIn("A-1, A-2", error)
@@ -956,6 +984,10 @@ class UiTests(unittest.TestCase):
             sorted(self.database.tour_seat_occupancy("Sajek Valley Tour", "2026-12-12")),
             ["A-1", "A-2"],
         )
+        # The seat map colours booked seats by gender and the table shows M/F markers.
+        occupancy = self.database.tour_seat_occupancy("Sajek Valley Tour", "2026-12-11")
+        self.assertEqual((occupancy["A-1"]["gender"], occupancy["A-2"]["gender"]), ("male", "female"))
+        self.assertEqual(self.app.tree.item(str(rows["Sazid"]["id"]))["values"][3], "A-1 M, A-2 F")
 
     def test_new_booking_number_uses_selected_tour_code(self) -> None:
         self.database.add_tour("Sajek Code Booking", 40, "SJB")
@@ -965,6 +997,7 @@ class UiTests(unittest.TestCase):
         self.assertTrue(first_number.startswith("SJB-RTT-"), first_number)
         self.app.vars["name"].set("Coded passenger")
         self.app.vars["seat"].set("A1")
+        self.app.seat_genders = {"A-1": "male"}
         self.app.vars["tour_date"].set("2026-12-11")
         self.app.save_booking()
         booking = self.database.list()[0]
@@ -1018,6 +1051,7 @@ class UiTests(unittest.TestCase):
         self.app.vars["tour_name"].set("Sajek Valley Tour")
         self.app.vars["tour_date"].set("2026-12-11")
         self.app.vars["seat"].set("A-1")
+        self.app.seat_genders = {"A-1": "female"}
         self.app.vars["total"].set("8000")
         self.app.vars["advance"].set("3000")
         self.app.save_booking()
@@ -1025,13 +1059,28 @@ class UiTests(unittest.TestCase):
         self.app.tree.selection_set(str(booking_id))
         self.app.on_select()
         self.assertEqual(self.app.vars["name"].get(), "Rina Akter")
+        self.assertEqual(self.app.seat_genders, {"A-1": "female"})  # genders reload with the booking
         self.app.vars["advance"].set("8000")
         self.app.save_booking()
         self.assertEqual(self.database.get(booking_id)["due"], 0.0)
+        self.assertEqual(self.database.get(booking_id)["seat_genders"], {"A-1": "female"})
         self.assertIsNone(self.app.selected_id)
         self.assertEqual(self.app.vars["name"].get(), "")
         self.assertEqual(self.app.vars["tour_name"].get(), "")
         self.assertEqual(self.app.vars["tour_date"].get(), "")
+        # A booking saved before genders existed can still be edited unchanged …
+        legacy_id = self.database.add({
+            "booking_no": self.database.next_number("RTT"), "name": "Legacy passenger",
+            "tour_name": "Sajek Valley Tour", "tour_date": "2026-12-11", "seat": "B-1, B-2",
+        })
+        self.app.selected_id = legacy_id
+        self.app.load_selected()
+        self.assertTrue(self.app.legacy_gender_missing)
+        self.app.vars["advance"].set("100")
+        self.assertIsNone(self.app.validate_form(self.app.collect_form()))
+        # … but changing its seats requires genders for the new selection.
+        self.app.vars["seat"].set("B-1, B-3")
+        self.assertIn("Male or Female", self.app.validate_form(self.app.collect_form()))
 
     def test_delete_requires_selection(self) -> None:
         self.app.selected_id = None
@@ -1059,6 +1108,7 @@ class UiTests(unittest.TestCase):
         self.app.vars["tour_name"].set("Sajek Valley Tour")
         self.app.vars["tour_date"].set("2026-12-11")
         self.app.vars["seat"].set("A-2")
+        self.app.seat_genders = {"A-2": "male"}
         self.app.vars["total"].set("5000")
         self.app.vars["advance"].set("1000")
         self.app.save_booking()
@@ -1192,6 +1242,7 @@ class UiTests(unittest.TestCase):
         self.assertEqual(self.app.vars["bus_no"].get(), "2")
         self.assertEqual(self.app.vars["seat"].get(), "")  # seats cleared on bus change
         self.app.vars["seat"].set("K-5")
+        self.app.seat_genders = {"K-5": "male"}
         self.app.vars["name"].set("Back-row passenger")
         self.app.vars["total"].set("3000")
         self.app.save_booking()
@@ -1209,6 +1260,7 @@ class UiTests(unittest.TestCase):
         # The same seat on bus 1 is still free; K-5 does not exist on bus 1.
         self.app.vars["name"].set("Second passenger")
         self.app.vars["seat"].set("K-5")
+        self.app.seat_genders = {"K-5": "female", "J-5": "female"}
         error = self.app.validate_form(self.app.collect_form())
         self.assertIn("not part of bus 1 (41 seats)", error)
         self.app.vars["seat"].set("J-5")
@@ -1217,6 +1269,45 @@ class UiTests(unittest.TestCase):
         self.app.selected_id = saved["id"]
         self.app.load_selected()
         self.assertEqual(self.app.bus_choice_var.get(), "Bus 2  ·  45 seats")
+
+    def test_tour_seat_map_colours_genders_and_allows_any_seat_count(self) -> None:
+        saved = {}
+        dialog = ui.SeatMapDialog(
+            self.root, "Sajek", 41, {"A-1": {"gender": "female"}}, [], seats=db.bus_seat_ids("41"),
+            gendered=True, exact=False, on_save=lambda seats, genders: saved.update(seats=seats, genders=genders),
+        )
+        self.assertEqual(dialog.buttons["A-1"].cget("style"), "BookedFemaleSeat.TButton")
+        dialog.toggle("A-2")  # no gender chosen yet -> refused
+        self.assertEqual(dialog.selected, set())
+        dialog.set_active_gender("male")
+        dialog.toggle("A-2")
+        dialog.set_active_gender("female")
+        dialog.toggle("A-3")
+        dialog.toggle("J-5")
+        self.assertEqual(dialog.buttons["A-2"].cget("style"), "SelectedMaleSeat.TButton")
+        self.assertEqual(dialog.buttons["J-5"].cget("style"), "SelectedFemaleSeat.TButton")
+        self.assertIn("1 male · 2 female", dialog.summary_var.get())
+        self.assertEqual(dialog.save_button.cget("state"), "normal")
+        dialog.save()
+        self.assertEqual(saved, {"seats": ["A-2", "A-3", "J-5"],
+                                 "genders": {"A-2": "male", "A-3": "female", "J-5": "female"}})
+        # The booking form stores what the map returned and the CSV export carries it.
+        self.app.new_booking()
+        self.app.vars["tour_name"].set("Sajek Valley Tour")
+        self.app.vars["tour_date"].set("2026-12-18")
+        self.app.set_tour_seats(saved["seats"], saved["genders"])
+        self.assertEqual(self.app.vars["seat"].get(), "A-2, A-3, J-5")
+        self.assertIn("(1 M / 2 F)", self.app.seat_summary_var.get())
+        self.app.vars["name"].set("Family booking")
+        self.app.save_booking()
+        row = self.database.list()[0]
+        self.assertEqual(row["seat_genders"], {"A-2": "male", "A-3": "female", "J-5": "female"})
+        path = os.path.join(tempfile.mkdtemp(), "bookings.csv")
+        self.database.export_csv(path, [row])
+        with open(path, encoding="utf-8-sig") as handle:
+            header, line = handle.readline(), handle.readline()
+        self.assertIn("Seat genders", header)
+        self.assertIn("A-2: Male; A-3: Female; J-5: Female", line)
 
     def test_seat_map_draws_five_seats_across_the_back_row(self) -> None:
         dialog = ui.SeatMapDialog(self.root, "Bus 1", 41, {}, [], seats=db.bus_seat_ids("41"))

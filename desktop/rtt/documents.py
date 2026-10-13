@@ -190,7 +190,31 @@ def _new_document(page_size=PAGE, title: str = "", author: str = "") -> pdf.PdfD
         if os.path.isfile(logo_path):
             doc.add_jpeg_image("agency-logo", logo_path)
             break
+    watermark_path = asset_path("agency-logo-watermark.jpg")
+    if os.path.isfile(watermark_path):
+        doc.add_jpeg_image("agency-watermark", watermark_path)
     return doc
+
+
+WATERMARK_WIDTH_RATIO = 0.86  # share of the page width the faint logo covers
+
+
+def _watermark(canvas: pdf.Canvas) -> None:
+    """Paint the faint company logo across the middle of the page.
+
+    The image is a pre-faded copy of the logo (sky-blue background keyed out),
+    so it reads as a light "shadow" behind the memo text on screen and on
+    paper without needing PDF transparency. It must be drawn first so every
+    later box and line sits on top of it.
+    """
+    if "agency-watermark" not in canvas.doc.images:
+        return
+    image = canvas.doc.images["agency-watermark"]
+    width = canvas.width * WATERMARK_WIDTH_RATIO
+    height = width * image.height / image.width
+    x = (canvas.width - width) / 2
+    y = (canvas.height - height) / 2
+    canvas.image("agency-watermark", x, y, width, height)
 
 
 def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float,
@@ -272,6 +296,7 @@ def booking_receipt(booking: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
 
     def draw(doc: pdf.PdfDocument) -> None:
         canvas = doc.new_page()
+        _watermark(canvas)
         width, height = canvas.width, canvas.height
         content_width = width - 2 * MARGIN
         y = _letterhead(canvas, settings, width, bangla=True)
@@ -365,6 +390,7 @@ def booking_receipt(booking: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
                     # Continue the remaining terms on a fresh page.
                     _footer(canvas, settings, width, height)
                     canvas = doc.new_page()
+                    _watermark(canvas)
                     y = _letterhead(canvas, settings, width, bangla=True)
                     y = _section_title(canvas, MARGIN, y, "শর্তাবলি (চলমান)", content_width)
                 canvas.text(MARGIN + 2, y + 10, "•", size=size + 0.5, color=AMBER)

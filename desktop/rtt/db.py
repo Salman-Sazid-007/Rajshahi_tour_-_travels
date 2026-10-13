@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     tour_name     TEXT DEFAULT '',
     notes         TEXT DEFAULT '',
     status        TEXT DEFAULT 'Confirmed',
+    seat_genders  TEXT DEFAULT '{}',
     created_at    TEXT DEFAULT '',
     updated_at    TEXT DEFAULT ''
 );
@@ -108,7 +109,7 @@ CREATE TABLE IF NOT EXISTS app_meta (
 """
 
 COLUMNS = (
-    "id", "booking_no", "name", "phone", "seat", "bus_no", "total", "advance", "due",
+    "id", "booking_no", "name", "phone", "seat", "bus_no", "seat_genders", "total", "advance", "due",
     "booking_date", "tour_date", "tour_name", "notes", "status",
     "created_at", "updated_at",
 )
@@ -136,6 +137,19 @@ def _clean(row: Dict[str, Any]) -> Dict[str, Any]:
             data[field] = parsed.isoformat()
     if "notes" in data:
         data["notes"] = str(data["notes"]).strip()
+    # Per-seat Male/Female markers travel with the seats they describe.
+    seats = seat_tokens(data.get("seat", row.get("seat")))
+    genders = _parse_seat_genders(row.get("seat_genders"))
+    data["seat_genders"] = json.dumps(
+        {seat: gender for seat, gender in genders.items() if seat in seats}, ensure_ascii=False
+    )
+    return data
+
+
+def _booking_dict(row: Any) -> Dict[str, Any]:
+    """A booking row as a dict with ``seat_genders`` decoded to ``{seat: gender}``."""
+    data = dict(row)
+    data["seat_genders"] = _parse_seat_genders(data.get("seat_genders"))
     return data
 
 
@@ -399,6 +413,9 @@ class Database:
         if "bus_no" not in columns:
             self.connection.execute("ALTER TABLE bookings ADD COLUMN bus_no TEXT DEFAULT ''")
             self.connection.commit()
+        if "seat_genders" not in columns:
+            self.connection.execute("ALTER TABLE bookings ADD COLUMN seat_genders TEXT DEFAULT '{}'")
+            self.connection.commit()
 
     def _backfill_tour_buses(self) -> None:
         """Give every tour created before bus support exactly one bus ("1").
@@ -597,7 +614,7 @@ class Database:
     def get(self, booking_id: int) -> Optional[Dict[str, Any]]:
         cur = self.connection.execute("SELECT * FROM bookings WHERE id = ?", (booking_id,))
         row = cur.fetchone()
-        return dict(row) if row else None
+        return _booking_dict(row) if row else None
 
     def list(
         self,
@@ -645,7 +662,7 @@ class Database:
             sql += " LIMIT ?"
             params.append(limit)
         cur = self.connection.execute(sql, params)
-        return [dict(row) for row in cur.fetchall()]
+        return [_booking_dict(row) for row in cur.fetchall()]
 
     def active_tours(self) -> List[str]:
         rows = self.connection.execute(
@@ -1034,12 +1051,12 @@ class Database:
         first_bus = self.resolve_bus_no(tour_name, "")
         occupied: Dict[str, Dict[str, Any]] = {}
         for row in rows:
-            data = dict(row)
+            data = _booking_dict(row)
             row_bus = normalise_bus_no(data.get("bus_no")) or first_bus
             if wanted is not None and row_bus.casefold() != wanted.casefold():
                 continue
             for seat in seat_tokens(data.get("seat")):
-                occupied.setdefault(seat, data)
+                occupied.setdefault(seat, {**data, "gender": data["seat_genders"].get(seat, "")})
         return occupied
 
     def tour_seats_taken(self, tour_name: str, tour_date: str) -> int:
@@ -1578,16 +1595,19 @@ class Database:
         if directory:
             os.makedirs(directory, exist_ok=True)
         headers = [
-            "Booking No", "Name", "Phone", "Seat", "Bus", "Total Amount", "Advance",
+            "Booking No", "Name", "Phone", "Seat", "Bus", "Seat genders", "Total Amount", "Advance",
             "Due", "Booking Date", "Tour Date", "Tour Name", "Notes", "Status",
         ]
         with open(path, "w", newline="", encoding="utf-8-sig") as handle:
             writer = csv.writer(handle)
             writer.writerow(headers)
             for row in rows:
+                genders = _parse_seat_genders(row.get("seat_genders"))
                 writer.writerow([
                     row.get("booking_no", ""), row.get("name", ""), row.get("phone", ""),
-                    row.get("seat", ""), row.get("bus_no", ""), f"{float(row.get('total') or 0):.2f}",
+                    row.get("seat", ""), row.get("bus_no", ""),
+                    "; ".join(f"{seat}: {gender.title()}" for seat, gender in genders.items()),
+                    f"{float(row.get('total') or 0):.2f}",
                     f"{float(row.get('advance') or 0):.2f}", f"{float(row.get('due') or 0):.2f}",
                     row.get("booking_date", ""), row.get("tour_date", ""),
                     row.get("tour_name", ""), row.get("notes", ""), row.get("status", ""),
@@ -1595,7 +1615,7 @@ class Database:
             writer.writerow([])
             totals = self.totals(rows)
             writer.writerow([
-                "TOTAL", f"{totals['count']} bookings", "", "", "",
+                "TOTAL", f"{totals['count']} bookings", "", "", "", "",
                 f"{totals['total']:.2f}", f"{totals['advance']:.2f}", f"{totals['due']:.2f}",
             ])
         return path

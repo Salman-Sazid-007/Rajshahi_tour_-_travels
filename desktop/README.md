@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.2.1.
+These are the **latest published** downloads: desktop version 1.2.2.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.2.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.1/RajshahiTours-Windows-1.2.1.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.2.1.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.1/RajshahiTours-Desktop-1.2.1.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
+| [**RajshahiTours-Windows-1.2.2.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.2/RajshahiTours-Windows-1.2.2.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.2.2.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.2/RajshahiTours-Desktop-1.2.2.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.1 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.2 in **Help → About**.
 
 ---
 
@@ -34,8 +34,11 @@ and **Tours & monthly reports**.
   `CBT-RTT-2026-0001`). Existing booking numbers are kept unchanged. Archive a
   tour to keep its history, or permanently delete it and its associated bookings
   after a clear warning and confirmation.
-* **Book a tour:** choose a tour and travel date, open the seat map, select free
-  seats, and save the customer and payment. Occupied seats are marked booked and
+* **Book a tour:** choose a tour and travel date, open the seat map, pick
+  **Male** or **Female** and click each passenger's seat (blue / pink, exactly
+  like bus tickets), then save the customer and payment. Booked seats show the
+  gender of the passenger already sitting there, and the booking list, CSV
+  export and seat summary carry the M/F markers. Occupied seats are marked booked and
   locked for that same tour/date; form validation also blocks duplicate seats.
   After any successful booking save, the passenger and trip inputs reset and a
   fresh unique serial is shown. Select the tour and departure date for the next
@@ -55,7 +58,8 @@ the Overview and in the monthly travel report.
 bookings, seats, availability and due, then export a printable PDF or spreadsheet-friendly CSV.
 * **Larger entry forms:** taller input boxes and larger text improve readability
 in tour booking, bus ticketing, and tour setup.
-* **Bangla tour booking memo:** the printed booking receipt uses Bengali labels,
+* **Bangla tour booking memo:** a large, faint company-logo watermark sits in
+  the middle of the page behind the text; the printed booking receipt uses Bengali labels,
   dates, amounts, status and signatures; it includes the six booking and safety
   terms and shows the office address as **Vodra Mor, Rajshahi**. Existing default
   receipt settings update automatically; custom office settings are preserved.
@@ -75,7 +79,7 @@ A tour may have several buses (bus numbers `1`, `2`, … or any short label), an
 each bus can be 41 or 45 seats independently. Seat labels repeat on every bus,
 so a booking always stores the bus number together with its seats; the seat map
 in the booking form shows the selected bus only. Labels such as `A1` are
-normalized to `A-1`. Tours created before 1.2.1 with the classic 40-seat map
+normalized to `A-1`. Tours created before 1.2.2 with the classic 40-seat map
 become a single 41-seat bus (the old seats keep their labels; `J-5` is added);
 other old capacities are kept as a "classic" layout until you change them.
 
@@ -148,8 +152,10 @@ it keeps the data in a `data` folder beside itself — handy for a USB stick.
 
 * **Overview** shows this month's tour bookings, seats sold, outstanding tour
 due, bus-ticket count and upcoming departures.
-* **Tour bookings** — choose a tour/date, click **Map**, select available seats,
-then save. Select a row and edit it to change customer details, seats, status,
+* **Tour bookings** — choose a tour/date, click **Map**, choose Male or Female,
+click the seats for those passengers (any number, up to the bus size), then
+save. Every seat needs a gender; bookings saved before this version can still
+be edited unchanged. Select a row and edit it to change customer details, seats, status,
 or payment; due is recalculated as Total − Advance. The seat map excludes the
 currently edited booking from its occupied-seat list.
 * **Tours & monthly reports** — add a tour with its buses (use **+ Add bus**

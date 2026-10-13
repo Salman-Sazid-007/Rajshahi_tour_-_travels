@@ -322,6 +322,9 @@ class BookingApp:
         self.db = database
         self.settings = settings
         self.selected_id: Optional[int] = None
+        self.seat_genders: Dict[str, str] = {}        # tour booking: seat -> male/female
+        self.legacy_gender_missing = False            # editing a booking saved before genders existed
+        self._legacy_seats: set = set()
         self.selected_tour_catalog_id: Optional[int] = None
         self.bus_selected_id: Optional[int] = None
         self._auto_booking_number = ""
@@ -1443,11 +1446,15 @@ class BookingApp:
         SeatMapDialog(
             self.root, f"{tour} · Bus {bus['bus_no']} ({bus['label']}) · {parsed.strftime('%d %b %Y')}",
             bus["capacity"], occupied, selected, max_select=bus["capacity"], seats=bus["seats"],
-            on_save=lambda seats: self.set_tour_seats(seats),
+            gendered=True, exact=False, selected_genders=self.seat_genders,
+            on_save=self.set_tour_seats,
         )
 
-    def set_tour_seats(self, seats: List[str]) -> None:
+    def set_tour_seats(self, seats: List[str], genders: Optional[Dict[str, str]] = None) -> None:
         self.vars["seat"].set(", ".join(seats))
+        if genders is not None:
+            self.seat_genders = {seat: gender for seat, gender in genders.items() if seat in seats}
+            self.legacy_gender_missing = False
         self.update_tour_seat_summary()
 
     # -- bus choice -----------------------------------------------------------
@@ -1524,6 +1531,10 @@ class BookingApp:
             f"Bus {bus['bus_no']}: {len(occupied)} booked  ·  "
             f"{max(0, bus['capacity'] - len(occupied))} open  ·  {len(selected)} selected"
         )
+        if selected:
+            males = sum(1 for seat in selected if self.seat_genders.get(seat) == "male")
+            females = sum(1 for seat in selected if self.seat_genders.get(seat) == "female")
+            text += f" ({males} M / {females} F)"
         if len(self.db.tour_buses(tour)) > 1:
             text += f"   |   all buses: {total_taken} / {total_capacity}"
         self.seat_summary_var.set(text)
@@ -2124,7 +2135,7 @@ class BookingApp:
         self.bus_choice_var.trace_add("write", lambda *_: self.on_bus_choice())
         self.booking_form_widgets["bus_no"] = self.bus_combo
         row += 2
-        row = self._form_row(card, row, "Seats · use the seat map", "seat", extra="seatmap")
+        row = self._form_row(card, row, "Seats · pick Male/Female in the seat map", "seat", extra="seatmap")
         ttk.Label(card, textvariable=self.seat_summary_var, style="Muted.TLabel").grid(
             row=row, column=0, columnspan=3, sticky="w", pady=(1, 0))
         row += 1
@@ -2377,6 +2388,10 @@ class BookingApp:
         data["advance"] = self._amount("advance")
         data["due"] = round(data["total"] - data["advance"], 2)
         data["notes"] = self.notes_text.get("1.0", "end").strip()
+        seats = db.seat_tokens(data.get("seat"))
+        data["seat_genders"] = {
+            seat: gender for seat, gender in self.seat_genders.items() if seat in seats
+        }
         return data
 
     def validate_form(self, data: Dict[str, Any]) -> Optional[str]:
@@ -2405,6 +2420,15 @@ class BookingApp:
             return f"One or more seats are not part of {where}. Open the seat map and choose again."
         if bus:
             data["bus_no"] = bus["bus_no"]
+        genders = data.get("seat_genders") if isinstance(data.get("seat_genders"), dict) else {}
+        missing_gender = [seat for seat in seats if genders.get(seat) not in {"male", "female"}]
+        legacy_unchanged = (
+            self.selected_id is not None and self.legacy_gender_missing
+            and set(seats) == set(self._legacy_seats)
+        )
+        if missing_gender and not legacy_unchanged:
+            return ("Choose Male or Female for each seat: open the seat map, pick the gender, "
+                    f"then click the seat(s). Missing for: {', '.join(missing_gender)}.")
         tour_date = parse_date(str(data.get("tour_date") or ""))
         if not tour_date:
             return "Tour date must be valid before a seat can be reserved."
@@ -2443,6 +2467,9 @@ class BookingApp:
                 var.set("")
         self.notes_text.delete("1.0", "end")
         self.selected_id = None
+        self.seat_genders = {}
+        self.legacy_gender_missing = False
+        self._legacy_seats = set()
         self.update_due()
         self.assign_number()
 
@@ -2536,6 +2563,12 @@ class BookingApp:
         row = self.db.get(self.selected_id)
         if not row:
             return
+        seats = db.seat_tokens(row.get("seat"))
+        self.seat_genders = {
+            seat: gender for seat, gender in dict(row.get("seat_genders") or {}).items() if seat in seats
+        }
+        self.legacy_gender_missing = any(self.seat_genders.get(seat) not in {"male", "female"} for seat in seats)
+        self._legacy_seats = set(seats)
         for key, var in self.vars.items():
             value = row.get(key, "")
             if key in ("total", "advance"):
@@ -2545,6 +2578,7 @@ class BookingApp:
         self.notes_text.delete("1.0", "end")
         self.notes_text.insert("1.0", str(row.get("notes") or ""))
         self.update_due()
+        self.update_tour_seat_summary()
         self.set_status(f"Editing {row.get('booking_no', '')} - {row.get('name', '')}")
 
     # ----------------------------------------------------------------- table
@@ -2582,13 +2616,19 @@ class BookingApp:
                 tags.append("cancelled")
             else:
                 tags.append("due" if float(row.get("due") or 0) > 0 else "clear")
+            genders = row.get("seat_genders") if isinstance(row.get("seat_genders"), dict) else {}
+            seat_display = ", ".join(
+                f"{seat} {'M' if genders.get(seat) == 'male' else 'F'}" if genders.get(seat) in ("male", "female")
+                else seat
+                for seat in db.seat_tokens(row.get("seat"))
+            ) or str(row.get("seat") or "")
             self.tree.insert(
                 "", "end", iid=str(row["id"]),
                 values=(
                     row.get("booking_no", ""),
                     row.get("name", ""),
                     row.get("phone", ""),
-                    row.get("seat", ""),
+                    seat_display,
                     row.get("bus_no", ""),
                     row.get("tour_name", ""),
                     row.get("tour_date", ""),
@@ -3076,8 +3116,12 @@ class SeatMapDialog(tk.Toplevel):
                  occupied: Dict[str, Dict[str, Any]], selected: List[str],
                  max_select: int = 40, on_save=None, gendered: bool = False,
                  selected_genders: Optional[Dict[str, str]] = None,
-                 seats: Optional[List[str]] = None) -> None:
+                 seats: Optional[List[str]] = None, exact: bool = True) -> None:
         super().__init__(master)
+        # ``exact`` (bus tickets) demands exactly ``max_select`` seats; tour
+        # bookings pass ``exact=False`` so any number of seats up to the bus
+        # size can be chosen, each still needing a Male/Female colour.
+        self.exact = bool(exact)
         if seats:
             self.seats = list(seats)
             self.capacity = len(self.seats)
@@ -3106,10 +3150,13 @@ class SeatMapDialog(tk.Toplevel):
 
         ttk.Label(self, text=title, font=("Segoe UI", 18, "bold"),
                   foreground=ACCENT_DARK, background=PAGE_BG).grid(row=0, column=0, sticky="w")
-        instruction = (
-            f"Choose Male or Female, then click exactly {self.max_select} open seat(s)."
-            if self.gendered else "Click open seats to assign or release them. Booked seats are locked."
-        )
+        if self.gendered and self.exact:
+            instruction = f"Choose Male or Female, then click exactly {self.max_select} open seat(s)."
+        elif self.gendered:
+            instruction = ("Choose Male or Female, then click each passenger's seat. "
+                           "Click a selected seat again to release it.")
+        else:
+            instruction = "Click open seats to assign or release them. Booked seats are locked."
         ttk.Label(self, text=instruction, font=("Segoe UI", 13), foreground=MUTED,
                   background=PAGE_BG, wraplength=500).grid(
             row=1, column=0, sticky="w", pady=(3, 10))
@@ -3231,7 +3278,22 @@ class SeatMapDialog(tk.Toplevel):
                 active = "ActiveGenderMale.TButton" if gender == "male" else "ActiveGenderFemale.TButton"
                 button.configure(style=active if self.active_gender == gender else base)
         open_count = max(0, len(self.seats) - len(set(self.seats).intersection(self.occupied)))
-        if self.gendered:
+        if self.gendered and not self.exact:
+            assigned = sum(1 for seat in self.selected if self.gender_by_seat.get(seat) in {"male", "female"})
+            males = sum(1 for seat in self.selected if self.gender_by_seat.get(seat) == "male")
+            females = sum(1 for seat in self.selected if self.gender_by_seat.get(seat) == "female")
+            if not self.selected:
+                detail = "Choose Male or Female, then click the seats."
+            elif assigned < len(self.selected):
+                detail = "Assign a gender to each selected seat."
+            else:
+                detail = f"{males} male · {females} female."
+            self.summary_var.set(
+                f"{len(self.selected)} selected  ·  {open_count} open of {len(self.seats)} seats  ·  {detail}"
+            )
+            can_save = bool(self.selected) and assigned == len(self.selected)
+            self.save_button.configure(state="normal" if can_save else "disabled")
+        elif self.gendered:
             assigned = sum(1 for seat in self.selected if self.gender_by_seat.get(seat) in {"male", "female"})
             if len(self.selected) == self.max_select and assigned == self.max_select:
                 detail = "All passengers have a colored seat assignment."
@@ -3285,7 +3347,8 @@ class SeatMapDialog(tk.Toplevel):
         result = [seat for seat in self.seats if seat in self.selected]
         if self.gendered:
             genders = {seat: self.gender_by_seat[seat] for seat in result if seat in self.gender_by_seat}
-            if len(result) != self.max_select or len(genders) != self.max_select:
+            wanted = self.max_select if self.exact else len(result)
+            if not result or len(result) != wanted or len(genders) != wanted:
                 return
         self.cancel()
         if self.on_save:
