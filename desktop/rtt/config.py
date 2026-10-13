@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 
 APP_TITLE = "Rajshahi Tours & Travels"
 APP_SUBTITLE = "Offline Tour & Bus Manager"
-APP_VERSION = "1.2.2"
+APP_VERSION = "1.2.3"
 
 BOOKING_FIELDS = (
     "booking_no",
@@ -38,16 +38,22 @@ DEFAULT_TERMS_BN = (
     "রুম ও সিট প্ল্যান: কাপল রুমের জন্য আলাদা চার্জ প্রযোজ্য। বাসের সিট সাধারণত বুকিংয়ের ক্রমানুসারে বণ্টন করা হয়।",
     "আচরণবিধি ও নিরাপত্তা: গ্রুপের শৃঙ্খলা ও স্থানীয় আইন মেনে চলতে হবে। মাদক সম্পূর্ণ নিষিদ্ধ।",
     "দায়বদ্ধতা: ব্যক্তিগত মালামাল ও নিজের নিরাপত্তার দায়িত্ব নিজেকেই নিতে হবে।",
+    "ট্যুরে থাকা অবস্থায় কোনো ব্যাক্তির অনাকাঙ্ক্ষিত দূর্ঘটনার শিকার হলে এবং আইন বহিরাগত কর্মকান্ডে জরালে রাজশাহী ট্যুরস এন্ড ট্রাভেলস দায়ী থাকবে না।",
 )
+
+# The six-term list shipped in 1.1.x–1.2.2; installs that still have it
+# untouched receive the seventh term automatically.
+_LEGACY_DEFAULT_TERMS_BN_6 = DEFAULT_TERMS_BN[:6]
 
 DEFAULT_SETTINGS: Dict[str, Any] = {
     "company_name": "Rajshahi Tours & Travels",
     "company_tagline": "ট্যুর, বাস সার্ভিস ও টিকিটিং",
     "address": "ভদ্রা মোড়, রাজশাহী",
     "phone": "01782250709",
+    "phone2": "01744262302",
     "whatsapp": "8801782250709",
     "email": "rajshahitoursandtravels@gmail.com",
-    "owner_name": "Safayet Hossain",
+    "owner_name": "Md Safayat Hossain",
     "owner_phone": "01782250709",
     "receipt_prefix": "RTT",
     "next_receipt_no": 1,
@@ -86,6 +92,7 @@ _LEGACY_DEFAULT_SETTINGS = {
     ),
     "email": ("info@rajshahitours.com",),
     "footer_note": ("Thank you for travelling with Rajshahi Tours & Travels.",),
+    "owner_name": ("Safayet Hossain",),
 }
 
 _lock = threading.Lock()
@@ -177,7 +184,9 @@ def load_settings() -> Dict[str, Any]:
         if settings.get(key) in old_values:
             settings[key] = DEFAULT_SETTINGS[key]
     old_terms = settings.get("terms") or ()
-    if isinstance(old_terms, (list, tuple)) and tuple(old_terms) == _LEGACY_DEFAULT_TERMS_EN:
+    if isinstance(old_terms, (list, tuple)) and tuple(old_terms) in (
+        _LEGACY_DEFAULT_TERMS_EN, _LEGACY_DEFAULT_TERMS_BN_6
+    ):
         settings["terms"] = DEFAULT_TERMS_BN
     return settings
 

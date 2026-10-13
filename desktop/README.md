@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.2.2.
+These are the **latest published** downloads: desktop version 1.2.3.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.2.2.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.2/RajshahiTours-Windows-1.2.2.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.2.2.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.2/RajshahiTours-Desktop-1.2.2.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
+| [**RajshahiTours-Windows-1.2.3.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.3/RajshahiTours-Windows-1.2.3.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.2.3.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.3/RajshahiTours-Desktop-1.2.3.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.2 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.3 in **Help → About**.
 
 ---
 
@@ -79,7 +79,7 @@ A tour may have several buses (bus numbers `1`, `2`, … or any short label), an
 each bus can be 41 or 45 seats independently. Seat labels repeat on every bus,
 so a booking always stores the bus number together with its seats; the seat map
 in the booking form shows the selected bus only. Labels such as `A1` are
-normalized to `A-1`. Tours created before 1.2.2 with the classic 40-seat map
+normalized to `A-1`. Tours created before 1.2.3 with the classic 40-seat map
 become a single 41-seat bus (the old seats keep their labels; `J-5` is added);
 other old capacities are kept as a "classic" layout until you change them.
 
@@ -90,7 +90,7 @@ full company logo. The original JPG is bundled at `assets/agency-logo.jpg`; a
 trimmed, print-resolution copy is embedded in PDFs and a compact PNG is used by
 the Tkinter sidebar, so no image package is required at runtime. Brand accents
 match the supplied palette: teal `#22B4B3`, orange `#F97000` / `#EE8625`, and
-black `#000000`. The owner **Safayet Hossain** and phone **01782250709** appear
+black `#000000`. The owner **Md Safayat Hossain** and phone **01782250709** appear
 in the upper-right PDF header; booking details and payment balances follow
 below in an aligned layout with a compact logo and larger, more legible type.
 The desktop uses a matching company icon in the window/task switcher and the

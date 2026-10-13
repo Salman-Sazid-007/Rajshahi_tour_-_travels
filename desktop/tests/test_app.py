@@ -608,7 +608,25 @@ class FormatTests(unittest.TestCase):
         self.assertEqual(settings["terms"], config.DEFAULT_TERMS_BN)
         self.assertEqual(settings["company_tagline"], config.DEFAULT_SETTINGS["company_tagline"])
         self.assertEqual(settings["footer_note"], config.DEFAULT_SETTINGS["footer_note"])
-        self.assertEqual(len(settings["terms"]), 6)
+        self.assertEqual(len(settings["terms"]), 7)
+        self.assertTrue(settings["terms"][-1].startswith("ট্যুরে থাকা অবস্থায়"))
+        self.assertTrue(settings["terms"][-1].endswith("দায়ী থাকবে না।"))
+        self.assertEqual(settings["owner_name"], "Md Safayat Hossain")
+        self.assertEqual(settings["phone2"], "01744262302")
+
+        # 1.1.9–1.2.2 installs stored the six Bangla terms and the old owner
+        # spelling; both untouched defaults pick up the seventh term and the
+        # corrected name, while a customised list is left alone.
+        with open(config.settings_path(), "w", encoding="utf-8") as handle:
+            json.dump({"terms": list(config.DEFAULT_TERMS_BN[:6]), "owner_name": "Safayet Hossain"}, handle)
+        six = config.load_settings()
+        self.assertEqual(six["terms"], config.DEFAULT_TERMS_BN)
+        self.assertEqual(six["owner_name"], "Md Safayat Hossain")
+        with open(config.settings_path(), "w", encoding="utf-8") as handle:
+            json.dump({"terms": list(config.DEFAULT_TERMS_BN[:5]), "owner_name": "Someone Else"}, handle)
+        trimmed = config.load_settings()
+        self.assertEqual(len(trimmed["terms"]), 5)
+        self.assertEqual(trimmed["owner_name"], "Someone Else")
 
         # 1.1.7/1.1.8 installs stored the English address and the placeholder
         # e-mail; both are untouched defaults and upgrade to the Bangla address
@@ -695,6 +713,15 @@ class DocumentTests(unittest.TestCase):
         texts = [text for _, _, text in draws]
         self.assertTrue(any("rajshahitoursandtravels@gmail.com" in text for text in texts))
         self.assertTrue(any("ভদ্রা মোড়, রাজশাহী" in text for text in texts))
+        # Both office numbers appear in the letterhead and the footer; the
+        # WhatsApp value (same line in +88 form) is not repeated.
+        contact_lines = [text for text in texts if "01782250709" in text and "  |  " in text]
+        self.assertGreaterEqual(len(contact_lines), 2)
+        for line in contact_lines:
+            self.assertIn("01744262302", line)
+            self.assertNotIn("8801782250709", line)
+        self.assertTrue(any(text == "Md Safayat Hossain" for text in texts))
+        self.assertTrue(any(text.startswith("ট্যুরে থাকা অবস্থায়") for text in texts))
         self.assertTrue(any(text.startswith("বুকিংয়ের অবস্থা:") for text in texts))
         self.assertTrue(any(text.startswith("প্রিন্টের তারিখ:") for text in texts))
 

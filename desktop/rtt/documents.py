@@ -217,6 +217,25 @@ def _watermark(canvas: pdf.Canvas) -> None:
     canvas.image("agency-watermark", x, y, width, height)
 
 
+def _contact_numbers(settings: Dict[str, Any]) -> List[str]:
+    """Office phone numbers for the letterhead: phone, second phone, WhatsApp.
+
+    The WhatsApp number is listed only when it is a different line from the
+    phones (the default WhatsApp value is the office phone in +88 form).
+    """
+    numbers: List[str] = []
+    seen: set = set()
+    for key in ("phone", "phone2", "whatsapp"):
+        value = _settings_value(settings, key, "")
+        digits = "".join(ch for ch in value if ch.isdigit())
+        if digits.startswith("88") and len(digits) == 13:
+            digits = digits[2:]
+        if value and digits not in seen:
+            numbers.append(value)
+            seen.add(digits)
+    return numbers
+
+
 def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float,
                 bangla: bool = False) -> float:
     """Logo-led company header with owner and phone at upper right."""
@@ -243,16 +262,14 @@ def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float,
                 color=MUTED, max_width=text_width)
     canvas.text(left, 72, _settings_value(settings, "address", ""), size=8.8, color=INK,
                 max_width=text_width)
-    contacts = "  |  ".join(part for part in (
-        _settings_value(settings, "phone"), _settings_value(settings, "whatsapp"),
-        _settings_value(settings, "email"),
-    ) if part)
+    contacts = "  |  ".join(_contact_numbers(settings) + [_settings_value(settings, "email")]
+                            if _settings_value(settings, "email") else _contact_numbers(settings))
     canvas.text(left, 89, contacts, size=8.8, color=MUTED, max_width=text_width)
 
     panel_x = width - MARGIN - right_panel_width
     canvas.rect(panel_x, 18, right_panel_width, 69, fill=WHITE, stroke=LINE, width=0.6, radius=5)
     canvas.rect(panel_x, 18, 3, 69, fill=AMBER)
-    owner = _settings_value(settings, "owner_name", "Safayet Hossain")
+    owner = _settings_value(settings, "owner_name", "Md Safayat Hossain")
     owner_phone = _settings_value(settings, "owner_phone", _settings_value(settings, "phone"))
     canvas.text(width - MARGIN - 11, 39, owner, style="bold", size=9.5, color=TEAL_DARK,
                 align="right", max_width=right_panel_width - 20)
@@ -273,7 +290,7 @@ def _footer(canvas: pdf.Canvas, settings: Dict[str, Any], width: float, height: 
         canvas.text(width / 2, height - 42, note, size=9, color=MUTED, align="center",
                     max_width=width - 2 * MARGIN)
     footer = "  |  ".join(
-        part for part in (_settings_value(settings, "phone"), _settings_value(settings, "email"),
+        part for part in (*_contact_numbers(settings), _settings_value(settings, "email"),
                           _settings_value(settings, "address")) if part
     )
     canvas.text(width / 2, height - 30, footer, size=8.8, color=MUTED, align="center",

@@ -606,7 +606,7 @@ class BookingApp:
         ttk.Label(owner_card, text="OWNER / PROPRIETOR", style="Sidebar.Eyebrow.TLabel").pack(
             anchor="w")
         self.header_owner_label = ttk.Label(
-            owner_card, text=str(self.settings.get("owner_name") or "Safayet Hossain"),
+            owner_card, text=str(self.settings.get("owner_name") or "Md Safayat Hossain"),
             font=(self.ui_font, 13, "bold"), foreground=WHITE, background=SIDEBAR_DEEP)
         self.header_owner_label.pack(anchor="w", pady=(4, 1))
         self.header_owner_phone_label = ttk.Label(
@@ -2841,7 +2841,7 @@ class BookingApp:
                 except ValueError:
                     pass
         self.header_company_label.configure(text=str(self.settings.get("company_name") or config.APP_TITLE))
-        self.header_owner_label.configure(text=str(self.settings.get("owner_name") or "Safayet Hossain"))
+        self.header_owner_label.configure(text=str(self.settings.get("owner_name") or "Md Safayat Hossain"))
         self.header_owner_phone_label.configure(
             text=str(self.settings.get("owner_phone") or self.settings.get("phone", "")))
         self.apply_tour_choices()
@@ -2894,7 +2894,7 @@ class SettingsDialog(tk.Toplevel):
         self.input_font = (self.ui_font, LARGE_INPUT_FONT_SIZE)
         self.title("Settings")
         self.transient(master)
-        self.geometry("570x690")
+        self.geometry("570x730")
         self.minsize(500, 500)
         self.resizable(True, True)
         self.configure(background=PAGE_BG)
@@ -2913,6 +2913,7 @@ class SettingsDialog(tk.Toplevel):
             ("owner_phone", "Owner phone"),
             ("address", "Address"),
             ("phone", "Office phone"),
+            ("phone2", "Second phone"),
             ("whatsapp", "WhatsApp"),
             ("email", "Email"),
             ("receipt_prefix", "Receipt prefix"),

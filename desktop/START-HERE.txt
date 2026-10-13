@@ -1,4 +1,4 @@
-RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.2)
+RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.3)
 ===================================================================
 This program runs on your own computer. Bookings and ticket records stay in a
 local database; nothing is sent to the website or over the internet.
@@ -51,8 +51,9 @@ WHAT THE PROGRAM DOES
 * Print branded tour receipts and bus tickets; cancelled records release seats.
 * Use File -> Backup database regularly to make a copy of every local record.
 
-Tour receipts use the agency teal/orange mark. Owner Safayet Hossain and phone
-01782250709 appear at the upper right. Update business details in Tools -> Settings.
+Tour receipts use the agency teal/orange mark. Owner Md Safayat Hossain and phone
+01782250709 appear at the upper right; the office numbers 01782250709 and
+01744262302 are printed in the letterhead and footer. Update business details in Tools -> Settings.
 
 
 WHERE YOUR RECORDS ARE KEPT

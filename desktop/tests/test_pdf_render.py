@@ -138,7 +138,7 @@ class RenderTests(unittest.TestCase):
         settings = config.load_settings()
         self.assertEqual(settings["address"], "ভদ্রা মোড়, রাজশাহী")
         self.assertEqual(settings["email"], "rajshahitoursandtravels@gmail.com")
-        self.assertEqual(len(settings["terms"]), 6)
+        self.assertEqual(len(settings["terms"]), 7)
         data = documents.booking_receipt(booking, settings)
         self.assertIn(b"LiAbuJMAkkasUnicode", data)
         rendered = fitz.open(stream=data)

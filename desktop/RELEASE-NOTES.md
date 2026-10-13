@@ -1,3 +1,18 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.2.3
+
+* **Seventh memo term.** The tour memo's terms & conditions now end with:
+  "ট্যুরে থাকা অবস্থায় কোনো ব্যাক্তির অনাকাঙ্ক্ষিত দূর্ঘটনার শিকার হলে এবং আইন
+  বহিরাগত কর্মকান্ডে জরালে রাজশাহী ট্যুরস এন্ড ট্রাভেলস দায়ী থাকবে না।"
+  Installs that still use the standard six terms receive it automatically; a
+  customised terms list is left exactly as the office wrote it.
+* **Owner name corrected** to **Md Safayat Hossain** in the memo's owner panel
+  and the app sidebar (an untouched old spelling upgrades automatically).
+* **Second office number.** **01744262302** is printed next to 01782250709 in
+  the memo letterhead and footer (and on bus tickets and reports). It is a
+  new *Second phone* field under Tools → Settings. The WhatsApp value is only
+  listed when it is a different line from the phones, so the old +88 duplicate
+  no longer appears.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.2.2
 
 * **Male / Female seats for tour bookings** — the same feature the bus-ticket
