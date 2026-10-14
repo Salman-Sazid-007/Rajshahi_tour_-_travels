@@ -197,6 +197,10 @@ def _new_document(page_size=PAGE, title: str = "", author: str = "") -> pdf.PdfD
 
 
 WATERMARK_WIDTH_RATIO = 0.86  # share of the page width the faint logo covers
+# Vertical centre of the watermark as a share of the page height. Slightly
+# below the middle so the whole logo sits in the terms/notes area instead of
+# being hidden behind the solid payment boxes near the top of the memo.
+WATERMARK_CENTRE_RATIO = 0.62
 
 
 def _watermark(canvas: pdf.Canvas) -> None:
@@ -213,7 +217,7 @@ def _watermark(canvas: pdf.Canvas) -> None:
     width = canvas.width * WATERMARK_WIDTH_RATIO
     height = width * image.height / image.width
     x = (canvas.width - width) / 2
-    y = (canvas.height - height) / 2
+    y = canvas.height * WATERMARK_CENTRE_RATIO - height / 2
     canvas.image("agency-watermark", x, y, width, height)
 
 
@@ -467,6 +471,182 @@ def _fit_terms(canvas: pdf.Canvas, terms: Sequence[str], width: float,
         if _terms_height(canvas, terms, width, size, leading) <= available:
             return size, leading
     return _TERM_SIZES[-1]
+
+
+# ------------------------------------------------------------- corporate memo
+
+
+_STATUS_BN = {
+    "confirmed": "নিশ্চিত", "pending": "অপেক্ষমাণ", "cancelled": "বাতিল",
+    "booked": "বুকিং সম্পন্ন", "paid": "পরিশোধিত",
+}
+
+
+def _corporate_bus_line(buses: Sequence[Dict[str, Any]]) -> str:
+    """"বাস ১ — ৪১ সিট, বাস ২ — ৪৫ সিট (মোট ৮৬ সিট)" for the memo."""
+    parts = []
+    total = 0
+    for bus in buses:
+        try:
+            capacity = int(bus.get("capacity") or 0)
+        except (TypeError, ValueError):
+            capacity = 0
+        total += capacity
+        parts.append(f"বাস {_bangla_digits(bus.get('bus_no', ''))} — {_bangla_digits(capacity)} সিট")
+    if not parts:
+        return "-"
+    return ", ".join(parts) + f"  (মোট {_bangla_digits(total)} সিট)"
+
+
+def corporate_memo(entry: Dict[str, Any], settings: Dict[str, Any]) -> bytes:
+    """Memo for a corporate / group booking.
+
+    The details section is typed by the office and may be long, so it flows
+    across as many pages as it needs; the status line, signatures and footer
+    always come after the last line of the details.
+    """
+    currency = _settings_value(settings, "currency", "Tk.")
+    doc = _new_document(
+        page_size=PAGE,
+        title=f"Corporate tour memo {entry.get('memo_no', '')}",
+        author=_settings_value(settings, "company_name", "Rajshahi Tours & Travels"),
+    )
+    buses = entry.get("buses") or []
+    if isinstance(buses, str):
+        try:
+            buses = json.loads(buses or "[]")
+        except ValueError:
+            buses = []
+    bus_rows: List[Dict[str, Any]] = []
+    for bus in buses:
+        if not isinstance(bus, dict):
+            continue
+        capacity = bus.get("capacity")
+        if capacity is None:
+            layout = str(bus.get("layout") or "41")
+            capacity = int("".join(ch for ch in layout if ch.isdigit()) or 41)
+        bus_rows.append({"bus_no": bus.get("bus_no", ""), "capacity": capacity})
+
+    def draw(doc: pdf.PdfDocument) -> None:
+        canvas = doc.new_page()
+        _watermark(canvas)
+        width, height = canvas.width, canvas.height
+        content_width = width - 2 * MARGIN
+        y = _letterhead(canvas, settings, width, bangla=True)
+        number = str(entry.get("memo_no") or "")
+
+        def title_band(canvas: pdf.Canvas, y: float, title: str) -> float:
+            band_height = 26.0
+            canvas.rect(MARGIN, y, content_width, band_height, fill=TEAL_LIGHT, stroke=LINE, width=0.6)
+            canvas.text(MARGIN + 10, y + 18, title, style="bold", size=13, color=TEAL_DARK)
+            canvas.text(MARGIN + content_width - 10, y + 18, f"মেমো নং: {number}",
+                        style="bold", size=11, color=TEAL_DARK, align="right")
+            return y + band_height + 18
+
+        y = title_band(canvas, y, "কর্পোরেট ট্যুর মেমো")
+
+        # Company + tour details ---------------------------------------------
+        y = _section_title(canvas, MARGIN, y, "প্রতিষ্ঠান ও ট্যুরের বিবরণ", content_width)
+        col = (content_width - 16) / 2
+        row_y = y
+        left_y = _field(canvas, MARGIN, row_y, col, "প্রতিষ্ঠানের নাম", str(entry.get("company", "")))
+        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "যোগাযোগকারী",
+                         str(entry.get("contact_name", "")))
+        y = max(left_y, right_y)
+        row_y = y
+        left_y = _field(canvas, MARGIN, row_y, col, "মোবাইল নম্বর", str(entry.get("phone", "")))
+        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "ট্যুর / গন্তব্য",
+                         str(entry.get("tour_name", "")))
+        y = max(left_y, right_y)
+        row_y = y
+        left_y = _field(canvas, MARGIN, row_y, col, "ট্যুরের তারিখ", _bangla_date(entry.get("tour_date", "")))
+        right_y = _field(canvas, MARGIN + col + 16, row_y, col, "বুকিংয়ের তারিখ",
+                         _bangla_date(entry.get("booking_date", "")))
+        y = max(left_y, right_y)
+        y = _field(canvas, MARGIN, y, content_width, "বাস ও আসন সংখ্যা", _corporate_bus_line(bus_rows),
+                   value_size=10.6) + 4
+
+        # Payment --------------------------------------------------------------
+        y = _section_title(canvas, MARGIN, y, "পেমেন্টের বিবরণ", content_width)
+        box_width = (content_width - 2 * 10) / 3
+        boxes = [
+            ("মোট টাকা", f"{_bangla_digits(money(entry.get('total'), currency))} টাকা", INK),
+            ("অগ্রিম জমা", f"{_bangla_digits(money(entry.get('advance'), currency))} টাকা", GREEN),
+            ("বাকি টাকা", f"{_bangla_digits(money(entry.get('due'), currency))} টাকা",
+             RED if float(entry.get("due") or 0) > 0 else GREEN),
+        ]
+        for index, (label, value, color) in enumerate(boxes):
+            x = MARGIN + index * (box_width + 10)
+            canvas.rect(x, y, box_width, 58, fill=SOFT if index == 2 else WHITE, stroke=LINE,
+                        width=0.6, radius=4)
+            canvas.text(x + box_width / 2, y + 18, label.upper(), size=8.8, color=MUTED,
+                        align="center", max_width=box_width - 8)
+            canvas.text(x + box_width / 2, y + 42, value, style="bold", size=15, color=color,
+                        align="center", max_width=box_width - 10)
+        y += 70
+        canvas.rect(MARGIN, y, content_width, 30, fill=TEAL_BAND, stroke=LINE, width=0.5)
+        canvas.text(MARGIN + 10, y + 19.5, "টাকার পরিমাণ কথায়", size=8.8, color=MUTED)
+        canvas.text(MARGIN + 116, y + 19.5, _bangla_amount_words(entry.get("total")),
+                    style="bold", size=11, max_width=content_width - 128)
+        y += 42
+
+        # Details: free text that may run over several pages ------------------
+        details = str(entry.get("details") or "").strip()
+        if details:
+            y = _section_title(canvas, MARGIN, y, "বিস্তারিত বিবরণ", content_width)
+            y += 10
+            size, leading = DETAIL_TEXT_SIZE, DETAIL_LEADING
+            page_limit = height - DETAIL_PAGE_BOTTOM
+            for raw_line in details.replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+                line = raw_line.rstrip()
+                if not line.strip():
+                    y += leading * 0.6
+                    continue
+                indent = (len(line) - len(line.lstrip(" "))) * 2.4
+                wrapped = canvas.doc.shaper.wrap(line.strip(), STYLES["regular"], size,
+                                                 content_width - indent) or [""]
+                for piece in wrapped:
+                    if y + leading > page_limit:
+                        _footer(canvas, settings, width, height)
+                        canvas = doc.new_page()
+                        _watermark(canvas)
+                        y = _letterhead(canvas, settings, width, bangla=True)
+                        y = title_band(canvas, y, "কর্পোরেট ট্যুর মেমো (চলমান)")
+                        y = _section_title(canvas, MARGIN, y, "বিস্তারিত বিবরণ (চলমান)", content_width)
+                        y += 10
+                    canvas.text(MARGIN + indent, y, piece, size=size, color=INK)
+                    y += leading
+            y += 4
+
+        # Closing block: status line, signatures, footer -----------------------
+        if y > height - RECEIPT_BOTTOM_RESERVED:
+            _footer(canvas, settings, width, height)
+            canvas = doc.new_page()
+            _watermark(canvas)
+            y = _letterhead(canvas, settings, width, bangla=True)
+            y = title_band(canvas, y, "কর্পোরেট ট্যুর মেমো (চলমান)")
+        signature_y = height - 92
+        status_value = str(entry.get("status") or "Confirmed").strip()
+        status = _STATUS_BN.get(status_value.casefold(), status_value)
+        printed_at = _bangla_printed_at(_dt.datetime.now())
+        info_y = signature_y - 22
+        canvas.line(MARGIN, info_y - 13, width - MARGIN, info_y - 13, color=LINE, width=0.5)
+        canvas.text(MARGIN, info_y, f"বুকিংয়ের অবস্থা: {status}", style="bold", size=9.2,
+                    color=TEAL_DARK, max_width=content_width / 2 - 8)
+        canvas.text(width - MARGIN, info_y, f"প্রিন্টের তারিখ: {printed_at}", size=8.8,
+                    color=MUTED, align="right", max_width=content_width / 2 - 8)
+        _signature_block(canvas, MARGIN, signature_y, content_width,
+                         "অফিস প্রতিনিধির স্বাক্ষর", "প্রতিষ্ঠানের প্রতিনিধির স্বাক্ষর")
+        _footer(canvas, settings, width, height)
+
+    return doc.render(draw)
+
+
+# Text size / line spacing of the corporate memo details and the space kept
+# free for the footer when the details continue onto another page.
+DETAIL_TEXT_SIZE = 10.0
+DETAIL_LEADING = 14.5
+DETAIL_PAGE_BOTTOM = 70.0
 
 
 def bus_ticket_receipt(ticket: Dict[str, Any], settings: Dict[str, Any]) -> bytes:

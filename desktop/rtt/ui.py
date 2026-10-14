@@ -536,15 +536,18 @@ class BookingApp:
         self.dashboard_page = ttk.Frame(self.notebook, padding=14, style="Page.TFrame")
         self.tour_page = ttk.Frame(self.notebook, padding=12, style="Page.TFrame")
         self.bus_page = ttk.Frame(self.notebook, padding=12, style="Page.TFrame")
+        self.corporate_page = ttk.Frame(self.notebook, padding=12, style="Page.TFrame")
         self.reports_page = ttk.Frame(self.notebook, padding=12, style="Page.TFrame")
         self.notebook.add(self.dashboard_page, text="Overview")
         self.notebook.add(self.tour_page, text="Tour bookings")
         self.notebook.add(self.bus_page, text="Bus tickets")
+        self.notebook.add(self.corporate_page, text="Corporate tours")
         self.notebook.add(self.reports_page, text="Tours & monthly reports")
         self.page_by_title = {
             "Overview": self.dashboard_page,
             "Tour bookings": self.tour_page,
             "Bus tickets": self.bus_page,
+            "Corporate tours": self.corporate_page,
             "Tours & monthly reports": self.reports_page,
         }
 
@@ -558,6 +561,7 @@ class BookingApp:
         self._build_form(self.tour_body)
         self._build_table(self.tour_body)
         self._build_bus_page(self.bus_page)
+        self._build_corporate_page(self.corporate_page)
         self._build_tours_reports_page(self.reports_page)
         self._build_sidebar(self.sidebar)
         self.notebook.bind("<<NotebookTabChanged>>", self.on_page_changed)
@@ -588,6 +592,7 @@ class BookingApp:
             ("Overview", "▦   Overview"),
             ("Tour bookings", "▣   Tour bookings"),
             ("Bus tickets", "⇄   Bus tickets"),
+            ("Corporate tours", "▥   Corporate tour"),
             ("Tours & monthly reports", "▤   Tours & reports"),
         )
         for title, label in nav_items:
@@ -666,6 +671,7 @@ class BookingApp:
             "Overview": "Tour departures, seats and payments — stored locally on this computer.",
             "Tour bookings": "Assign open seats by tour and travel date; keep customer payments current.",
             "Bus tickets": "Issue offline counter tickets for any route and travel date.",
+            "Corporate tours": "Group tours booked by a company: buses, payment and a free-form memo.",
             "Tours & monthly reports": "Manage tours and capacity, then export a clean monthly travel sheet.",
         }
         if page:
@@ -679,6 +685,8 @@ class BookingApp:
             self.refresh()
         elif page == "Bus tickets":
             self.refresh_bus_tickets()
+        elif page == "Corporate tours":
+            self.refresh_corporate_tours()
         elif page == "Tours & monthly reports":
             self.refresh_tour_catalog()
             self.refresh_month_report()
@@ -747,6 +755,7 @@ class BookingApp:
         shortcuts = [
             ("Tour bookings", "Choose a tour and date, pick open seats from the seat map, then save the passenger and payment.", self.open_tour_page),
             ("Bus ticketing", "Select the route and day to see sold seats. Issue or reprint a paper ticket offline.", self.open_bus_page),
+            ("Corporate tour", "Record a company's group tour with its buses and payment; print a memo whose details can run to several pages.", self.open_corporate_page),
             ("Monthly report", "Review every trip, passenger, seat and due for a calendar month; export PDF or CSV.", self.open_reports_page),
         ]
         for row, (title, detail, command) in enumerate(shortcuts, start=1):
@@ -1128,6 +1137,13 @@ class BookingApp:
     def open_reports_page(self) -> None:
         self.notebook.select(self.reports_page)
         self.refresh_month_report()
+
+    def open_corporate_page(self) -> None:
+        self.notebook.select(self.corporate_page)
+
+    def start_corporate_tour(self) -> None:
+        self.notebook.select(self.corporate_page)
+        self.new_corporate_tour()
 
     def refresh_dashboard(self) -> None:
         if not hasattr(self, "dashboard_values"):
@@ -2056,12 +2072,361 @@ class BookingApp:
         self.set_status(f"Exported {len(rows)} bus tickets to {path}")
 
 
+    # ------------------------------------------------------ corporate tours
+
+    def _build_corporate_page(self, parent: ttk.Frame) -> None:
+        parent.columnconfigure(1, weight=1)
+        parent.rowconfigure(0, weight=1)
+        self.corporate_selected_id: Optional[int] = None
+        self.corporate_rows: List[Dict[str, Any]] = []
+        self._build_corporate_form(parent)
+        self._build_corporate_table(parent)
+
+    def _build_corporate_form(self, parent: ttk.Frame) -> None:
+        self.corporate_form_panel = ScrollableFormPanel(parent)
+        self.corporate_form_panel.grid(row=0, column=0, sticky="nsw", padx=(0, 12))
+        card = self.corporate_form_panel.card
+        card.columnconfigure(0, weight=1)
+        ttk.Label(card, text="Corporate / group tour", style="Header.TLabel").grid(
+            row=0, column=0, columnspan=3, sticky="w", pady=(0, 4))
+        ttk.Label(card, text="A whole tour booked by a company. Add the buses by number and coach type - "
+                             "no seat plan is kept. Everything else goes in the details box.",
+                  style="Muted.TLabel", wraplength=350, justify="left").grid(
+            row=1, column=0, columnspan=3, sticky="w", pady=(0, 8))
+        self.corporate_vars: Dict[str, tk.Variable] = {
+            "memo_no": tk.StringVar(), "company": tk.StringVar(), "contact_name": tk.StringVar(),
+            "phone": tk.StringVar(), "tour_name": tk.StringVar(), "tour_date": tk.StringVar(),
+            "booking_date": tk.StringVar(), "total": tk.StringVar(value="0"),
+            "advance": tk.StringVar(value="0"), "status": tk.StringVar(value="Confirmed"),
+        }
+        self.corporate_due_var = tk.StringVar(value="0.00")
+        row = 2
+        row = self._corporate_form_row(card, row, "Memo number", "memo_no", extra="auto")
+        row = self._corporate_form_row(card, row, "Company / organisation *", "company", combo=True,
+                                       values=self.db.corporate_companies())
+        row = self._corporate_form_row(card, row, "Contact person", "contact_name")
+        row = self._corporate_form_row(card, row, "Phone / WhatsApp", "phone")
+        row = self._corporate_form_row(card, row, "Tour / destination", "tour_name")
+        row = self._corporate_form_row(card, row, "Tour date *", "tour_date", date=True)
+        row = self._corporate_form_row(card, row, "Booking date", "booking_date", date=True)
+        ttk.Label(card, text="Buses (number + 41 or 45 seats) *", style="Field.TLabel").grid(
+            row=row, column=0, columnspan=3, sticky="w", pady=(8, 2))
+        self.corporate_bus_editor = BusListEditor(card, self.ui_font, self.input_font)
+        self.corporate_bus_editor.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
+        row += 2
+        row = self._corporate_form_row(card, row, "Total amount", "total")
+        row = self._corporate_form_row(card, row, "Advance paid", "advance")
+        ttk.Label(card, text="Balance due", style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(8, 0))
+        ttk.Label(card, textvariable=self.corporate_due_var, style="Due.TLabel").grid(
+            row=row + 1, column=0, sticky="w", pady=(1, 0))
+        row += 2
+        ttk.Label(card, text="Status", style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(7, 0))
+        self.corporate_status_combo = ttk.Combobox(
+            card, textvariable=self.corporate_vars["status"],
+            values=("Confirmed", "Pending", "Paid", "Cancelled"), state="readonly",
+            style="Input.TCombobox", font=self.input_font,
+        )
+        self.corporate_status_combo.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
+        row += 2
+        ttk.Label(card, text="Details (itinerary, package, conditions - printed on the memo)",
+                  style="Field.TLabel", wraplength=350, justify="left").grid(
+            row=row, column=0, columnspan=3, sticky="w", pady=(7, 0))
+        self.corporate_details_text = tk.Text(card, height=12, width=30, font=(self.ui_font, 18),
+                                              relief="solid", borderwidth=1, wrap="word", undo=True)
+        self.corporate_details_text.grid(row=row + 1, column=0, columnspan=3, sticky="ew")
+        ttk.Label(card, text="Long details are fine - the memo continues onto more pages automatically.",
+                  style="Muted.TLabel", wraplength=350, justify="left").grid(
+            row=row + 2, column=0, columnspan=3, sticky="w", pady=(2, 0))
+        row += 3
+        actions = ttk.Frame(card, style="Card.TFrame")
+        actions.grid(row=row, column=0, columnspan=3, sticky="ew", pady=(10, 0))
+        ttk.Button(actions, text="New", command=self.new_corporate_tour).pack(
+            side="left", expand=True, fill="x", padx=(0, 4))
+        ttk.Button(actions, text="Save tour", style="Accent.TButton",
+                   command=self.save_corporate_tour).pack(side="left", expand=True, fill="x", padx=4)
+        ttk.Button(actions, text="Delete", style="Danger.TButton",
+                   command=self.delete_corporate_tour).pack(side="left", expand=True, fill="x", padx=(4, 0))
+        actions2 = ttk.Frame(card, style="Card.TFrame")
+        actions2.grid(row=row + 1, column=0, columnspan=3, sticky="ew", pady=(6, 0))
+        ttk.Button(actions2, text="Print memo", style="Secondary.TButton",
+                   command=self.print_corporate_memo).pack(side="left", expand=True, fill="x", padx=(0, 4))
+        ttk.Button(actions2, text="Export list", command=self.export_corporate_csv).pack(
+            side="left", expand=True, fill="x", padx=(4, 0))
+        for key in ("total", "advance"):
+            self.corporate_vars[key].trace_add("write", lambda *_: self.update_corporate_due())
+        self.new_corporate_tour(announce=False)
+
+    def _corporate_form_row(self, card: ttk.Frame, row: int, label: str, key: str,
+                            combo: bool = False, values: Optional[List[str]] = None,
+                            date: bool = False, extra: str = "") -> int:
+        ttk.Label(card, text=label, style="Field.TLabel").grid(row=row, column=0, sticky="w", pady=(6, 0))
+        if combo:
+            widget = ttk.Combobox(card, textvariable=self.corporate_vars[key], values=values or (),
+                                  style="Input.TCombobox", font=self.input_font)
+            if key == "company":
+                self.corporate_company_combo = widget
+        else:
+            widget = ttk.Entry(card, textvariable=self.corporate_vars[key], style="Input.TEntry",
+                               font=self.input_font)
+        widget.grid(row=row + 1, column=0, columnspan=2 if date or extra else 3, sticky="ew")
+        if date:
+            ttk.Button(card, text="…", width=4,
+                       command=lambda field=key: self.pick_corporate_date(field)).grid(
+                row=row + 1, column=2, sticky="e")
+        elif extra == "auto":
+            ttk.Button(card, text="Auto", width=6, command=self.assign_corporate_number).grid(
+                row=row + 1, column=2, sticky="e")
+        return row + 2
+
+    def _build_corporate_table(self, parent: ttk.Frame) -> None:
+        panel = ttk.Frame(parent, style="Page.TFrame")
+        panel.grid(row=0, column=1, sticky="nsew")
+        panel.rowconfigure(1, weight=1)
+        panel.columnconfigure(0, weight=1)
+        filters = ttk.Frame(panel, style="Card.TFrame", padding=(10, 8))
+        filters.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        self.corporate_search_var = tk.StringVar()
+        self.corporate_search_entry = ttk.Entry(filters, textvariable=self.corporate_search_var, width=24)
+        self.corporate_search_entry.pack(side="left")
+        self.corporate_search_entry.bind("<Return>", lambda event: self.refresh_corporate_tours())
+        self.corporate_company_filter_var = tk.StringVar(value="All companies")
+        self.corporate_company_filter = ttk.Combobox(
+            filters, textvariable=self.corporate_company_filter_var,
+            values=["All companies"] + self.db.corporate_companies(), state="readonly", width=24)
+        self.corporate_company_filter.pack(side="left", padx=(7, 0))
+        self.corporate_company_filter.bind("<<ComboboxSelected>>", lambda event: self.refresh_corporate_tours())
+        ttk.Button(filters, text="Filter", style="Secondary.TButton",
+                   command=self.refresh_corporate_tours).pack(side="left", padx=(7, 0))
+        ttk.Button(filters, text="Clear", command=self.clear_corporate_filters).pack(side="right")
+
+        columns = (
+            ("memo_no", "Memo", 130), ("company", "Company", 170), ("contact_name", "Contact", 120),
+            ("phone", "Phone", 105), ("tour_name", "Tour", 150), ("tour_date", "Tour date", 95),
+            ("buses", "Buses", 150), ("seats", "Seats", 58), ("total", "Total", 92),
+            ("advance", "Advance", 86), ("due", "Due", 86), ("status", "Status", 82),
+        )
+        table = ttk.Frame(panel, style="Card.TFrame")
+        table.grid(row=1, column=0, sticky="nsew")
+        table.rowconfigure(0, weight=1)
+        table.columnconfigure(0, weight=1)
+        self.corporate_tree = ttk.Treeview(table, columns=[c[0] for c in columns], show="headings",
+                                           selectmode="browse")
+        for key, heading, width in columns:
+            self.corporate_tree.heading(key, text=heading)
+            self.corporate_tree.column(key, width=width, stretch=True,
+                                       anchor="e" if key in ("total", "advance", "due", "seats") else "w")
+        self.corporate_tree.tag_configure("cancelled", foreground=MUTED)
+        self.corporate_tree.tag_configure("due", foreground=DANGER)
+        self.corporate_tree.bind("<<TreeviewSelect>>", self.on_corporate_select)
+        scroll_y = ttk.Scrollbar(table, orient="vertical", command=self.corporate_tree.yview)
+        scroll_x = ttk.Scrollbar(table, orient="horizontal", command=self.corporate_tree.xview)
+        self.corporate_tree.configure(yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
+        self.corporate_tree.grid(row=0, column=0, sticky="nsew")
+        scroll_y.grid(row=0, column=1, sticky="ns")
+        scroll_x.grid(row=1, column=0, sticky="ew")
+        self.corporate_totals_var = tk.StringVar(value="0 corporate tours")
+        ttk.Label(panel, textvariable=self.corporate_totals_var, style="Card.TLabel").grid(
+            row=2, column=0, sticky="e", pady=(7, 0))
+
+    def assign_corporate_number(self) -> None:
+        self.corporate_vars["memo_no"].set(self.db.next_corporate_number())
+
+    def pick_corporate_date(self, field: str) -> None:
+        current = parse_date(self.corporate_vars[field].get())
+        DatePicker(self.root, current, lambda value: self.corporate_vars[field].set(
+            value.isoformat() if value else ""))
+
+    def update_corporate_due(self) -> None:
+        total = self._amount_text(self.corporate_vars["total"].get())
+        advance = self._amount_text(self.corporate_vars["advance"].get())
+        self.corporate_due_var.set(money(total - advance, self.currency))
+
+    @staticmethod
+    def _amount_text(raw: Any) -> float:
+        cleaned = "".join(char for char in str(raw or "") if char.isdigit() or char in ".-")
+        try:
+            return float(cleaned or 0)
+        except ValueError:
+            return 0.0
+
+    def new_corporate_tour(self, announce: bool = True) -> None:
+        self.corporate_selected_id = None
+        for key, variable in self.corporate_vars.items():
+            variable.set({"total": "0", "advance": "0", "status": "Confirmed"}.get(key, ""))
+        self.corporate_vars["booking_date"].set(_dt.date.today().isoformat())
+        self.corporate_bus_editor.set_buses([])
+        self.corporate_details_text.delete("1.0", "end")
+        self.assign_corporate_number()
+        self.update_corporate_due()
+        if announce:
+            self.set_status("New corporate tour - enter the company, tour date, buses and details.")
+
+    def collect_corporate_tour(self) -> Dict[str, Any]:
+        data = {key: str(variable.get() or "").strip() for key, variable in self.corporate_vars.items()}
+        for key in ("tour_date", "booking_date"):
+            parsed = parse_date(data.get(key) or "")
+            if parsed:
+                data[key] = parsed.isoformat()
+        data["total"] = self._amount_text(data.get("total"))
+        data["advance"] = self._amount_text(data.get("advance"))
+        data["due"] = round(data["total"] - data["advance"], 2)
+        data["buses"] = [{"bus_no": spec["bus_no"], "layout": spec["layout"]}
+                         for spec in self.corporate_bus_editor.get_buses()]
+        data["details"] = self.corporate_details_text.get("1.0", "end").rstrip()
+        return data
+
+    def save_corporate_tour(self) -> None:
+        data = self.collect_corporate_tour()
+        if not data["memo_no"]:
+            data["memo_no"] = self.db.next_corporate_number()
+        try:
+            if self.corporate_selected_id is None:
+                self.corporate_selected_id = self.db.add_corporate_tour(data)
+                message = f"Corporate tour {data['memo_no']} saved."
+            else:
+                self.db.update_corporate_tour(self.corporate_selected_id, data)
+                message = f"Corporate tour {data['memo_no']} updated."
+        except Exception as exc:
+            messagebox.showerror("Corporate tour not saved", str(exc), parent=self.root)
+            return
+        self.refresh_corporate_tours(keep_selection=True)
+        self.set_status(message)
+
+    def on_corporate_select(self, event=None) -> None:
+        selection = self.corporate_tree.selection()
+        if not selection:
+            return
+        try:
+            self.corporate_selected_id = int(selection[0])
+        except (ValueError, TypeError):
+            self.corporate_selected_id = None
+            return
+        self.load_corporate_selected()
+
+    def load_corporate_selected(self) -> None:
+        if self.corporate_selected_id is None:
+            return
+        row = self.db.corporate_tour_get(self.corporate_selected_id)
+        if not row:
+            return
+        for key, variable in self.corporate_vars.items():
+            value = row.get(key, "")
+            if key in ("total", "advance"):
+                value = f"{float(value or 0):g}"
+            variable.set("" if value is None else str(value))
+        self.corporate_bus_editor.set_buses(
+            [{"id": None, "bus_no": bus["bus_no"], "layout": bus["layout"]} for bus in row.get("buses") or []])
+        self.corporate_details_text.delete("1.0", "end")
+        self.corporate_details_text.insert("1.0", str(row.get("details") or ""))
+        self.update_corporate_due()
+        self.set_status(f"Editing corporate tour {row.get('memo_no')} for {row.get('company')}")
+
+    def delete_corporate_tour(self) -> None:
+        if self.corporate_selected_id is None:
+            messagebox.showinfo("Delete corporate tour", "Select a corporate tour from the list first.",
+                                parent=self.root)
+            return
+        row = self.db.corporate_tour_get(self.corporate_selected_id) or {}
+        if not messagebox.askyesno(
+            "Delete corporate tour", f"Delete memo {row.get('memo_no')} for {row.get('company')}?",
+            parent=self.root,
+        ):
+            return
+        self.db.delete_corporate_tour(self.corporate_selected_id)
+        self.new_corporate_tour(announce=False)
+        self.refresh_corporate_tours()
+        self.set_status("Corporate tour deleted.")
+
+    def clear_corporate_filters(self) -> None:
+        self.corporate_search_var.set("")
+        self.corporate_company_filter_var.set("All companies")
+        self.refresh_corporate_tours()
+
+    def refresh_corporate_tours(self, keep_selection: bool = False) -> None:
+        if not hasattr(self, "corporate_tree"):
+            return
+        rows = self.db.list_corporate_tours(search=self.corporate_search_var.get(),
+                                            company=self.corporate_company_filter_var.get())
+        self.corporate_rows = rows
+        for item in self.corporate_tree.get_children():
+            self.corporate_tree.delete(item)
+        for row in rows:
+            status = str(row.get("status") or "Confirmed")
+            tags = ("cancelled",) if status.lower() == "cancelled" else (
+                ("due",) if float(row.get("due") or 0) > 0 else ()
+            )
+            buses = row.get("buses") or []
+            self.corporate_tree.insert(
+                "", "end", iid=str(row["id"]),
+                values=(row.get("memo_no", ""), row.get("company", ""), row.get("contact_name", ""),
+                        row.get("phone", ""), row.get("tour_name", ""), row.get("tour_date", ""),
+                        ", ".join(f"Bus {bus['bus_no']} ({bus['capacity']})" for bus in buses),
+                        row.get("seat_capacity", 0), money(row.get("total"), self.currency),
+                        money(row.get("advance"), self.currency), money(row.get("due"), self.currency), status),
+                tags=tags,
+            )
+        companies = self.db.corporate_companies()
+        self.corporate_company_filter.configure(values=["All companies"] + companies)
+        if self.corporate_company_filter_var.get() not in ["All companies"] + companies:
+            self.corporate_company_filter_var.set("All companies")
+        self.corporate_company_combo.configure(values=companies)
+        totals = self.db.corporate_totals(rows)
+        self.corporate_totals_var.set(
+            f"{totals['count']} active tours  ·  {totals['buses']} buses  ·  "
+            f"Total {money(totals['total'], self.currency)}  ·  Advance {money(totals['advance'], self.currency)}"
+            f"  ·  Due {money(totals['due'], self.currency)}"
+        )
+        if keep_selection and self.corporate_selected_id is not None:
+            key = str(self.corporate_selected_id)
+            if key in self.corporate_tree.get_children():
+                self.corporate_tree.selection_set(key)
+                self.corporate_tree.focus(key)
+
+    def print_corporate_memo(self) -> None:
+        if self.corporate_selected_id is None:
+            messagebox.showinfo("Print memo", "Save or select a corporate tour first.", parent=self.root)
+            return
+        entry = self.db.corporate_tour_get(self.corporate_selected_id)
+        if not entry:
+            return
+        try:
+            data = documents.corporate_memo(entry, self.settings)
+        except Exception as exc:
+            messagebox.showerror("Memo PDF error", str(exc), parent=self.root)
+            return
+        path = os.path.join(config.export_dir(), f"corporate-memo-{entry['memo_no']}.pdf")
+        with open(path, "wb") as handle:
+            handle.write(data)
+        printed = print_file(path)
+        self.set_status(f"Sent {os.path.basename(path)} to the printer." if printed
+                        else f"Saved {path} (opened in your PDF viewer).")
+
+    def export_corporate_csv(self) -> None:
+        rows = getattr(self, "corporate_rows", [])
+        if not rows:
+            messagebox.showinfo("Export corporate tours", "There are no corporate tours in this view.",
+                                parent=self.root)
+            return
+        path = filedialog.asksaveasfilename(
+            parent=self.root, title="Export corporate tours", defaultextension=".csv",
+            initialdir=str(self.settings.get("last_export_dir") or config.export_dir()),
+            initialfile=f"corporate-tours-{_dt.date.today().isoformat()}.csv",
+            filetypes=[("CSV file", "*.csv"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        self.db.export_corporate_csv(path, rows)
+        self.settings["last_export_dir"] = os.path.dirname(path)
+        config.save_settings(self.settings)
+        self.set_status(f"Exported {len(rows)} corporate tours to {path}")
+
     def _build_menu(self) -> None:
         menubar = tk.Menu(self.root)
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(label="New booking", command=self.start_tour_booking, accelerator="Ctrl+N")
         file_menu.add_command(label="Save current entry", command=self.save_current_entry, accelerator="Ctrl+S")
         file_menu.add_command(label="New bus ticket", command=self.start_bus_ticket)
+        file_menu.add_command(label="New corporate tour", command=self.start_corporate_tour)
         file_menu.add_separator()
         file_menu.add_command(label="Export list to CSV...", command=self.export_csv)
         file_menu.add_command(label="Backup database...", command=self.backup_database)
@@ -2492,6 +2857,8 @@ class BookingApp:
             page = ""
         if page == "Bus tickets":
             self.save_bus_ticket()
+        elif page == "Corporate tours":
+            self.save_corporate_tour()
         else:
             self.save_booking()
 
@@ -2857,6 +3224,8 @@ class BookingApp:
             "Enter passenger name and phone, choose the tour date and tour, then use Map to select open seats. Booked seats are locked for that trip. After a successful booking create or update, all trip/passenger inputs clear and a fresh unique number is shown. Click a saved row to edit it; due is Total minus Advance.\n\n"
             "TOURS & MONTHLY REPORTS\n"
             "Add or edit tours, a unique tour code, and the buses that run the tour (each bus is a 41-seat or 45-seat coach with its own bus number and seat map). The code is added before new tour booking serials; leaving it blank generates initials. Archive a tour to keep its booking history, or permanently delete it and its booking/payment records. Select a travel month to preview trips and export PDF or CSV.\n\n"
+            "CORPORATE TOURS\n"
+            "Use this for a whole tour booked by a company or group. Pick or type the company name, the tour date, and add each bus with its number and coach type (41 or 45 seats) - no seat map is needed. Write the itinerary, package and any conditions in the Details box; the printed memo continues onto extra pages when the details are long.\n\n"
             "BUS TICKETS\n"
             "Bus ticketing is separate from tour bookings and uses its own ticket numbers and seat inventory. Choose the passenger count, then use Map to select exactly that many free seats. Assign Male or Female before each seat; selected seats are blue for Male and pink for Female. Fare is per passenger, and the name/phone are the group contact.\n\n"
             "Use File → Backup database regularly. Everything is stored offline on this computer.\n\n"

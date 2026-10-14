@@ -1,4 +1,4 @@
-RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.3)
+RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.4)
 ===================================================================
 This program runs on your own computer. Bookings and ticket records stay in a
 local database; nothing is sent to the website or over the internet.
@@ -36,6 +36,11 @@ WHAT THE PROGRAM DOES
   the code (for example, CBT-RTT-2026-0001). Export a selected travel month as PDF
   or CSV. Archive keeps booking history; **Delete tour + bookings** permanently
   erases the tour and its saved booking/payment records after confirmation.
+* Corporate tour: a whole tour booked by a company. Choose or type the company
+  name, the contact person, the tour date and the buses (bus number plus 41 or
+  45 seats - no seat plan). Type the itinerary, package and conditions in the
+  Details box; the printed memo continues onto extra pages when the details
+  are long. Memos are numbered RTT-CORP-<year>-0001 and can be exported as CSV.
 * Bus tickets are separate from tour bookings and use their own ticket numbers.
   Every route/date runs one 41-seat bus until you change it: in the "Bus &
   coach type" row pick 41 or 45 seats for that day's bus, or press "+ Bus" to

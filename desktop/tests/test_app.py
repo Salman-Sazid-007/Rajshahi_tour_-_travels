@@ -532,6 +532,84 @@ class DatabaseTests(unittest.TestCase):
             self.assertIn("Ticket No", handle.read())
 
 
+class CorporateTourTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.dir = temp_dir()
+        self.database = db.Database(config.database_path())
+
+    def tearDown(self) -> None:
+        self.database.close()
+
+    def _entry(self, **overrides):
+        data = {
+            "company": "Square Pharmaceuticals", "contact_name": "Rafiq", "phone": "01700000000",
+            "tour_name": "Sajek Valley", "tour_date": "2026-12-20",
+            "buses": [{"bus_no": "1", "layout": "41"}, {"bus_no": "2", "layout": "45"}],
+            "details": "Day 1: depart.\nDay 2: return.", "total": 200000, "advance": 50000,
+        }
+        data.update(overrides)
+        return data
+
+    def test_corporate_tour_round_trip_and_numbering(self) -> None:
+        year = _dt.date.today().year
+        self.assertEqual(self.database.next_corporate_number(), f"RTT-CORP-{year}-0001")
+        tour_id = self.database.add_corporate_tour(self._entry())
+        row = self.database.corporate_tour_get(tour_id)
+        self.assertEqual(row["memo_no"], f"RTT-CORP-{year}-0001")
+        self.assertEqual(row["company"], "Square Pharmaceuticals")
+        self.assertEqual(row["due"], 150000.0)
+        self.assertEqual(row["booking_date"], _dt.date.today().isoformat())
+        self.assertEqual([bus["capacity"] for bus in row["buses"]], [41, 45])
+        self.assertEqual(row["seat_capacity"], 86)
+        self.assertEqual(row["details"], "Day 1: depart.\nDay 2: return.")
+        self.assertEqual(self.database.next_corporate_number(), f"RTT-CORP-{year}-0002")
+        self.database.update_corporate_tour(tour_id, dict(row, advance=200000, status="Paid",
+                                                          buses=[{"bus_no": "7", "layout": "45"}]))
+        row = self.database.corporate_tour_get(tour_id)
+        self.assertEqual((row["due"], row["status"], row["seat_capacity"]), (0.0, "Paid", 45))
+        self.assertEqual(self.database.corporate_companies(), ["Square Pharmaceuticals"])
+        self.assertEqual(len(self.database.list_corporate_tours(search="sajek")), 1)
+        self.assertEqual(len(self.database.list_corporate_tours(company="Nobody")), 0)
+        totals = self.database.corporate_totals()
+        self.assertEqual((totals["count"], totals["buses"], totals["total"]), (1, 1, 200000.0))
+        path = os.path.join(self.dir, "corp.csv")
+        self.database.export_corporate_csv(path, self.database.list_corporate_tours())
+        with open(path, encoding="utf-8-sig") as handle:
+            lines = handle.read().splitlines()
+        self.assertIn("Bus 7: 45 seats", lines[1])
+        self.database.delete_corporate_tour(tour_id)
+        self.assertEqual(self.database.list_corporate_tours(), [])
+
+    def test_corporate_tour_validation(self) -> None:
+        with self.assertRaises(ValueError):
+            self.database.add_corporate_tour(self._entry(company=""))
+        with self.assertRaises(ValueError):
+            self.database.add_corporate_tour(self._entry(tour_date="not a date"))
+        with self.assertRaises(ValueError):
+            self.database.add_corporate_tour(self._entry(buses=[{"bus_no": "1", "layout": "41"},
+                                                                {"bus_no": "1", "layout": "45"}]))
+        with self.assertRaises(ValueError):
+            self.database.add_corporate_tour(self._entry(total=1000, advance=5000))
+        # A missing bus list falls back to a single 41-seat bus.
+        tour_id = self.database.add_corporate_tour(self._entry(buses=[]))
+        self.assertEqual(self.database.corporate_tour_get(tour_id)["seat_capacity"], 41)
+
+    def test_corporate_table_is_added_to_existing_databases(self) -> None:
+        path = os.path.join(self.dir, "old.db")
+        db.Database(path).close()
+        connection = sqlite3.connect(path)
+        connection.execute("DROP TABLE corporate_tours")
+        connection.commit()
+        connection.close()
+        database = db.Database(path)
+        try:
+            self.assertEqual(database.list_corporate_tours(), [])
+            database.add_corporate_tour({"company": "ACI", "tour_date": "2026-12-20"})
+            self.assertEqual(len(database.list_corporate_tours()), 1)
+        finally:
+            database.close()
+
+
 class FormatTests(unittest.TestCase):
     def test_offline_seat_labels_match_website_layout(self) -> None:
         standard = ui.seat_ids(40)
@@ -783,9 +861,53 @@ class DocumentTests(unittest.TestCase):
         x0, y0, x1, y1 = watermark["bbox"]
         self.assertGreater(x1 - x0, page.rect.width * 0.8)
         self.assertAlmostEqual((x0 + x1) / 2, page.rect.width / 2, delta=2)
-        self.assertAlmostEqual((y0 + y1) / 2, page.rect.height / 2, delta=2)
+        # Sits below the centre so the whole logo shows under the payment boxes
+        # and above the signature lines.
+        self.assertAlmostEqual((y0 + y1) / 2, page.rect.height * documents.WATERMARK_CENTRE_RATIO, delta=2)
+        self.assertGreater(y0, page.rect.height * 0.3)
+        self.assertLess(y1, page.rect.height - 92)
         # Drawn first, so every text block paints over it.
         self.assertEqual(page.get_image_info()[0]["bbox"], watermark["bbox"])
+
+    def test_corporate_memo_flows_long_details_over_several_pages(self) -> None:
+        entry = {
+            "memo_no": "RTT-CORP-2026-0007", "company": "Pran-RFL Group", "contact_name": "Kamal",
+            "phone": "01711223344", "tour_name": "Cox's Bazar Annual Picnic", "tour_date": "2026-12-20",
+            "booking_date": "2026-10-14", "total": 385000, "advance": 150000, "due": 235000,
+            "status": "Confirmed",
+            "buses": [{"bus_no": "1", "layout": "41", "capacity": 41, "label": "41 seats"},
+                      {"bus_no": "2", "layout": "45", "capacity": 45, "label": "45 seats"}],
+            "details": "Short note.",
+        }
+        short = documents.corporate_memo(entry, self.settings)
+        self.assertTrue(short.startswith(b"%PDF"))
+        long_details = "\n".join(
+            f"{index}. Day {index}: breakfast at the hotel, sightseeing with the local guide, lunch, "
+            "evening free time and dinner for all passengers of both buses." for index in range(1, 80)
+        )
+        long = documents.corporate_memo(dict(entry, details=long_details), self.settings)
+        self.assertTrue(long.startswith(b"%PDF"))
+        self.assertEqual(documents._corporate_bus_line(entry["buses"]),
+                         "বাস ১ — ৪১ সিট, বাস ২ — ৪৫ সিট  (মোট ৮৬ সিট)")
+        try:
+            import pymupdf
+        except ImportError:
+            return
+        short_doc = pymupdf.open(stream=short, filetype="pdf")
+        long_doc = pymupdf.open(stream=long, filetype="pdf")
+        self.assertEqual(len(short_doc), 1)
+        self.assertGreaterEqual(len(long_doc), 3)
+        # Every page carries the letterhead logo and the watermark.
+        for page in long_doc:
+            self.assertEqual(len(page.get_image_info()), 2)
+        # The memo number and the details text reach the last page, and the
+        # signature lines are only drawn once, after the last detail line.
+        self.assertIn("RTT-CORP-2026-0007", long_doc[-1].get_text())
+        self.assertIn("Day 79", long_doc[-1].get_text())
+        self.assertNotIn("Day 79", long_doc[0].get_text())
+        first_text = long_doc[0].get_text()
+        self.assertIn("Pran-RFL Group", first_text)
+        self.assertIn("01711223344", first_text)
 
     def test_branded_bus_ticket_pdf(self) -> None:
         ticket = {
@@ -932,6 +1054,69 @@ class UiTests(unittest.TestCase):
         self.assertEqual(self.app.notebook.tab(self.app.notebook.select(), "text"), "Bus tickets")
         self.app.open_reports_page()
         self.assertEqual(self.app.page_title_var.get(), "Tours & monthly reports")
+        self.app.open_corporate_page()
+        self.assertEqual(self.app.page_title_var.get(), "Corporate tours")
+        self.assertIn("Corporate tours", self.app.nav_buttons)
+        self.assertEqual(self.app.nav_buttons["Corporate tours"].cget("text"), "▥   Corporate tour")
+
+    def test_corporate_tour_page_saves_buses_and_details_without_a_seat_map(self) -> None:
+        self.app.start_corporate_tour()
+        self.assertEqual(self.app.page_title_var.get(), "Corporate tours")
+        self.assertTrue(self.app.corporate_vars["memo_no"].get().startswith("RTT-CORP-"))
+        self.assertEqual(self.app.corporate_company_combo.cget("style"), "Input.TCombobox")
+        self.assertFalse(hasattr(self.app, "corporate_seat_map"))
+        self.app.corporate_vars["company"].set("Walton Hi-Tech")
+        self.app.corporate_vars["contact_name"].set("Mr Habib")
+        self.app.corporate_vars["phone"].set("01811111111")
+        self.app.corporate_vars["tour_name"].set("Sundarbans")
+        self.app.corporate_vars["tour_date"].set("25/12/2026")
+        self.app.corporate_vars["total"].set("300000")
+        self.app.corporate_vars["advance"].set("100000")
+        editor = self.app.corporate_bus_editor
+        editor.rows[0]["type"].set(db.layout_label("45"))
+        editor.add_bus()
+        editor.add_bus()
+        self.assertEqual(editor.total_capacity(), 45 + 41 + 41)
+        self.app.corporate_details_text.insert("1.0", "Day 1: Khulna.\nDay 2: Boat.")
+        self.assertEqual(self.app.corporate_due_var.get(), config.money(200000, self.app.currency))
+        self.app.save_corporate_tour()
+        rows = self.database.list_corporate_tours()
+        self.assertEqual(len(rows), 1)
+        saved = rows[0]
+        self.assertEqual(saved["company"], "Walton Hi-Tech")
+        self.assertEqual(saved["tour_date"], "2026-12-25")
+        self.assertEqual([(bus["bus_no"], bus["layout"]) for bus in saved["buses"]],
+                         [("1", "45"), ("2", "41"), ("3", "41")])
+        self.assertEqual(saved["details"], "Day 1: Khulna.\nDay 2: Boat.")
+        self.assertEqual(saved["due"], 200000.0)
+        self.assertEqual(self.app.corporate_selected_id, saved["id"])
+        self.assertEqual(self.app.corporate_tree.selection(), (str(saved["id"]),))
+        # Previously used company names are offered in the drop-down.
+        self.assertEqual(tuple(self.app.corporate_company_combo.cget("values")), ("Walton Hi-Tech",))
+        # Editing: change the advance and reload from the list.
+        self.app.corporate_vars["advance"].set("300000")
+        self.app.corporate_vars["status"].set("Paid")
+        self.app.save_corporate_tour()
+        self.assertEqual(self.database.corporate_tour_get(saved["id"])["due"], 0.0)
+        self.app.new_corporate_tour()
+        self.assertEqual(self.app.corporate_vars["company"].get(), "")
+        self.assertEqual(len(self.app.corporate_bus_editor.rows), 1)
+        self.app.corporate_tree.selection_set(str(saved["id"]))
+        self.app.on_corporate_select()
+        self.assertEqual(self.app.corporate_vars["company"].get(), "Walton Hi-Tech")
+        self.assertEqual(len(self.app.corporate_bus_editor.rows), 3)
+        self.assertEqual(self.app.corporate_details_text.get("1.0", "end").strip(), "Day 1: Khulna.\nDay 2: Boat.")
+        # Printing writes the memo PDF.
+        self.app.print_corporate_memo()
+        path = os.path.join(config.export_dir(), f"corporate-memo-{saved['memo_no']}.pdf")
+        self.assertTrue(os.path.isfile(path))
+        with open(path, "rb") as handle:
+            self.assertTrue(handle.read().startswith(b"%PDF"))
+        # Validation errors surface as a message box instead of a crash.
+        self.app.new_corporate_tour()
+        self.app.corporate_vars["tour_date"].set("2026-12-25")
+        self.app.save_corporate_tour()
+        self.assertEqual(len(self.database.list_corporate_tours()), 1)
 
     def test_tour_date_field_follows_name_and_phone(self) -> None:
         fields = self.app.booking_form_widgets

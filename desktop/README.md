@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.2.3.
+These are the **latest published** downloads: desktop version 1.2.4.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.2.3.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.3/RajshahiTours-Windows-1.2.3.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.2.3.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.3/RajshahiTours-Desktop-1.2.3.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
+| [**RajshahiTours-Windows-1.2.4.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.4/RajshahiTours-Windows-1.2.4.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.2.4.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.4/RajshahiTours-Desktop-1.2.4.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.3 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.4 in **Help → About**.
 
 ---
 
@@ -21,7 +21,7 @@ tour details, bus tickets, seat occupancy and payment balances in SQLite on this
 computer. Bangla memos use the supplied Li Abu J M Akkas Unicode font with
 HarfBuzz shaping so conjuncts and vowel marks are positioned correctly. The
 interface is organized into **Overview**, **Tour bookings**, **Bus tickets**,
-and **Tours & monthly reports**.
+**Corporate tours** and **Tours & monthly reports**.
 
 ## What it does
 
@@ -174,6 +174,16 @@ amount; the due amount is calculated for the whole group. Save, edit, cancel or
 delete a group ticket, then print a receipt showing its seats and genders. Seat
 occupancy is scoped to route + travel date + bus. Group bus tickets remain
 completely separate from tour bookings and their numbering.
+* **Corporate tours** — for a whole tour booked by a company or group. Pick a
+previously used company from the drop-down or type a new one, add the contact
+person, tour/destination and **tour date**, then list the buses: each bus has a
+number and is a **41-seat** or **45-seat** coach (no seat plan is kept for
+corporate tours). Enter total and advance, and write the itinerary, package and
+conditions in the **Details** box. **Print memo** produces a Bangla corporate
+memo with the company, buses and payment boxes; long details continue onto as
+many extra pages as needed, with the status line and signatures after the last
+line. Memo numbers run `RTT-CORP-<year>-0001`, and the list can be filtered by
+company and exported to CSV.
 * **Search and filters** apply to the relevant list. Select a booking or ticket
 row to load it for editing (double-click also works). Cancelled records stay in
 history but do not occupy a seat or add to payment totals.

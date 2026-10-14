@@ -102,6 +102,28 @@ CREATE TABLE IF NOT EXISTS bus_trip_buses (
     UNIQUE(route, travel_date, bus_no)
 );
 CREATE INDEX IF NOT EXISTS idx_bus_trip_buses_trip ON bus_trip_buses(route, travel_date);
+-- Corporate / group tours booked by a company: one memo per booking with the
+-- buses (number + coach type) and a free-text details section.
+CREATE TABLE IF NOT EXISTS corporate_tours (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    memo_no      TEXT NOT NULL UNIQUE,
+    company      TEXT NOT NULL,
+    contact_name TEXT DEFAULT '',
+    phone        TEXT DEFAULT '',
+    tour_name    TEXT DEFAULT '',
+    tour_date    TEXT DEFAULT '',
+    booking_date TEXT DEFAULT '',
+    buses        TEXT NOT NULL DEFAULT '[]',
+    details      TEXT DEFAULT '',
+    total        REAL DEFAULT 0,
+    advance      REAL DEFAULT 0,
+    due          REAL DEFAULT 0,
+    status       TEXT DEFAULT 'Confirmed',
+    created_at   TEXT DEFAULT '',
+    updated_at   TEXT DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_corporate_company ON corporate_tours(company);
+CREATE INDEX IF NOT EXISTS idx_corporate_date ON corporate_tours(tour_date);
 CREATE TABLE IF NOT EXISTS app_meta (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -1553,6 +1575,188 @@ class Database:
     def delete_bus_ticket(self, ticket_id: int) -> None:
         self.connection.execute("DELETE FROM bus_tickets WHERE id = ?", (ticket_id,))
         self.connection.commit()
+
+    # ------------------------------------------------------- corporate tours
+
+    CORPORATE_COLUMNS = (
+        "memo_no", "company", "contact_name", "phone", "tour_name", "tour_date", "booking_date",
+        "buses", "details", "total", "advance", "due", "status",
+    )
+
+    @staticmethod
+    def corporate_buses(value: Any) -> List[Dict[str, Any]]:
+        """Decode the stored bus list into rows with capacity and label."""
+        specs = value
+        if isinstance(value, str):
+            try:
+                specs = json.loads(value or "[]")
+            except (TypeError, ValueError):
+                specs = []
+        if not isinstance(specs, list):
+            specs = []
+        buses = []
+        for spec in specs:
+            if not isinstance(spec, dict):
+                continue
+            try:
+                layout = normalise_layout(spec.get("layout", DEFAULT_BUS_LAYOUT))
+            except ValueError:
+                layout = DEFAULT_BUS_LAYOUT
+            buses.append({
+                "bus_no": normalise_bus_no(spec.get("bus_no")) or str(len(buses) + 1),
+                "layout": layout, "capacity": layout_capacity(layout), "label": layout_label(layout),
+            })
+        return buses
+
+    @classmethod
+    def _corporate_dict(cls, row: sqlite3.Row) -> Dict[str, Any]:
+        data = dict(row)
+        data["buses"] = cls.corporate_buses(data.get("buses"))
+        data["bus_count"] = len(data["buses"])
+        data["seat_capacity"] = sum(bus["capacity"] for bus in data["buses"])
+        return data
+
+    def _clean_corporate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        row: Dict[str, Any] = {}
+        for key in ("memo_no", "company", "contact_name", "phone", "tour_name", "status"):
+            row[key] = re.sub(r"\s+", " ", str(data.get(key) or "")).strip()
+        row["details"] = str(data.get("details") or "").strip()
+        for key in ("tour_date", "booking_date"):
+            raw = str(data.get(key) or "").strip()
+            parsed = parse_date(raw)
+            row[key] = parsed.isoformat() if parsed else raw
+        for key in ("total", "advance"):
+            try:
+                row[key] = round(float(data.get(key) or 0), 2)
+            except (TypeError, ValueError):
+                row[key] = 0.0
+        row["due"] = round(row["total"] - row["advance"], 2)
+        row["status"] = row["status"] or "Confirmed"
+        specs = normalise_bus_specs(data.get("buses") or [{"bus_no": "1", "layout": DEFAULT_BUS_LAYOUT}])
+        row["buses"] = json.dumps([{"bus_no": spec["bus_no"], "layout": spec["layout"]} for spec in specs],
+                                  ensure_ascii=False)
+        if not row["company"]:
+            raise ValueError("The company name is required.")
+        if not parse_date(row["tour_date"]):
+            raise ValueError("Tour date must be a valid calendar date, for example 2026-12-20.")
+        if row["booking_date"] and not parse_date(row["booking_date"]):
+            raise ValueError("Booking date must be a valid calendar date.")
+        if not row["booking_date"]:
+            row["booking_date"] = _dt.date.today().isoformat()
+        if row["total"] < 0 or row["advance"] < 0:
+            raise ValueError("Amounts cannot be negative.")
+        if row["advance"] > row["total"] and row["total"] > 0:
+            raise ValueError("Advance cannot be larger than the total amount.")
+        return row
+
+    def next_corporate_number(self, prefix: str = "RTT-CORP") -> str:
+        year = _dt.date.today().year
+        row = self.connection.execute(
+            "SELECT memo_no FROM corporate_tours WHERE memo_no LIKE ? ORDER BY memo_no DESC LIMIT 1",
+            (f"{prefix}-{year}-%",),
+        ).fetchone()
+        last = 0
+        if row and row[0]:
+            tail = str(row[0]).rsplit("-", 1)[-1]
+            if tail.isdigit():
+                last = int(tail)
+        return f"{prefix}-{year}-{last + 1:04d}"
+
+    def corporate_companies(self) -> List[str]:
+        rows = self.connection.execute(
+            "SELECT DISTINCT company FROM corporate_tours WHERE TRIM(company) != '' "
+            "ORDER BY company COLLATE NOCASE"
+        ).fetchall()
+        return [str(row[0]) for row in rows]
+
+    def corporate_tour_get(self, tour_id: int) -> Optional[Dict[str, Any]]:
+        row = self.connection.execute("SELECT * FROM corporate_tours WHERE id = ?", (tour_id,)).fetchone()
+        return self._corporate_dict(row) if row else None
+
+    def list_corporate_tours(
+        self, search: str = "", company: str = "", sort_by: str = "tour_date", sort_desc: bool = True,
+    ) -> List[Dict[str, Any]]:
+        clauses: List[str] = []
+        params: List[Any] = []
+        if search.strip():
+            like = f"%{search.strip()}%"
+            clauses.append("(memo_no LIKE ? OR company LIKE ? OR contact_name LIKE ? OR phone LIKE ? "
+                           "OR tour_name LIKE ? OR details LIKE ?)")
+            params.extend([like] * 6)
+        if company and company != "All companies":
+            clauses.append("company = ? COLLATE NOCASE")
+            params.append(company.strip())
+        allowed = {"tour_date", "memo_no", "company", "tour_name", "total", "advance", "due", "id", "booking_date"}
+        column = sort_by if sort_by in allowed else "tour_date"
+        order = "DESC" if sort_desc else "ASC"
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        rows = self.connection.execute(
+            "SELECT * FROM corporate_tours" + where + f" ORDER BY {column} {order}, id DESC", params
+        ).fetchall()
+        return [self._corporate_dict(row) for row in rows]
+
+    def add_corporate_tour(self, data: Dict[str, Any]) -> int:
+        row = self._clean_corporate(data)
+        if not row["memo_no"]:
+            row["memo_no"] = self.next_corporate_number()
+        row["created_at"] = row["updated_at"] = _now()
+        columns = list(self.CORPORATE_COLUMNS) + ["created_at", "updated_at"]
+        cur = self.connection.execute(
+            f"INSERT INTO corporate_tours ({', '.join(columns)}) VALUES ({', '.join('?' * len(columns))})",
+            [row.get(column, "") for column in columns],
+        )
+        self.connection.commit()
+        return int(cur.lastrowid)
+
+    def update_corporate_tour(self, tour_id: int, data: Dict[str, Any]) -> None:
+        row = self._clean_corporate(data)
+        if not row["memo_no"]:
+            raise ValueError("The memo number is required.")
+        row["updated_at"] = _now()
+        columns = list(self.CORPORATE_COLUMNS) + ["updated_at"]
+        self.connection.execute(
+            "UPDATE corporate_tours SET " + ", ".join(f"{column} = ?" for column in columns) + " WHERE id = ?",
+            [row.get(column, "") for column in columns] + [tour_id],
+        )
+        self.connection.commit()
+
+    def delete_corporate_tour(self, tour_id: int) -> None:
+        self.connection.execute("DELETE FROM corporate_tours WHERE id = ?", (tour_id,))
+        self.connection.commit()
+
+    def corporate_totals(self, rows: Optional[Sequence[Dict[str, Any]]] = None) -> Dict[str, float]:
+        if rows is None:
+            rows = self.list_corporate_tours()
+        active = [row for row in rows if str(row.get("status") or "").lower() != "cancelled"]
+        return {
+            "count": len(active),
+            "buses": sum(int(row.get("bus_count") or 0) for row in active),
+            "total": sum(float(row.get("total") or 0) for row in active),
+            "advance": sum(float(row.get("advance") or 0) for row in active),
+            "due": sum(float(row.get("due") or 0) for row in active),
+        }
+
+    def export_corporate_csv(self, path: str, rows: Iterable[Dict[str, Any]]) -> str:
+        rows = list(rows)
+        directory = os.path.dirname(path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        with open(path, "w", newline="", encoding="utf-8-sig") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["Memo No", "Company", "Contact", "Phone", "Tour", "Tour Date", "Booking Date",
+                             "Buses", "Seats", "Total", "Advance", "Due", "Status", "Details"])
+            for row in rows:
+                buses = row.get("buses") if isinstance(row.get("buses"), list) else self.corporate_buses(row.get("buses"))
+                writer.writerow([
+                    row.get("memo_no", ""), row.get("company", ""), row.get("contact_name", ""),
+                    row.get("phone", ""), row.get("tour_name", ""), row.get("tour_date", ""),
+                    row.get("booking_date", ""),
+                    "; ".join(f"Bus {bus['bus_no']}: {bus['label']}" for bus in buses),
+                    sum(bus["capacity"] for bus in buses),
+                    f"{float(row.get('total') or 0):.2f}", f"{float(row.get('advance') or 0):.2f}",
+                    f"{float(row.get('due') or 0):.2f}", row.get("status", ""), row.get("details", ""),
+                ])
+        return path
 
     def bus_totals(self, rows: Optional[Sequence[Dict[str, Any]]] = None) -> Dict[str, float]:
         if rows is None:

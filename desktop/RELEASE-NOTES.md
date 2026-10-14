@@ -1,3 +1,23 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.2.4
+
+* **Corporate tour section.** A new *Corporate tour* entry in the side menu
+  (next to Tour bookings and Bus tickets) records a whole tour booked by a
+  company: company name (previous companies are offered in a drop-down),
+  contact person and phone, tour/destination, **tour date**, and the buses —
+  each with a bus number and a **41-seat** or **45-seat** coach type. No seat
+  plan is kept; everything else is typed into a free-form **Details** box.
+  Total, advance and due are tracked like other bookings, memos are numbered
+  `RTT-CORP-<year>-0001`, and the list can be searched, filtered by company
+  and exported to CSV. *File → New corporate tour* starts a blank entry.
+* **Corporate memo PDF** with the same letterhead, watermark and footer as the
+  tour memo: company and tour fields, a bus line such as “বাস ১ — ৪১ সিট,
+  বাস ২ — ৪৫ সিট (মোট ৮৬ সিট)”, payment boxes with the amount in words, and
+  the details section. Long details flow onto as many extra pages as needed;
+  the status line and signatures always follow the last line.
+* **Watermark moved lower.** The faint logo on the memo now sits below the
+  payment boxes so the complete logo is visible instead of being hidden behind
+  the amount cards.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.2.3
 
 * **Seventh memo term.** The tour memo's terms & conditions now end with:
