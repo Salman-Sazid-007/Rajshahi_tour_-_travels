@@ -1,3 +1,18 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.2.5
+
+* **Bangla no longer turns into boxes in Word.** Foxit and other PDF viewers
+  draw the font embedded in the memo, but Microsoft Word rebuilds the page
+  from the PDF's hidden text layer, and that layer was wrong for shaped
+  Bangla (reordered vowel signs, conjuncts). Every glyph in every PDF now maps
+  back to the exact original text, so Word, copy-paste and search read
+  "যাত্রীর নাম" instead of garbage — and printing from Word prints the words.
+  The printed appearance in a PDF viewer is unchanged.
+* **PDFs open and print through a real PDF viewer.** When the app saves or
+  prints a memo it now launches Foxit, Adobe Acrobat/Reader or SumatraPDF if
+  one is installed, instead of whatever Windows has associated with `.pdf`
+  (on some computers that is Word). A different program can be chosen under
+  *Tools → Settings → PDF viewer program*.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.2.4
 
 * **Corporate tour section.** A new *Corporate tour* entry in the side menu

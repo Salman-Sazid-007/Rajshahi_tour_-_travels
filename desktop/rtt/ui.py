@@ -321,6 +321,8 @@ class BookingApp:
         self._set_window_icon()
         self.db = database
         self.settings = settings
+        ACTIVE_SETTINGS.clear()
+        ACTIVE_SETTINGS.update(settings)
         self.selected_id: Optional[int] = None
         self.seat_genders: Dict[str, str] = {}        # tour booking: seat -> male/female
         self.legacy_gender_missing = False            # editing a booking saved before genders existed
@@ -3198,6 +3200,8 @@ class BookingApp:
 
     def apply_settings(self) -> None:
         self.currency = str(self.settings.get("currency", "Tk."))
+        ACTIVE_SETTINGS.clear()
+        ACTIVE_SETTINGS.update(self.settings)
         known = {str(tour["name"]).casefold() for tour in self.db.tour_catalog(include_inactive=True)}
         for suggestion in self.settings.get("tour_suggestions") or ():
             name = str(suggestion).strip()
@@ -3288,15 +3292,31 @@ class SettingsDialog(tk.Toplevel):
             ("receipt_prefix", "Receipt prefix"),
             ("currency", "Currency symbol"),
             ("footer_note", "Receipt footer note"),
+            ("pdf_viewer", "PDF viewer program (optional)"),
         ]
         row = 0
         for key, label in fields:
             ttk.Label(content, text=label).grid(row=row, column=0, sticky="w", pady=(6, 0))
             var = tk.StringVar(value=str(settings.get(key, "")))
-            ttk.Entry(content, textvariable=var, width=52, style="Input.TEntry",
-                      font=self.input_font).grid(row=row + 1, column=0, columnspan=2, sticky="ew")
+            entry = ttk.Entry(content, textvariable=var, width=52, style="Input.TEntry",
+                              font=self.input_font)
+            if key == "pdf_viewer":
+                entry.grid(row=row + 1, column=0, sticky="ew")
+                ttk.Button(content, text="Browse…", command=self.browse_pdf_viewer).grid(
+                    row=row + 1, column=1, sticky="e", padx=(6, 0))
+                row += 2
+                detected_kind, detected = find_pdf_viewer({})
+                hint = ("Memos and tickets open and print through this program instead of the "
+                        "Windows default for .pdf files (so Word is never used). "
+                        + (f"Found: {detected}" if detected else
+                           "Leave blank to use the default viewer."))
+                ttk.Label(content, text=hint, wraplength=380, foreground=MUTED).grid(
+                    row=row, column=0, columnspan=2, sticky="w", pady=(2, 0))
+                row += 1
+            else:
+                entry.grid(row=row + 1, column=0, columnspan=2, sticky="ew")
+                row += 2
             self.vars[key] = var
-            row += 2
 
         ttk.Label(content, text="Terms (one per line)").grid(row=row, column=0, sticky="w",
                                                              pady=(8, 0))
@@ -3316,6 +3336,14 @@ class SettingsDialog(tk.Toplevel):
         buttons.grid(row=row, column=0, columnspan=2, sticky="e", pady=(14, 0))
         ttk.Button(buttons, text="Cancel", command=self.destroy).pack(side="right", padx=(8, 0))
         ttk.Button(buttons, text="Save", command=self.save).pack(side="right")
+
+    def browse_pdf_viewer(self) -> None:
+        path = filedialog.askopenfilename(
+            parent=self, title="Choose the PDF viewer program",
+            filetypes=[("Programs", "*.exe"), ("All files", "*.*")],
+        )
+        if path:
+            self.vars["pdf_viewer"].set(path)
 
     def _text_list(self, widget: tk.Text) -> List[str]:
         return [line.strip() for line in widget.get("1.0", "end").splitlines() if line.strip()]
@@ -3732,9 +3760,88 @@ class SeatMapDialog(tk.Toplevel):
 # ---------------------------------------------------------------- utilities
 
 
+# Settings of the running app (set by BookingApp) so the module-level file
+# helpers can honour the configured PDF viewer.
+ACTIVE_SETTINGS: Dict[str, Any] = {}
+
+# Real PDF viewers to prefer on Windows. Windows may have ".pdf" associated
+# with Microsoft Word, which does not draw the embedded fonts but converts the
+# page to editable text - Bangla then prints as boxes. Any of these programs
+# render the PDF as it is.
+_PDF_VIEWERS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
+    ("foxit", ("Foxit Software", "Foxit PDF Reader", "FoxitPDFReader.exe")),
+    ("foxit", ("Foxit Software", "Foxit Reader", "FoxitReader.exe")),
+    ("foxit", ("Foxit Software", "Foxit PDF Editor", "FoxitPDFEditor.exe")),
+    ("foxit", ("Foxit Software", "Foxit PhantomPDF", "FoxitPhantomPDF.exe")),
+    ("acrobat", ("Adobe", "Acrobat DC", "Acrobat", "Acrobat.exe")),
+    ("acrobat", ("Adobe", "Acrobat", "Acrobat", "Acrobat.exe")),
+    ("acrobat", ("Adobe", "Acrobat Reader DC", "Reader", "AcroRd32.exe")),
+    ("acrobat", ("Adobe", "Acrobat Reader", "Reader", "AcroRd64.exe")),
+    ("sumatra", ("SumatraPDF", "SumatraPDF.exe")),
+    ("edge", ("Microsoft", "Edge", "Application", "msedge.exe")),
+)
+
+
+def pdf_viewer_kind(executable: str) -> str:
+    name = os.path.basename(str(executable or "")).casefold()
+    if "foxit" in name:
+        return "foxit"
+    if "acro" in name:
+        return "acrobat"
+    if "sumatra" in name:
+        return "sumatra"
+    if "msedge" in name:
+        return "edge"
+    return "other"
+
+
+def find_pdf_viewer(settings: Optional[Dict[str, Any]] = None) -> Tuple[str, str]:
+    """``(kind, executable)`` of the PDF program to use, or ``("", "")``.
+
+    A program chosen under Tools → Settings wins; otherwise, on Windows, the
+    first installed viewer from ``_PDF_VIEWERS`` is used.
+    """
+    settings = ACTIVE_SETTINGS if settings is None else settings
+    chosen = str(settings.get("pdf_viewer") or "").strip().strip('"')
+    if chosen and os.path.isfile(chosen):
+        return pdf_viewer_kind(chosen), chosen
+    if not sys.platform.startswith("win"):
+        return "", ""
+    roots = []
+    for variable in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LocalAppData"):
+        value = os.environ.get(variable)
+        if value and value not in roots:
+            roots.append(value)
+    for kind, parts in _PDF_VIEWERS:
+        for root in roots:
+            candidate = os.path.join(root, *parts)
+            if os.path.isfile(candidate):
+                return kind, candidate
+    return "", ""
+
+
+def pdf_print_command(kind: str, executable: str, path: str) -> Optional[List[str]]:
+    """Command line that prints *path* on the default printer, if the viewer has one."""
+    if kind == "foxit":
+        return [executable, "/p", path]
+    if kind == "acrobat":
+        return [executable, "/p", "/h", path]
+    if kind == "sumatra":
+        return [executable, "-print-to-default", "-silent", path]
+    return None
+
+
 def open_file(path: str) -> None:
-    """Open a file or folder with the operating system's default handler."""
+    """Open a file or folder with the operating system's default handler.
+
+    PDFs are opened with a real PDF viewer when one is configured or found,
+    so a ".pdf → Word" association on the computer does not get in the way."""
     try:
+        if str(path).casefold().endswith(".pdf"):
+            kind, viewer = find_pdf_viewer()
+            if viewer:
+                subprocess.Popen([viewer, path])
+                return
         if sys.platform.startswith("win"):
             os.startfile(path)  # type: ignore[attr-defined]
         elif sys.platform == "darwin":
@@ -3748,6 +3855,14 @@ def open_file(path: str) -> None:
 def print_file(path: str) -> bool:
     """Send a PDF to the default printer. Returns ``False`` if it only opened."""
     try:
+        kind, viewer = find_pdf_viewer()
+        if viewer:
+            command = pdf_print_command(kind, viewer, path)
+            if command:
+                subprocess.Popen(command)
+                return True
+            open_file(path)  # the viewer cannot print from the command line
+            return False
         if sys.platform.startswith("win"):
             os.startfile(path, "print")  # type: ignore[attr-defined]
             return True

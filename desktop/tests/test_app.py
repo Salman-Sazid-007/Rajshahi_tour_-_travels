@@ -27,6 +27,9 @@ fake_tkinter.install(ANSWERS)
 from rtt import config, db, documents, pdf, ui  # noqa: E402
 from rtt.text import FontStyle, HARFBUZZ_AVAILABLE, split_runs  # noqa: E402
 
+# The UI tests stub these out; keep the real ones for the viewer test.
+REAL_OPEN_FILE, REAL_PRINT_FILE = ui.open_file, ui.print_file
+
 
 def temp_dir() -> str:
     os.environ["RTT_DATA_DIR"] = tempfile.mkdtemp(prefix="rtt-test-")
@@ -909,6 +912,44 @@ class DocumentTests(unittest.TestCase):
         self.assertIn("Pran-RFL Group", first_text)
         self.assertIn("01711223344", first_text)
 
+    def test_memo_text_layer_is_the_original_bangla_for_word_and_copy_paste(self) -> None:
+        """Word (and any converter) rebuilds the page from the PDF's text layer,
+        not from the embedded font, so every glyph must map back to the real
+        text - otherwise Bangla turns into boxes there."""
+        booking = dict(self.database.list()[0], name="মুহাম্মদ সুমন", tour_name="কক্সবাজার ট্যুর")
+        data = documents.booking_receipt(booking, self.settings)
+        self.assertIn(b"/CIDToGIDMap ", data)
+        self.assertNotIn(b"/CIDToGIDMap /Identity", data)
+        try:
+            import pymupdf
+        except ImportError:
+            return
+        import unicodedata
+        page = pymupdf.open(stream=data, filetype="pdf")[0]
+        text = unicodedata.normalize("NFC", page.get_text())
+        self.assertEqual([ch for ch in text if ord(ch) < 32 and ch not in "\n\t"], [])
+        self.assertNotIn("\u200b", text)
+        for needle in ("রাজশাহী ট্যুরস অ্যান্ড ট্রাভেলস", "ভদ্রা মোড়, রাজশাহী", "ফোন",
+                       "ট্যুর বুকিংয়ের মেমো", "যাত্রী ও ট্যুরের বিবরণ", "যাত্রীর নাম", "মোবাইল নম্বর",
+                       "যাত্রার তারিখ", "বুকিংয়ের তারিখ", "মুহাম্মদ সুমন", "কক্সবাজার ট্যুর",
+                       "পেমেন্টের বিবরণ", "টাকার পরিমাণ কথায়", "শর্তাবলি", "অফিস প্রতিনিধির স্বাক্ষর",
+                       "01782250709", "Md Safayat Hossain"):
+            self.assertIn(needle, text)
+
+    def test_glyph_texts_deal_each_cluster_out_in_glyph_order(self) -> None:
+        class G:
+            def __init__(self, cluster):
+                self.cluster = cluster
+        # "মে": the e-sign is drawn before its consonant but reads after it.
+        self.assertEqual(pdf.glyph_texts([G(0), G(0)], "মে"), ["ম", "ে"])
+        # Conjunct ligature: one glyph for three characters.
+        self.assertEqual(pdf.glyph_texts([G(0), G(3)], "ক্ষর"), ["ক্ষ", "র"])
+        # "মো" is drawn as three glyphs; use its canonical decomposition.
+        self.assertEqual(pdf.glyph_texts([G(0), G(0), G(0), G(2)], "মোট"), ["ম", "\u09c7", "\u09be", "ট"])
+        self.assertEqual("".join(pdf.glyph_texts([G(0), G(1), G(1), G(1), G(5), G(6), G(6)], "শর্তাবলি")),
+                         "শর্তাবলি")
+        self.assertEqual(pdf.glyph_texts([], "x"), [])
+
     def test_branded_bus_ticket_pdf(self) -> None:
         ticket = {
             "ticket_no": "RTT-BUS-2026-0001", "route": "Rajshahi → Dhaka",
@@ -1684,6 +1725,39 @@ class UiTests(unittest.TestCase):
         self.assertEqual(dialog.save_button.cget("state"), "normal")
         dialog.save()
         self.assertEqual(selected, [(["A-1", "A-2"], {"A-1": "male", "A-2": "female"})])
+
+    def test_pdfs_open_and_print_through_a_real_pdf_viewer_when_available(self) -> None:
+        viewer = os.path.join(config.data_dir(), "FoxitPDFReader.exe")
+        with open(viewer, "wb") as handle:
+            handle.write(b"")
+        calls: List[List[str]] = []
+        real_popen = ui.subprocess.Popen
+        ui.subprocess.Popen = lambda command, *a, **k: calls.append(list(command))  # type: ignore
+        try:
+            self.assertEqual(ui.find_pdf_viewer({"pdf_viewer": viewer}), ("foxit", viewer))
+            if not sys.platform.startswith("win"):
+                self.assertEqual(ui.find_pdf_viewer({"pdf_viewer": "C:/missing.exe"}), ("", ""))
+            self.assertEqual(ui.pdf_print_command("foxit", viewer, "m.pdf"), [viewer, "/p", "m.pdf"])
+            self.assertEqual(ui.pdf_print_command("acrobat", "a.exe", "m.pdf"), ["a.exe", "/p", "/h", "m.pdf"])
+            self.assertEqual(ui.pdf_print_command("sumatra", "s.exe", "m.pdf"),
+                             ["s.exe", "-print-to-default", "-silent", "m.pdf"])
+            self.assertIsNone(ui.pdf_print_command("edge", "e.exe", "m.pdf"))
+            # The running app's settings drive the module-level helpers.
+            dialog = ui.SettingsDialog(self.root, self.settings, on_save=self.app.apply_settings)
+            self.assertIn("pdf_viewer", dialog.vars)
+            dialog.vars["pdf_viewer"].set(viewer)
+            dialog.save()
+            self.assertEqual(config.load_settings()["pdf_viewer"], viewer)
+            self.assertEqual(ui.ACTIVE_SETTINGS["pdf_viewer"], viewer)
+            self.assertTrue(REAL_PRINT_FILE("m.pdf"))
+            REAL_OPEN_FILE("m.pdf")
+            self.assertEqual(calls, [[viewer, "/p", "m.pdf"], [viewer, "m.pdf"]])
+            # Non-PDF files (the data folder) still go to the system handler.
+            calls.clear()
+            REAL_OPEN_FILE(config.data_dir())
+            self.assertNotIn([viewer, config.data_dir()], calls)
+        finally:
+            ui.subprocess.Popen = real_popen
 
     def test_settings_round_trip(self) -> None:
         dialog = ui.SettingsDialog(self.root, self.settings, on_save=self.app.apply_settings)

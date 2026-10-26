@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import zlib
+import unicodedata
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from .text import FontStyle, Shaper, split_runs
@@ -103,7 +104,14 @@ class FontResource:
         self.resource_name = ""
         self.used_gids: List[int] = []
         self._seen: set = set()
-        self.gid_text: Dict[int, str] = {}
+        # Character codes written into the content stream. A code stands for
+        # one glyph *and* the text it represents, so the same glyph can carry
+        # different text in different words (a CIDToGIDMap turns codes back
+        # into glyphs). Code 0 is .notdef.
+        self.codes: Dict[Tuple[int, str, int], int] = {}
+        self.code_gid: List[int] = [0]
+        self.code_text: List[str] = [""]
+        self.code_width: List[int] = [0]
         self.mapping: Dict[int, int] = {}
         self.advances: List[int] = []
         self.data: bytes = b""
@@ -115,9 +123,33 @@ class FontResource:
             self._seen.add(gid)
             self.used_gids.append(gid)
 
-    def note_text(self, gid: int, text: str) -> None:
-        if text and gid not in self.gid_text:
-            self.gid_text[gid] = text
+    def reset(self) -> None:
+        self.used_gids = []
+        self._seen = set()
+        self.codes = {}
+        self.code_gid = [0]
+        self.code_text = [""]
+        self.code_width = [0]
+
+    def code_for(self, gid: int, text: str, width: int) -> int:
+        """Character code for *gid* drawn as *text* with advance *width*
+        (1/1000 em, as HarfBuzz positioned it); allocated on first use.
+
+        Carrying the shaped advance in the code means marks such as a reph
+        (advance 0) need no correcting kern in the content stream, which keeps
+        text extractors from reading a word break inside a syllable."""
+        self.note(gid)
+        key = (gid, text, width)
+        code = self.codes.get(key)
+        if code is None:
+            code = len(self.code_gid)
+            if code > 0xFFFF:  # cannot happen in practice
+                return 0
+            self.codes[key] = code
+            self.code_gid.append(gid)
+            self.code_text.append(text)
+            self.code_width.append(width)
+        return code
 
     def finalise(self, subset_tag: str) -> None:
         self.data, self.mapping, self.advances = self.face.subset(self.used_gids)
@@ -358,40 +390,19 @@ class Canvas:
         color: Sequence[float],
         scale_factor: float,
     ) -> None:
-        if not self._emitting:
-            # Collect-only pass: still register glyphs so the subset is complete.
-            for face_key, glyphs, _source in runs:
-                resource = self.doc.resources[face_key]
-                for glyph in glyphs:
-                    resource.note(glyph.gid)
-            return
-
         cursor = x
         for face_key, glyphs, source in runs:
             resource = self.doc.resources[face_key]
             face = resource.face
             scale = 1000.0 / (face.units_per_em or 1000)
-            # Remember which source text each glyph came from (ToUnicode map).
-            # HarfBuzz groups a base consonant and its vowel sign into one
-            # cluster, so the whole cluster is credited to its first glyph.
-            clusters = [g.cluster for g in glyphs]
-            for index, glyph in enumerate(glyphs):
-                start = clusters[index]
-                if index and start == clusters[index - 1]:
-                    pass  # later glyph of a cluster: no separate mapping
-                else:
-                    end = len(source)
-                    for later in clusters[index + 1 :]:
-                        if later > start:
-                            end = later
-                            break
-                    if 0 <= start < end <= len(source):
-                        resource.note_text(glyph.gid, source[start:end])
-                resource.note(glyph.gid)
-            if not glyphs:
+            codes = [resource.code_for(glyph.gid, text, int(round(glyph.x_advance * scale)))
+                     for glyph, text in zip(glyphs, glyph_texts(glyphs, source))]
+            if not self._emitting or not glyphs:
+                # Collect-only pass: the codes are now registered so the font
+                # subset and the ToUnicode map will be complete.
                 continue
             used = self._emit_glyphs(
-                resource, glyphs, cursor, y, size, color, scale, scale_factor
+                resource, glyphs, codes, cursor, y, size, color, scale, scale_factor
             )
             cursor += used * size / 1000.0
 
@@ -399,6 +410,7 @@ class Canvas:
         self,
         resource: FontResource,
         glyphs: Sequence,
+        codes: Sequence[int],
         x: float,
         y: float,
         size: float,
@@ -425,9 +437,8 @@ class Canvas:
                 segments.append((rise, list(items)))
                 items.clear()
 
-        for glyph in glyphs:
-            gid = resource.mapping.get(glyph.gid, 0)
-            width_units = resource.width(glyph.gid)
+        for glyph, code in zip(glyphs, codes):
+            width_units = resource.code_width[code]
             # HarfBuzz asks for the glyph to be drawn here (1/1000 em, text space).
             desired = (logical + glyph.x_offset) * scale
             delta = pen - desired
@@ -441,7 +452,7 @@ class Canvas:
             if abs(rise - current_rise) > 0.0005:
                 flush_segment(current_rise)
                 current_rise = rise
-            hexbuf.append(f"{gid:04X}")
+            hexbuf.append(f"{code:04X}")
             pen += width_units
             logical += glyph.x_advance
         flush_segment(current_rise)
@@ -579,9 +590,7 @@ class PdfDocument:
         # Pass 1 - collect.
         self.pages = []
         for resource in self.resources.values():
-            resource.used_gids = []
-            resource.gid_text = {}
-            resource._seen = set()
+            resource.reset()
         self._collecting = True
         draw(self)
         self._collecting = False
@@ -709,15 +718,21 @@ class PdfDocument:
     def _write_font(self, objects: List[bytes], add, add_stream, resource: FontResource) -> int:
         face = resource.face
         scale = 1000.0 / (face.units_per_em or 1000)
-        widths = [int(round(a * scale)) for a in resource.advances]
+        widths = list(resource.code_width)
         w_array = b"[0 [" + b" ".join(str(w).encode() for w in widths) + b"]]"
+        # Codes are not glyph ids: the CIDToGIDMap stream maps every code to
+        # its glyph in the subset (two big-endian bytes per code).
+        cid_to_gid = b"".join(
+            resource.mapping.get(gid, 0).to_bytes(2, "big") for gid in resource.code_gid
+        )
+        cid_to_gid_id = add_stream(cid_to_gid, b"")
         descriptor_id = add(b"")  # placeholder
         cidfont_id = add(
             b"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /" + resource.pdf_font_name.encode()
             + b" /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >>"
             + b" /FontDescriptor " + str(descriptor_id).encode() + b" 0 R"
             + b" /DW 1000 /W " + w_array
-            + b" /CIDToGIDMap /Identity >>"
+            + b" /CIDToGIDMap " + str(cid_to_gid_id).encode() + b" 0 R >>"
         )
         bbox = resource.font_bbox()
         ascent, descent = resource.ascent_descent()
@@ -758,20 +773,64 @@ class PdfDocument:
             "endcodespacerange",
         ]
         entries = []
-        for gid, text in sorted(resource.gid_text.items()):
-            final = resource.mapping.get(gid)
-            if final is None:
+        for code, text in enumerate(resource.code_text):
+            if code == 0:
                 continue
-            hexed = "".join(f"{ord(ch):04X}" for ch in text if ch)
-            if not hexed:
-                continue
-            entries.append(f"<{final:04X}> <{hexed}>")
-        if entries:
-            lines.append(f"{len(entries)} beginbfchar")
-            lines.extend(entries)
+            hexed = "".join(_utf16_hex(ch) for ch in (text or "\u200b"))
+            entries.append(f"<{code:04X}> <{hexed}>")
+        # A bfchar block may hold at most 100 entries.
+        for start in range(0, len(entries), 100):
+            chunk = entries[start:start + 100]
+            lines.append(f"{len(chunk)} beginbfchar")
+            lines.extend(chunk)
             lines.append("endbfchar")
         lines += ["endcmap", "CMapName currentdict /CMap defineresource pop", "end", "end"]
         return add_stream(("\n".join(lines) + "\n").encode("utf-8"), b"")
+
+
+def _utf16_hex(ch: str) -> str:
+    """UTF-16BE hex digits for one character (surrogate pairs above the BMP)."""
+    code = ord(ch)
+    if code < 0x10000:
+        return f"{code:04X}"
+    code -= 0x10000
+    return f"{0xD800 + (code >> 10):04X}{0xDC00 + (code & 0x3FF):04X}"
+
+
+def glyph_texts(glyphs: Sequence, source: str) -> List[str]:
+    """Which part of *source* each shaped glyph stands for.
+
+    HarfBuzz tags every glyph with the index of the character cluster it
+    came from. For Bangla a cluster is a whole syllable that may become a
+    different number of glyphs, in a different order (the e-sign is drawn in
+    front of its consonant, a reph after it). The cluster's text is dealt out
+    across its glyphs in glyph order - one character each, the remainder on
+    the last glyph - so reading the glyphs back in order gives the original
+    text exactly. Surplus glyphs map to an empty string (written as a
+    zero-width space in the PDF).
+    """
+    texts = [""] * len(glyphs)
+    if not glyphs:
+        return texts
+    starts = sorted({max(0, min(int(g.cluster), len(source))) for g in glyphs})
+    ends = {start: (starts[i + 1] if i + 1 < len(starts) else len(source))
+            for i, start in enumerate(starts)}
+    by_cluster: Dict[int, List[int]] = {}
+    for index, glyph in enumerate(glyphs):
+        by_cluster.setdefault(max(0, min(int(glyph.cluster), len(source))), []).append(index)
+    for start, members in by_cluster.items():
+        text = source[start:ends[start]]
+        if len(members) > len(text):
+            # ো and ৌ are drawn as two glyphs (ে + া / ৌ) around the consonant;
+            # their canonical decomposition has the same meaning and one
+            # character per glyph.
+            text = unicodedata.normalize("NFD", text)
+        for position, index in enumerate(members):
+            if position == len(members) - 1:
+                texts[index] = text[position:]
+            else:
+                texts[index] = text[position:position + 1]
+    return texts
 
 
 def _subset_tag(index: int) -> str:

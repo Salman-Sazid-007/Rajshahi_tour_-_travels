@@ -1,4 +1,4 @@
-RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.4)
+RAJSHAHI TOURS & TRAVELS - OFFLINE COUNTER MANAGER (DESKTOP 1.2.5)
 ===================================================================
 This program runs on your own computer. Bookings and ticket records stay in a
 local database; nothing is sent to the website or over the internet.
@@ -54,6 +54,10 @@ WHAT THE PROGRAM DOES
   executable icon. Tour booking memos are in Bangla and include booking terms;
   the office address is Vodra Mor, Rajshahi. Bus ticket receipts remain separate.
 * Print branded tour receipts and bus tickets; cancelled records release seats.
+* Memos and tickets open and print through a real PDF viewer (Foxit, Adobe
+  Reader or SumatraPDF are found automatically; choose another under Tools ->
+  Settings -> "PDF viewer program"). Do not print them from Microsoft Word:
+  Word converts the page instead of drawing the embedded Bangla font.
 * Use File -> Backup database regularly to make a copy of every local record.
 
 Tour receipts use the agency teal/orange mark. Owner Md Safayat Hossain and phone

@@ -2,17 +2,17 @@
 
 ## Download
 
-These are the **latest published** downloads: desktop version 1.2.4.
+These are the **latest published** downloads: desktop version 1.2.5.
 
 | Download | For |
 | --- | --- |
-| [**RajshahiTours-Windows-1.2.4.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.4/RajshahiTours-Windows-1.2.4.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
-| [**RajshahiTours-Desktop-1.2.4.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.4/RajshahiTours-Desktop-1.2.4.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
+| [**RajshahiTours-Windows-1.2.5.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.5/RajshahiTours-Windows-1.2.5.zip) | Windows: unzip, then double-click `RajshahiTours.exe`. Python is **not** required. |
+| [**RajshahiTours-Desktop-1.2.5.zip**](https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases/download/desktop-v1.2.5/RajshahiTours-Desktop-1.2.5.zip) | Python 3.10+ (any OS). Unzip, install `requirements.txt`, then run `python app.py`. |
 
 All published versions: <https://github.com/Salman-Sazid-007/Rajshahi_tour_-_travels/releases?q=desktop> ·
 Open `START-HERE.txt` inside a release zip first if you just want to start using it.
 
-To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.4 in **Help → About**.
+To run the current source, follow [Run it with Python](#1-run-it-with-python-no-build-needed) below. The app shows version 1.2.5 in **Help → About**.
 
 ---
 
@@ -190,7 +190,14 @@ history but do not occupy a seat or add to payment totals.
 * **File → Backup database** copies all local data into `Backups` with a
 timestamp. Keep a second copy somewhere safe.
 * **Tools → Settings** changes the company and owner names, phone numbers,
-address, email, receipt prefix, currency symbol, and printed terms.
+address, email, receipt prefix, currency symbol, printed terms and, optionally,
+the **PDF viewer program**. Memos and tickets are opened and printed through a
+real PDF viewer (Foxit, Adobe Acrobat/Reader or SumatraPDF are found
+automatically; use *Browse…* to pick another). This matters when Windows has
+`.pdf` files associated with Microsoft Word: Word does not draw the embedded
+Bangla font but converts the page to editable text, which used to print as
+boxes. The PDFs also carry an exact text layer now, so Word, copy-paste and
+search all read the real Bangla text.
 
 Keyboard shortcuts for the tour-booking page: `Ctrl+N` new · `Ctrl+S` save ·
 `Ctrl+F` jump to search.

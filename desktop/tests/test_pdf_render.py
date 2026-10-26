@@ -115,9 +115,12 @@ class RenderTests(unittest.TestCase):
                         pen_x -= float(token) / 1000.0 * size * squeeze
 
         self.assertEqual(len(placed), len(expected))
-        for (name, gid, px, py), (face_key, source_gid, ex, ey) in zip(placed, expected):
+        for (name, code, px, py), (face_key, source_gid, ex, ey) in zip(placed, expected):
             resource = document.resources[face_key]
-            self.assertEqual(resource.mapping.get(source_gid, -1), gid)
+            self.assertEqual(resource.resource_name, name)
+            # The content stream holds character codes; the font's CIDToGIDMap
+            # turns each code back into the glyph HarfBuzz chose.
+            self.assertEqual(resource.code_gid[code], source_gid)
             self.assertAlmostEqual(px, ex, delta=0.02)
             self.assertAlmostEqual(py, height - ey, delta=0.02)
 
