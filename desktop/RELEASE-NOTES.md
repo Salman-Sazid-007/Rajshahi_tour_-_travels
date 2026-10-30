@@ -1,3 +1,11 @@
+## Rajshahi Tours & Travels — Desktop counter app 1.2.6
+
+* **Company name spelt as on the logo.** The memo letterhead now prints
+  **রাজশাহী ট্যুরস এন্ড ট্রাভেলস** (previously "অ্যান্ড"), and the default
+  footer note reads "রাজশাহী ট্যুরস এন্ড ট্রাভেলসের সঙ্গে ভ্রমণের জন্য
+  ধন্যবাদ।". An untouched footer note upgrades automatically; a note the office
+  edited under Tools → Settings is left as written.
+
 ## Rajshahi Tours & Travels — Desktop counter app 1.2.5
 
 * **Bangla no longer turns into boxes in Word.** Foxit and other PDF viewers

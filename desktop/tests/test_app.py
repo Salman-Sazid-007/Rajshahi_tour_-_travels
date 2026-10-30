@@ -709,6 +709,15 @@ class FormatTests(unittest.TestCase):
         self.assertEqual(len(trimmed["terms"]), 5)
         self.assertEqual(trimmed["owner_name"], "Someone Else")
 
+        # 1.1.9–1.2.5 printed "অ্যান্ড" in the footer note; the untouched default
+        # becomes "এন্ড" (as on the logo) and the memo letterhead uses the same.
+        with open(config.settings_path(), "w", encoding="utf-8") as handle:
+            json.dump({"footer_note": "রাজশাহী ট্যুরস অ্যান্ড ট্রাভেলসের সঙ্গে ভ্রমণের জন্য ধন্যবাদ।"}, handle)
+        self.assertEqual(config.load_settings()["footer_note"],
+                         "রাজশাহী ট্যুরস এন্ড ট্রাভেলসের সঙ্গে ভ্রমণের জন্য ধন্যবাদ।")
+        self.assertEqual(documents.BANGLA_COMPANY_NAME, "রাজশাহী ট্যুরস এন্ড ট্রাভেলস")
+        self.assertNotIn("অ্যান্ড", documents.BANGLA_COMPANY_NAME)
+
         # 1.1.7/1.1.8 installs stored the English address and the placeholder
         # e-mail; both are untouched defaults and upgrade to the Bangla address
         # and the office Gmail address.
@@ -929,7 +938,7 @@ class DocumentTests(unittest.TestCase):
         text = unicodedata.normalize("NFC", page.get_text())
         self.assertEqual([ch for ch in text if ord(ch) < 32 and ch not in "\n\t"], [])
         self.assertNotIn("\u200b", text)
-        for needle in ("রাজশাহী ট্যুরস অ্যান্ড ট্রাভেলস", "ভদ্রা মোড়, রাজশাহী", "ফোন",
+        for needle in ("রাজশাহী ট্যুরস এন্ড ট্রাভেলস", "ভদ্রা মোড়, রাজশাহী", "ফোন",
                        "ট্যুর বুকিংয়ের মেমো", "যাত্রী ও ট্যুরের বিবরণ", "যাত্রীর নাম", "মোবাইল নম্বর",
                        "যাত্রার তারিখ", "বুকিংয়ের তারিখ", "মুহাম্মদ সুমন", "কক্সবাজার ট্যুর",
                        "পেমেন্টের বিবরণ", "টাকার পরিমাণ কথায়", "শর্তাবলি", "অফিস প্রতিনিধির স্বাক্ষর",

@@ -240,6 +240,10 @@ def _contact_numbers(settings: Dict[str, Any]) -> List[str]:
     return numbers
 
 
+# The company name as printed on the logo and the memo letterhead.
+BANGLA_COMPANY_NAME = "রাজশাহী ট্যুরস এন্ড ট্রাভেলস"
+
+
 def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float,
                 bangla: bool = False) -> float:
     """Logo-led company header with owner and phone at upper right."""
@@ -259,7 +263,7 @@ def _letterhead(canvas: pdf.Canvas, settings: Dict[str, Any], width: float,
     text_width = width - left - MARGIN - right_panel_width - 16
     company_name = _settings_value(settings, "company_name", "Rajshahi Tours & Travels")
     if bangla and company_name == "Rajshahi Tours & Travels":
-        company_name = "রাজশাহী ট্যুরস অ্যান্ড ট্রাভেলস"
+        company_name = BANGLA_COMPANY_NAME
     canvas.text(left, 36, company_name, style="bold", size=16, color=TEAL_DARK,
                 max_width=text_width)
     canvas.text(left, 53, _settings_value(settings, "company_tagline", ""), size=9,

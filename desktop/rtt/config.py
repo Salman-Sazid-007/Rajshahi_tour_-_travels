@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 
 APP_TITLE = "Rajshahi Tours & Travels"
 APP_SUBTITLE = "Offline Tour & Bus Manager"
-APP_VERSION = "1.2.5"
+APP_VERSION = "1.2.6"
 
 BOOKING_FIELDS = (
     "booking_no",
@@ -58,7 +58,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "receipt_prefix": "RTT",
     "next_receipt_no": 1,
     "currency": "Tk.",
-    "footer_note": "রাজশাহী ট্যুরস অ্যান্ড ট্রাভেলসের সঙ্গে ভ্রমণের জন্য ধন্যবাদ।",
+    "footer_note": "রাজশাহী ট্যুরস এন্ড ট্রাভেলসের সঙ্গে ভ্রমণের জন্য ধন্যবাদ।",
     # Optional full path of the program that opens/prints PDFs (blank = the
     # first installed viewer found, else the Windows default).
     "pdf_viewer": "",
@@ -94,7 +94,10 @@ _LEGACY_DEFAULT_SETTINGS = {
         "Vodra Mor, Rajshahi",
     ),
     "email": ("info@rajshahitours.com",),
-    "footer_note": ("Thank you for travelling with Rajshahi Tours & Travels.",),
+    "footer_note": (
+        "Thank you for travelling with Rajshahi Tours & Travels.",
+        "রাজশাহী ট্যুরস অ্যান্ড ট্রাভেলসের সঙ্গে ভ্রমণের জন্য ধন্যবাদ।",
+    ),
     "owner_name": ("Safayet Hossain",),
 }
 
